@@ -1,0 +1,11 @@
+{
+  "description": "Aligned transparent walk frames cut from user-supplied footage",
+  "first_frame": 0,
+  "last_frame": 32,
+  "frame_count": 33,
+  "frame_rate_fps": 24,
+  "width": 420,
+  "height": 790,
+  "format": "png",
+  "alpha": true
+}

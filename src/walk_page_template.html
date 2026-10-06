@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#080808">
+  <title>Infinite Walk Preview</title>
+  <style>
+    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #080808; color: #fff; font: 14px system-ui, sans-serif; }
+    #stage { display: block; width: 100vw; height: 100dvh; touch-action: manipulation; }
+    #controls { position: fixed; right: 12px; bottom: max(12px, env(safe-area-inset-bottom)); left: 12px; display: flex; align-items: center; gap: 12px; padding: 10px 14px; border: 1px solid #ffffff26; border-radius: 18px; background: #141414dd; backdrop-filter: blur(10px); box-sizing: border-box; }
+    #toggle { flex: none; min-width: 66px; min-height: 42px; border: 0; border-radius: 12px; background: #f1f1f1; color: #111; font: inherit; font-weight: 700; }
+    #speed { flex: 1; min-width: 50px; accent-color: #fff; }
+    #readout { flex: none; min-width: 56px; text-align: right; font-variant-numeric: tabular-nums; }
+    #status { position: fixed; top: max(12px, env(safe-area-inset-top)); left: 14px; color: #bbb; font-size: 12px; font-variant-numeric: tabular-nums; pointer-events: none; }
+  </style>
+</head>
+<body>
+  <canvas id="stage" aria-label="Infinite walking animation"></canvas>
+  <div id="status">Loading frames…</div>
+  <div id="controls">
+    <button id="toggle" type="button" aria-label="Pause">Pause</button>
+    <input id="speed" type="range" min="8" max="36" value="24" step="1" aria-label="Speed in frames per second">
+    <span id="readout">24 fps</span>
+  </div>
+  <script>
+    (() => {
+      const FRAME_WIDTH = __FRAME_WIDTH__;
+      const FRAME_HEIGHT = __FRAME_HEIGHT__;
+      const FRAME_COUNT = __FRAME_COUNT__;
+      const COLUMNS = __COLUMNS__;
+      const atlas = new Image();
+      const canvas = document.getElementById('stage');
+      const context = canvas.getContext('2d', { alpha: false });
+      const status = document.getElementById('status');
+      const toggle = document.getElementById('toggle');
+      const speed = document.getElementById('speed');
+      const readout = document.getElementById('readout');
+      let fps = 24;
+      let playing = true;
+      let elapsedFrames = 0;
+      let lastTime = 0;
+      let lastFrame = -1;
+      let lastWidth = 0;
+      let lastHeight = 0;
+
+      function resize() {
+        const ratio = Math.min(window.devicePixelRatio || 1, 2);
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        canvas.width = Math.round(width * ratio);
+        canvas.height = Math.round(height * ratio);
+        context.setTransform(ratio, 0, 0, ratio, 0, 0);
+        context.imageSmoothingEnabled = true;
+        context.imageSmoothingQuality = 'high';
+        lastWidth = width;
+        lastHeight = height;
+        lastFrame = -1;
+      }
+
+      function draw(frame) {
+        context.fillStyle = '#080808';
+        context.fillRect(0, 0, lastWidth, lastHeight);
+        const scale = Math.min(lastWidth / FRAME_WIDTH, lastHeight / FRAME_HEIGHT);
+        const width = FRAME_WIDTH * scale;
+        const height = FRAME_HEIGHT * scale;
+        const x = (lastWidth - width) / 2;
+        const y = (lastHeight - height) / 2;
+        context.drawImage(
+          atlas,
+          (frame % COLUMNS) * FRAME_WIDTH,
+          Math.floor(frame / COLUMNS) * FRAME_HEIGHT,
+          FRAME_WIDTH,
+          FRAME_HEIGHT,
+          x, y, width, height
+        );
+        status.textContent = `Frame ${String(frame).padStart(2, '0')} / 32 · loop ${Math.floor(elapsedFrames / FRAME_COUNT) + 1}`;
+      }
+
+      function tick(now) {
+        if (playing && lastTime) elapsedFrames += Math.min(now - lastTime, 100) * fps / 1000;
+        lastTime = now;
+        const frame = Math.floor(elapsedFrames) % FRAME_COUNT;
+        if (atlas.complete && atlas.naturalWidth && frame !== lastFrame) {
+          draw(frame);
+          lastFrame = frame;
+        }
+        requestAnimationFrame(tick);
+      }
+
+      toggle.addEventListener('click', () => {
+        playing = !playing;
+        toggle.textContent = playing ? 'Pause' : 'Play';
+        toggle.setAttribute('aria-label', playing ? 'Pause' : 'Play');
+        lastTime = 0;
+      });
+      speed.addEventListener('input', () => {
+        fps = Number(speed.value);
+        readout.textContent = `${fps} fps`;
+      });
+      window.addEventListener('resize', resize);
+      atlas.onload = () => draw(0);
+      atlas.onerror = () => { status.textContent = 'Could not load frames'; };
+      resize();
+      atlas.src = 'data:image/webp;base64,__ATLAS_DATA__';
+      requestAnimationFrame(tick);
+    })();
+  </script>
+</body>
+</html>
