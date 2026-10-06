@@ -2,7 +2,7 @@
 
 Status: high-level specification for the first interactive preview. This records the intended experience without locking its detailed visual design or implementation.
 
-Current input: the transparent walking sprites in `forest_runway/walk_full/transparent/`. The existing `walk_animation/walk_infinite.html` demonstrates the sprite loop on a plain background; it is a technical starting point, not the forest preview described here.
+Current input: 33 transparent walking sprites have been prepared from the supplied footage for `assets/walk/`. A sprite-only technical preview has also been prepared locally. The images and built HTML are pending a separate upload; neither is the forest preview described here.
 
 ## Vision
 
