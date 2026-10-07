@@ -1,25 +1,38 @@
 # Woodz Witch Fashion
 
-An interactive fashion runway in a hand-drawn enchanted forest. The subject walks in place using cutout sprites from user-supplied footage; the planned forest will be drawn and animated by code in the browser.
+An endless fashion runway through an illustrated enchanted forest. A woman walks in place using the 33 existing footage-derived cutouts while a continuously generated world travels from left to right.
 
-## First scene preview
+[Open the live forest preview](https://tonidondoni.github.io/woodz-witch-fashion-preview/).
 
-The initial visual study pairs the approved walking sprites with a procedural chalk runway and butterflies on a black stage. The forest background is still to come. The standalone page is stored at `site/index.html` and is published through GitHub Pages after changes are merged into `main`.
+## Current forest preview
 
-Once deployed, the project page is available at `https://tonidondoni.github.io/woodz_witch_fashion/`. GitHub Pages serves this page publicly even though the source repository is private, when the account plan permits Pages for private repositories. The page embeds its sprites and scripts and makes no runtime network requests.
+Two layers of hand-drawn trees pass behind the walker. Moss, ferns, mushrooms, stumps and small woodland spirits line the runway. Seeded identities preserve each object's shape and details throughout its journey. Smooth parallax and secondary movements run independently of the 12 Hz boiling pencil contours. Butterflies remain as occasional accents.
 
-## Requirements and project structure
+The deliverable is one self-contained `index.html`: its sprite atlas, styles and drawing code are embedded. It opens offline without adjacent assets or external dependencies. Pause, walking pace and New Dream controls are included.
 
-The requirements and acceptance criteria are in [`tasks/procedural_runway_spec.md`](tasks/procedural_runway_spec.md). Keep implementation attempts under named subdirectories in `out/`, as described in [`AGENTS.md`](AGENTS.md).
+The source repository is private. The public preview repository contains only the standalone page and hosting files, and publishes its `main` branch through GitHub Pages. Changes to this private repository do not automatically update that public preview.
+
+## Source and reproduction
+
+The requirements are in [`tasks/procedural_runway_spec.md`](tasks/procedural_runway_spec.md). Follow [`AGENTS.md`](AGENTS.md), and keep each exploratory attempt in its own `out/<attempt-name>/` directory.
 
 | Path | Purpose |
 | --- | --- |
-| `assets/walk/` | The 33 aligned transparent PNG walk sprites. |
-| `site/index.html` | The one-file public first scene preview. |
-| `tasks/procedural_runway_spec.md` | Project brief, acceptance criteria, and research notes. |
-| `src/walk_page_template.html` | Sprite-only technical preview source. |
-| `scripts/build_walk_page.py` | Packs sprites into a one-file technical preview. |
-| `out/` | Separate named directories for each implementation and visual attempt. |
-| `.github/workflows/publish-pages.yml` | Deploys the `site/` folder to GitHub Pages after a merge to `main`. |
+| `assets/walk/` | The 33 approved transparent PNG walk frames. |
+| `src/forest_scene.js` | Procedural trees, ground vegetation, mushrooms, stumps and woodland spirits. |
+| `src/forest_runway_template.html` | Inline animation, composition and controls. |
+| `scripts/build_forest_page.py` | Builds the standalone forest page from the existing sprites and drawing source. |
+| `index.html` | Current standalone forest preview. |
+| `site/index.html` | Identical copy of the standalone preview for static hosting. |
+| `tasks/procedural_runway_spec.md` | Full experience brief and acceptance criteria. |
+| `out/enchanted-forest/` | This iteration's draft sources, captures, verification and independent review. |
+| `out/butterfly-runway/` | Previous path-and-butterfly study, preserved separately. |
+| `src/walk_page_template.html` | Original sprite-only technical preview source. |
 
-The first scene study still has a visible discontinuity at the selected sprite loop seam (32 to 0). A reviewer report and local verification record are in `out/butterfly-runway/`.
+With Python and Pillow available, run `python scripts/build_forest_page.py` from the project root. This regenerates `index.html` and `site/index.html` from frames 0–32.
+
+## Verification and limits
+
+The forest iteration passes offline Chromium checks with no external requests or runtime errors. Desktop, landscape and two phone-sized viewports were visually reviewed. Objects retain their identities, enter and retire outside the viewport, and remain bounded during two minutes of sampled simulation and a one-hour seek. See `out/enchanted-forest/verification.json` and `out/enchanted-forest/review.md`.
+
+The existing frame 32-to-0 pose discontinuity remains visible. This iteration approves the procedural forest artwork; it does not claim seamless gait acceptance or physical-phone performance and offline file-opening acceptance.
