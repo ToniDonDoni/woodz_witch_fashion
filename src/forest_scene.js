@@ -246,13 +246,23 @@ function drawNightSky(){
   const moonX=w*.24-time*1.1*forestUnit();
   const moonY=horizon*.26;
   const halo=ctx.createRadialGradient(moonX,moonY,moonR*.4,moonX,moonY,moonR*4.6);
-  halo.addColorStop(0,'rgba(226,222,214,0.10)');halo.addColorStop(.5,'rgba(226,222,214,0.035)');halo.addColorStop(1,'rgba(226,222,214,0)');
+  halo.addColorStop(0,'rgba(226,222,214,0.12)');halo.addColorStop(.5,'rgba(226,222,214,0.04)');halo.addColorStop(1,'rgba(226,222,214,0)');
   ctx.fillStyle=halo;ctx.fillRect(moonX-moonR*4.6,moonY-moonR*4.6,moonR*9.2,moonR*9.2);
-  ellipse(moonX,moonY,moonR,moonR,'rgba(228,224,216,0.16)');
+  ellipse(moonX,moonY,moonR,moonR,'rgba(228,224,216,0.18)');
   // A soft terminator shadow gives the disc a waning read without a hard edge.
-  const shade=ctx.createRadialGradient(moonX+moonR*.42,moonY-moonR*.28,moonR*.2,moonX,moonY,moonR);
-  shade.addColorStop(0,'rgba(7,7,17,0.55)');shade.addColorStop(.75,'rgba(7,7,17,0.12)');shade.addColorStop(1,'rgba(7,7,17,0)');
+  const shade=ctx.createRadialGradient(moonX+moonR*.3,moonY-moonR*.2,moonR*.1,moonX,moonY,moonR*1.2);
+  shade.addColorStop(0,'rgba(7,7,17,0.65)');shade.addColorStop(.6,'rgba(7,7,17,0.25)');shade.addColorStop(1,'rgba(7,7,17,0)');
   ctx.fillStyle=shade;ctx.beginPath();ctx.arc(moonX,moonY,moonR,0,TAU);ctx.fill();
+  // Realistic lunar maria: sparse, irregular, seeded patches.
+  const maria = [
+    {ox: -.3, oy: .1, rx: .2, ry: .15, a: .12},
+    {ox: .1, oy: -.2, rx: .15, ry: .1, a: .10},
+    {ox: .2, oy: .3, rx: .12, ry: .18, a: .11},
+    {ox: -.1, oy: .4, rx: .1, ry: .08, a: .09}
+  ];
+  maria.forEach(m => {
+    ellipse(moonX+m.ox*moonR, moonY+m.oy*moonR, m.rx*moonR, m.ry*moonR, `rgba(130,126,120,${m.a})`);
+  });
   // Two faint craters, seeded so the moon keeps its identity across frames.
   ellipse(moonX-moonR*.34,moonY+moonR*.18,moonR*.16,moonR*.13,'rgba(190,186,180,0.10)');
   ellipse(moonX+moonR*.12,moonY+moonR*.42,moonR*.10,moonR*.08,'rgba(190,186,180,0.08)');
