@@ -11,9 +11,9 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;color:
 body{font:12px/1.4 system-ui,-apple-system,sans-serif}
 .stage{position:fixed;inset:0;background:#000;overflow:hidden}
 .stage canvas{position:absolute;inset:0;display:block;width:100%;height:100%;pointer-events:none}
-#pigment{z-index:1}
-#fallback{z-index:1;display:none}
-#walker{z-index:2}
+#pigment{z-index:2}
+#fallback{z-index:2;display:none}
+#walker{z-index:1}
 .header{position:fixed;top:max(18px,env(safe-area-inset-top));left:20px;right:20px;
  display:flex;align-items:start;justify-content:space-between;z-index:3;
  pointer-events:none;opacity:.8;text-shadow:0 1px 8px #000}
@@ -152,8 +152,8 @@ const encounterGrammar = (() => {
       behaviorName: ACTIONS[action], behavior: action,
       genes, palette,
       side: r(19) < 0.5 ? -1 : 1,
-      altitude: 0.28 + r(20) * 0.39,
-      distance: 0.30 + r(21) * 0.045,
+      altitude: 0.38 + r(20) * 0.31,
+      distance: 0.23 + r(21) * 0.085,
       size: 0.80 + 0.32 * r(22),
       arrival: r(23) < .5 ? 0 : 1
     };
