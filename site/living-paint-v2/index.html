@@ -153,7 +153,7 @@ const encounterGrammar = (() => {
       genes, palette,
       side: r(19) < 0.5 ? -1 : 1,
       altitude: 0.28 + r(20) * 0.39,
-      distance: 0.16 + r(21) * 0.11,
+      distance: 0.30 + r(21) * 0.045,
       size: 0.80 + 0.32 * r(22),
       arrival: r(23) < .5 ? 0 : 1
     };
@@ -238,7 +238,8 @@ const livingPaint = (() => {
     float w=uBody.y, h=uBody.z;
     float mode=uBody.x;
     float time=uMotion.z, phase=uMotion.y;
-    float pulse = 1.0 + .038*sin(time*2.15+phase);
+    float expressivePulse=(uMotion.x>.5&&uMotion.x<1.5)?.14*sin(time*3.8+phase):0.;
+    float pulse=1.0+.038*sin(time*2.15+phase)+expressivePulse;
     vec2 q=p/vec2(w,h*pulse);
     if(mode<.5) {
       // A jelly-like domed creature with an open, rippling underside.
@@ -363,14 +364,16 @@ const livingPaint = (() => {
     // Hand-drawn irregularity updates at 12 Hz; movement is smooth.
     float boil=hash12(vec2(floor(uAux.w),uAux.z*137.))-0.5;
     vec2 q=p+vec2(boil*.007,boil*.004);
-    float core=bodyDistance(q), limbs=appendageDistance(q,t);
+    float contourFlow=(noise(q*vec2(13.,17.)+vec2(t*.31,-t*.19))-.5)*.016;
+    float core=bodyDistance(q)+contourFlow;
+    float limbs=appendageDistance(q,t)+contourFlow*.18;
     float body=1.0-smoothstep(-.020,.018,core);
     float membrane=1.0-smoothstep(-.018,.025,limbs);
     float coreRim=exp(-abs(core)*36.0);
     float appendRim=exp(-abs(limbs)*43.0);
     float softGlow=exp(-abs(core)*9.0)*.30 + exp(-abs(limbs)*8.0)*.23;
     float coverage=max(body,membrane);
-    float alpha=clamp(coverage*.74+coreRim*.20+appendRim*.30+softGlow*.35,0.,.95);
+    float alpha=clamp(coverage*.87+coreRim*.34+appendRim*.50+softGlow*.45,0.,.99);
     alpha*=uMotion.w;
     if(alpha<.002)discard;
     // Dynamic domain-warped fBm pigment: color streams inside stable anatomy.
@@ -383,18 +386,23 @@ const livingPaint = (() => {
     float pigment=clamp(n*.52+m*.48,0.,1.);
     vec3 paint=mix(uColor0,uColor1,smoothstep(.20,.71,pigment));
     paint=mix(paint,uColor2,smoothstep(.48,.91,pigment+m*.17)*.65);
-    float filaments=pow(max(0.,sin(p.y*29.*uMarks.w+p.x*18.+flow.x*9.-t*2.1)),15.);
+    float filaments=pow(max(0.,sin((p.y+flow.x*.33)*34.*uMarks.w+
+                  (p.x-flow.y*.27)*22.-t*2.3)),19.);
+    float electricA=pow(max(0.,sin(warped.x*23.+warped.y*9.-t*1.5)),22.);
+    float electricB=pow(max(0.,cos(warped.y*27.-warped.x*13.+t*1.9)),23.);
     float tinyVeins=pow(max(0.,sin(atan(p.y,p.x)*uMarks.y+
                                    length(p)*31.-t*.7+flow.y*4.)),19.);
-    float inner=(filaments*.22+tinyVeins*.16)*body;
+    float inner=(filaments*.72+tinyVeins*.32)*body;
     vec3 glowColor=mix(uColor0,uColor2,.55+.4*sin(t*.45+uMotion.y));
-    vec3 result=paint*(.40+.65*n)*(body*.9+membrane*.6);
-    result+=glowColor*(coreRim*.70+appendRim*.65)*uAux.y;
-    result+=mix(uColor1,uColor2,.52)*(softGlow*.52)*uAux.y;
-    result+=vec3(1.,.91,1.)*inner*.27;
+    vec3 result=paint*(.70+.85*n)*(body*.95+membrane*.62);
+    result+=glowColor*(coreRim*1.0+appendRim*.98)*uAux.y;
+    result+=mix(uColor1,uColor2,.52)*(softGlow*.92)*uAux.y;
+    // Three independent pigment filaments swirl across the interior.
+    result+=body*(uColor0*electricA+uColor1*electricB+uColor2*filaments)*1.28;
+    result+=vec3(1.,.91,1.)*inner*.35;
     float eyes=eyePattern(p)*body;
     result+=mix(uColor2,vec3(1.),.55)*eyes*.9;
-    result=1.0-exp(-result*1.6);
+    result=1.0-exp(-result*1.45);
     fragColor=vec4(result*alpha,alpha);
   }`;
 
@@ -458,10 +466,32 @@ const livingPaint = (() => {
       const entrance=smooth(elapsed/.85);
       const departure=smooth((elapsed-spec.duration+1.03)/1.03);
       const exitX=(left?-.25:1.25)*width;
-      const x=(startX*(1-entrance)+restX*entrance)*(1-departure)+exitX*departure;
-      const y=height*spec.altitude+
-              Math.sin(elapsed*1.25+spec.genes.animationPhase)*6;
-      const scale=Math.min(width*.30,height*.18,163)*spec.size;
+      let x=(startX*(1-entrance)+restX*entrance)*(1-departure)+exitX*departure;
+      let y=height*spec.altitude+
+            Math.sin(elapsed*1.25+spec.genes.animationPhase)*6;
+      let scale=Math.min(width*.285,height*.175,158)*spec.size;
+      // Distinct gestures use a common skeletal grammar and remain one event.
+      const phrase=smooth((elapsed-.8)/1.3)*smooth((spec.duration-elapsed-.95)/1.1);
+      switch(spec.behavior){
+        case 0: // hover
+          y+=Math.sin(elapsed*2.3+spec.genes.animationPhase)*9;
+          break;
+        case 1: // rhythmic breathing
+          scale*=1+.085*Math.sin(elapsed*3.6+spec.genes.animationPhase);
+          break;
+        case 2: // look toward the walker
+          x+=spec.side*14*phrase;
+          break;
+        case 3: // unfurl from a smaller form
+          scale*=.76+.29*smooth(elapsed/2.2);
+          break;
+        case 4: // retreat from the model
+          x-=spec.side*20*phrase;
+          break;
+        case 5: // imitate the cadence of her steps
+          y+=Math.sin(elapsed*Math.PI*2*24/33)*11*phrase;
+          break;
+      }
       return {x,y,scale};
     }
     function fallbackDraw(state,time){
