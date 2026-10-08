@@ -100,8 +100,8 @@ const encounterGrammar = (() => {
       behaviorName: ACTIONS[action], behavior: action,
       genes, palette,
       side: r(19) < 0.5 ? -1 : 1,
-      altitude: 0.28 + r(20) * 0.39,
-      distance: 0.30 + r(21) * 0.045,
+      altitude: 0.38 + r(20) * 0.31,
+      distance: 0.23 + r(21) * 0.085,
       size: 0.80 + 0.32 * r(22),
       arrival: r(23) < .5 ? 0 : 1
     };
