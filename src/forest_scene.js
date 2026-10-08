@@ -263,7 +263,17 @@ function drawNightSky(){
   maria.forEach(m => {
     ellipse(moonX+m.ox*moonR, moonY+m.oy*moonR, m.rx*moonR, m.ry*moonR, `rgba(130,126,120,${m.a})`);
   });
-  // Two faint craters, seeded so the moon keeps its identity across frames.
+  // Small craters: sparse, seeded, and varied in size to add surface detail.
+  for(let k=0; k<12; k++){
+    const id=771+k*131;
+    const cx=moonX+nrand(id)*moonR*.8;
+    const cy=moonY+nrand(id+1)*moonR*.8;
+    if(Math.hypot(cx-moonX, cy-moonY) < moonR*.9){
+      const cr=moonR*(.03+rand(id+2)*.07);
+      ellipse(cx, cy, cr, cr*.8, `rgba(190,186,180,${.05+rand(id+3)*.08})`);
+    }
+  }
+  // Two prominent craters, seeded so the moon keeps its identity across frames.
   ellipse(moonX-moonR*.34,moonY+moonR*.18,moonR*.16,moonR*.13,'rgba(190,186,180,0.10)');
   ellipse(moonX+moonR*.12,moonY+moonR*.42,moonR*.10,moonR*.08,'rgba(190,186,180,0.08)');
   // A thin cloud band crossing the moon, drifting a touch faster than the stars.
