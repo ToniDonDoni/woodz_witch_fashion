@@ -188,8 +188,8 @@ const livingPaint = (() => {
     float boil=hash12(vec2(floor(uAux.w),uAux.z*137.))-0.5;
     vec2 q=p+vec2(boil*.007,boil*.004);
     float core=bodyDistance(q), limbs=appendageDistance(q,t);
-    float body=smoothstep(.018,-.020,core);
-    float membrane=smoothstep(.025,-.018,limbs);
+    float body=1.0-smoothstep(-.020,.018,core);
+    float membrane=1.0-smoothstep(-.018,.025,limbs);
     float coreRim=exp(-abs(core)*36.0);
     float appendRim=exp(-abs(limbs)*43.0);
     float softGlow=exp(-abs(core)*9.0)*.30 + exp(-abs(limbs)*8.0)*.23;
@@ -275,16 +275,16 @@ const livingPaint = (() => {
       if(!failed)gl.viewport(0,0,ww,hh);
       fallbackCtx.setTransform(dpr,0,0,dpr,0,0);
     }
-    function layout(spec,time){
+    function layout(spec,elapsed){
       const left=spec.side<0;
       const startX=(left?-.25:1.25)*width;
       const restX=width*(left?spec.distance:1-spec.distance);
-      const entrance=smooth((time-spec.start)/.85);
-      const departure=smooth((time-spec.start-spec.duration+1.03)/1.03);
+      const entrance=smooth(elapsed/.85);
+      const departure=smooth((elapsed-spec.duration+1.03)/1.03);
       const exitX=(left?-.25:1.25)*width;
       const x=(startX*(1-entrance)+restX*entrance)*(1-departure)+exitX*departure;
       const y=height*spec.altitude+
-              Math.sin((time-spec.start)*1.25+spec.genes.animationPhase)*6;
+              Math.sin(elapsed*1.25+spec.genes.animationPhase)*6;
       const scale=Math.min(width*.30,height*.18,163)*spec.size;
       return {x,y,scale};
     }
@@ -294,7 +294,7 @@ const livingPaint = (() => {
       if(!state.active)return;
       const s=state.spec,elapsed=state.elapsed;
       const env=smooth(elapsed/.7)*smooth((s.duration-elapsed)/.85);
-      const v=layout(s,time),g=s.genes;
+      const v=layout(s,elapsed),g=s.genes;
       ctx.save();ctx.globalAlpha=env;ctx.translate(v.x,v.y);
       ctx.scale(v.scale,v.scale);ctx.lineCap='round';
       const color=s.palette[0].map(x=>Math.round(x*255));
@@ -315,7 +315,7 @@ const livingPaint = (() => {
       if(failed){fallbackDraw(state,time);return;}
       gl.clear(gl.COLOR_BUFFER_BIT);
       if(!state.active)return;
-      const s=state.spec,g=s.genes,v=layout(s,time),life=state.elapsed;
+      const s=state.spec,g=s.genes,v=layout(s,state.elapsed),life=state.elapsed;
       const alpha=smooth(life/.7)*smooth((s.duration-life)/.85);
       const px=v.x*dpr,py=(height-v.y)*dpr,scale=v.scale*dpr;
       const marginX=2.55*scale,marginY=2.65*scale;
