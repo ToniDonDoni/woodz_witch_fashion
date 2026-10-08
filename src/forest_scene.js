@@ -229,7 +229,7 @@ function drawNightSky(){
   sky.addColorStop(0,'#070711');sky.addColorStop(.55,'#0a0a16');sky.addColorStop(1,'#0d0d19');
   ctx.fillStyle=sky;ctx.fillRect(0,0,w,horizon);
   // Stars: sparse, dim, seeded per world index, twinkling on the boil clock.
-  const spacing=97*forestUnit(),speed=6*forestUnit(),offset=time*speed;
+  const spacing=67*forestUnit(),speed=6*forestUnit(),offset=time*speed;
   const start=Math.floor((-offset-40)/spacing),end=Math.ceil((w-offset+40)/spacing);
   for(let i=start;i<=end;i++){
     const id=i*613+40009;
@@ -239,6 +239,14 @@ function drawNightSky(){
     const size=.5+rand(id+5)*.9;
     ellipse(x,y,size,size*.8,`rgba(214,206,228,${twinkle})`);
     if(rand(id+6)>.86)ellipse(x+size*1.6,y+size*.5,size*.4,size*.35,`rgba(214,206,228,${twinkle*.5})`);
+  }
+  // Additional distant star-field for depth
+  for(let j=0; j<40; j++){
+    const jid=j*997+12345;
+    const jx=rand(jid)*w;
+    const jy=rand(jid+1)*horizon;
+    const jTwinkle=.05+.08*(.5+.5*Math.sin(time*(.5+rand(jid+2))+rand(jid+3)*TAU));
+    ellipse(jx, jy, .4, .4, `rgba(214,206,228,${jTwinkle})`);
   }
   // The moon: a pale disc sunk into the dark, haloed, and only slightly brighter
   // than the sky. It hangs high left and drifts slower than any forest layer.
