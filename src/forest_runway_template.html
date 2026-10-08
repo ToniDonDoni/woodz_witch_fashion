@@ -112,6 +112,7 @@ function draw(){
  boil=Math.floor(time*12);ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#050507';ctx.fillRect(0,0,w,h);ctx.lineJoin='round';ctx.lineCap='round';
  // A faint light pool separates the dark clothes from the black stage.
  const glow=ctx.createRadialGradient(w*.5,h*.50,0,w*.5,h*.50,h*.48);glow.addColorStop(0,'#1a1422');glow.addColorStop(.55,'#0c0a10');glow.addColorStop(1,'#050507');ctx.fillStyle=glow;ctx.fillRect(0,0,w,h);
+ drawNightSky();
  const woodland=drawForestBackground();drawDust();const butterflies=drawButterflies(),path=drawPath();const forest=drawForestGround(woodland);
  const figureHeight=Math.min(h*.68,w*1.42),figureWidth=figureHeight*FW/FH;
  const x=(w-figureWidth)/2,y=h*.858-figureHeight;

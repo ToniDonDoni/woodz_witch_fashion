@@ -220,6 +220,53 @@ function renderForestRow(layer,objects,used){
     objects.push({id:layer+':'+i,kind,x,y,size,layer});
   }
 }
+// A hushed night sky: a deep indigo wash, faint stars, and a barely-there moon.
+// Stars drift with the slowest parallax so the sky participates in the world's
+// travel without competing with the walker or the forest.
+function drawNightSky(){
+  const horizon=h*.785;
+  const sky=ctx.createLinearGradient(0,0,0,horizon);
+  sky.addColorStop(0,'#070711');sky.addColorStop(.55,'#0a0a16');sky.addColorStop(1,'#0d0d19');
+  ctx.fillStyle=sky;ctx.fillRect(0,0,w,horizon);
+  // Stars: sparse, dim, seeded per world index, twinkling on the boil clock.
+  const spacing=97*forestUnit(),speed=6*forestUnit(),offset=time*speed;
+  const start=Math.floor((-offset-40)/spacing),end=Math.ceil((w-offset+40)/spacing);
+  for(let i=start;i<=end;i++){
+    const id=i*613+40009;
+    const x=i*spacing+offset+nrand(id+1)*spacing*.4;
+    const y=horizon*(.06+rand(id+2)*.62);
+    const twinkle=.10+.13*(.5+.5*Math.sin(time*(.7+rand(id+3))+rand(id+4)*TAU));
+    const size=.5+rand(id+5)*.9;
+    ellipse(x,y,size,size*.8,`rgba(214,206,228,${twinkle})`);
+    if(rand(id+6)>.86)ellipse(x+size*1.6,y+size*.5,size*.4,size*.35,`rgba(214,206,228,${twinkle*.5})`);
+  }
+  // The moon: a pale disc sunk into the dark, haloed, and only slightly brighter
+  // than the sky. It hangs high left and drifts slower than any forest layer.
+  const moonR=Math.min(w,h)*.052;
+  const moonX=w*.24-time*1.1*forestUnit();
+  const moonY=horizon*.26;
+  const halo=ctx.createRadialGradient(moonX,moonY,moonR*.4,moonX,moonY,moonR*4.6);
+  halo.addColorStop(0,'rgba(226,222,214,0.10)');halo.addColorStop(.5,'rgba(226,222,214,0.035)');halo.addColorStop(1,'rgba(226,222,214,0)');
+  ctx.fillStyle=halo;ctx.fillRect(moonX-moonR*4.6,moonY-moonR*4.6,moonR*9.2,moonR*9.2);
+  ellipse(moonX,moonY,moonR,moonR,'rgba(228,224,216,0.16)');
+  // A soft terminator shadow gives the disc a waning read without a hard edge.
+  const shade=ctx.createRadialGradient(moonX+moonR*.42,moonY-moonR*.28,moonR*.2,moonX,moonY,moonR);
+  shade.addColorStop(0,'rgba(7,7,17,0.55)');shade.addColorStop(.75,'rgba(7,7,17,0.12)');shade.addColorStop(1,'rgba(7,7,17,0)');
+  ctx.fillStyle=shade;ctx.beginPath();ctx.arc(moonX,moonY,moonR,0,TAU);ctx.fill();
+  // Two faint craters, seeded so the moon keeps its identity across frames.
+  ellipse(moonX-moonR*.34,moonY+moonR*.18,moonR*.16,moonR*.13,'rgba(190,186,180,0.10)');
+  ellipse(moonX+moonR*.12,moonY+moonR*.42,moonR*.10,moonR*.08,'rgba(190,186,180,0.08)');
+  // A thin cloud band crossing the moon, drifting a touch faster than the stars.
+  const cloudY=moonY+moonR*.9;
+  for(let k=0;k<3;k++){
+    const id=907+k*331;
+    const cx=w*(.06+k*.34)-time*(2.4+k*.5)*forestUnit();
+    const cw=moonR*(2.6+k*.9),ch=moonR*(.16+k*.05);
+    ctx.save();ctx.translate(((cx% (w+cw*2))+w+cw*2)%(w+cw*2)-cw,cloudY+k*moonR*.5);
+    ctx.fillStyle=`rgba(16,16,28,${.16+k*.05})`;
+    ctx.beginPath();ctx.ellipse(0,0,cw,ch,0,0,TAU);ctx.fill();ctx.restore();
+  }
+}
 function drawForestBackground(){
   const objects=[],used=new Set();
   renderForestRow(0,objects,used);renderForestRow(1,objects,used);
