@@ -12,7 +12,7 @@
 </head>
 <body>
 <canvas id="scene" aria-label="A woman walking on an infinite illustrated forest runway while the woodland stages a new enchanted act around her"></canvas>
-<header class="masthead"><div class="brand">WOODZ</div><div class="edition">INFINITE RUNWAY<br>STUDY 03 / LIVING ACTS</div></header>
+<header class="masthead"><div class="brand">WOODZ</div><div class="edition">INFINITE RUNWAY<br>STUDY 05 / SCENES IN THE WOOD</div></header>
 <div class="caption"><h1>Into the woods.</h1><p>An endless woodland procession</p></div>
 <div id="loading" role="status">Entering the night…</div>
 <div id="actcard" role="status" aria-live="polite"></div>
@@ -436,11 +436,14 @@ function pruneForestCache(used){
 
 // ── The act director ─────────────────────────────────────────────────────────
 // The runway is staged as a sequence of seeded acts. Every act announces itself
-// with a title card, changes the weather of the whole woodland, and sends one
-// signature set piece across the stage. Rare cameos (a star fall, an owl passing
-// overhead) are never announced. Act order, weather, colour mood, species layout
-// and every set piece derive from the world seed, so New Dream reshuffles the
-// entire programme and no two dreams run the same show twice.
+// with a title card that stays up for the whole act, changes the weather of the
+// whole woodland, and is built from three overlapping beats, so the stage is
+// alive for almost the entire act instead of for one fly-past. Every beat has an
+// explicit screen trajectory: it can enter from either side, arrive and hold
+// beside her, rise out of the ground, or swoop overhead. Rare cameos (a star
+// fall, an owl passing overhead) are never announced. Act order, beat cast,
+// entry modes, weather, colour mood, species layout and every piece derive from
+// the world seed, so New Dream reshuffles the entire programme.
 const dreamMoods = [
   {name: 'EMERALD HUSH', tint: '#1d5c46', alpha: .30},
   {name: 'VIOLET VEIL', tint: '#4a2470', alpha: .30},
@@ -507,16 +510,79 @@ function themeIndexFor(index) {
   themeMemo.set(index, chosen);
   return chosen;
 }
+// ── The cast of one act ──────────────────────────────────────────────────────
+// Three overlapping windows tile an act, and every window carries one piece, so
+// the stage is busy for the whole act. Only one window holds the headline set
+// piece; the others hold quieter support pieces that never repeat it or each
+// other. Which window holds the headline, which pieces appear and how they
+// arrive all come from the seed.
+const supportPool = ['moths', 'wisps', 'fairring', 'bloom', 'choir', 'lanterns', 'stag'];
+const headlineEntries = ['left', 'right', 'hold'];
+const supportEntries = ['left', 'right', 'hold', 'rise'];
+function actBeats(id, length, signature) {
+  const slots = [[.03, .40], [.34, .38], [.66, .36]], beats = [], used = new Set([signature]);
+  const headline = Math.floor(rand(id + 61) * slots.length);
+  for (let slot = 0; slot < slots.length; slot++) {
+    const [start, visible] = slots[slot], isHeadline = slot === headline;
+    let type = signature;
+    if (!isHeadline) {
+      const pool = supportPool.filter(item => !used.has(item));
+      type = pool[Math.floor(rand(id + 101 + slot * 37) * pool.length)];
+      used.add(type);
+    }
+    const grounded = type === 'bloom' || type === 'fairring' || type === 'wisps';
+    const entry = isHeadline
+      ? headlineEntries[Math.floor(rand(id + 71 + slot * 13) * headlineEntries.length)]
+      : (grounded && rand(id + 113 + slot * 29) < .6
+        ? 'rise'
+        : supportEntries[Math.floor(rand(id + 127 + slot * 31) * supportEntries.length)]);
+    beats.push({
+      type, kind: isHeadline ? 'signature' : 'support', slot, entry,
+      id: id * 5 + slot * 977 + 11,
+      start: length * start, visible: length * visible,
+      size: isHeadline ? 1 : .62 + rand(id + 151 + slot * 41) * .2,
+      drift: entry === 'rise' ? 9 + rand(id + 179 + slot * 43) * 7 : 0,
+      at: .30 + rand(id + 163 + slot * 47) * .30
+    });
+  }
+  // Unannounced extras: a star fall only reaches the sky layer, the owl sweeps
+  // overhead. They are never part of the guaranteed coverage.
+  if (rand(id + 9) < .45) beats.push({type: 'starfall', kind: 'cameo', slot: 3, entry: 'sky', id: id * 5 + 4001,
+    start: length * (.30 + rand(id + 10) * .40), visible: Math.min(9, length * .18), size: 1, drift: 0, at: .5});
+  if (rand(id + 11) < .22) beats.push({type: 'owl', kind: 'rare', slot: 4, entry: 'swoop', id: id * 5 + 7001,
+    start: length * (.05 + rand(id + 12) * .35), visible: length * .30, size: 1, drift: 0, at: .5});
+  return beats;
+}
+// Where a beat is on screen at a given age, as fractions of the viewport. The
+// trajectories are deliberately different from each other so the show does not
+// read as one conveyor belt: from the left, from the right (mirrored), arriving
+// and holding beside her, rising out of the ground and drifting, or swooping.
+function beatTransform(beat, age) {
+  const p = Math.max(0, Math.min(1, beat.visible > 0 ? age / beat.visible : 1));
+  const base = eventStagers[beat.type].baseline();
+  if (beat.entry === 'sky') return {x: w * .5, y: h * .25, scale: beat.size, flip: false};
+  if (beat.entry === 'left') return {x: -.35 * w + p * 1.7 * w, y: base, scale: beat.size, flip: false};
+  if (beat.entry === 'right') return {x: 1.35 * w - p * 1.7 * w, y: base, scale: beat.size, flip: true};
+  if (beat.entry === 'hold') {
+    const arrive = Math.min(1, p / .24), leave = p > .78 ? (p - .78) / .22 : 0;
+    return {x: beat.at * w - (1 - arrive) * .62 * w + leave * 1.1 * w, y: base, scale: beat.size, flip: false};
+  }
+  if (beat.entry === 'rise') {
+    const grow = Math.min(1, p / .22), shrink = p > .86 ? Math.max(0, (1 - p) / .14) : 1;
+    return {x: beat.at * w + beat.drift * age, y: base, scale: beat.size * grow * shrink, flip: false};
+  }
+  return {x: -.3 * w + p * 1.6 * w, y: base + Math.sin(p * Math.PI) * h * .12, scale: beat.size, flip: false};
+}
 function actPlan(index) {
   const length = actLength(index), start = actStartFor(index), cached = actCache.get(index);
   if (cached && cached.length === length) return cached;
   const id = index * 104729 + seed * 7919 + 31337, themeIndex = themeIndexFor(index), theme = actThemes[themeIndex];
+  const beats = actBeats(id, length, theme.event);
   const plan = {
     index, length, start, progress: 0, themeIndex, name: theme.name,
-    ambient: theme.ambient, event: theme.event, eventId: id * 3 + 7,
-    eventStart: length * (.20 + rand(id + 5) * .30), eventDur: length * .92,
-    cameo: rand(id + 9) < .45 ? 'starfall' : null, cameoStart: length * (.62 + rand(id + 10) * .26),
-    rare: rand(id + 11) < .22 ? 'owl' : null, rareStart: length * (.08 + rand(id + 12) * .22)
+    ambient: theme.ambient, event: theme.event, beats,
+    cameo: beats.some(beat => beat.kind === 'cameo') ? 'starfall' : null,
+    rare: beats.some(beat => beat.kind === 'rare') ? 'owl' : null
   };
   actCache.set(index, plan);
   return plan;
@@ -561,7 +627,8 @@ function actProgramme(count) {
   const list = [];
   for (let index = 0; index < count; index++) {
     const plan = actPlan(index);
-    list.push({index, name: plan.name, event: plan.event, ambient: plan.ambient, cameo: plan.cameo, rare: plan.rare, length: plan.length, start: plan.start});
+    list.push({index, name: plan.name, event: plan.event, ambient: plan.ambient, cameo: plan.cameo, rare: plan.rare, length: plan.length, start: plan.start,
+      beats: plan.beats.map(beat => ({type: beat.type, kind: beat.kind, entry: beat.entry, start: Number(beat.start.toFixed(2)), visible: Number(beat.visible.toFixed(2)), size: Number(beat.size.toFixed(2))}))});
   }
   return list;
 }
@@ -854,30 +921,24 @@ const eventStagers = {
   bloom: {layer: 'front', speed: 134, size: .62, baseline: () => h * .99, draw: drawBloomEvent},
   starfall: {layer: 'sky', speed: 0, size: 1.0, baseline: () => 0, draw: drawStarfallEvent}
 };
-function scheduledEvents(plan) {
-  return [
-    {type: plan.event, id: plan.eventId, start: plan.eventStart, dur: plan.eventDur, kind: 'signature'},
-    plan.cameo ? {type: plan.cameo, id: plan.eventId + 9001, start: plan.cameoStart, dur: 6, kind: 'cameo'} : null,
-    plan.rare ? {type: plan.rare, id: plan.eventId + 13007, start: plan.rareStart, dur: 16, kind: 'rare'} : null
-  ].filter(Boolean);
-}
 function stageEvents(plan, layer) {
-  const unit = forestUnit(), staged = [];
-  // The previous act's pieces keep travelling until they leave the stage, so a set
-  // piece is never cut off mid-crossing by an act boundary.
+  const staged = [];
+  // The previous act's beats keep playing until their trajectory is done, so a
+  // set piece is never cut off mid-crossing by an act boundary.
   const sources = plan.index > 0 ? [plan, actPlan(plan.index - 1)] : [plan];
-  for (const source of sources) for (const item of scheduledEvents(source)) {
-    const stager = eventStagers[item.type];
+  for (const source of sources) for (const beat of source.beats) {
+    const stager = eventStagers[beat.type];
     if (!stager || stager.layer !== layer) continue;
-    const age = time - source.start - item.start;
-    if (age < 0 || age > item.dur) continue;
-    const x = age * stager.speed * unit - 360 * unit;
-    if (layer === 'sky' ? false : (x < -640 * unit || x > w + 640 * unit)) continue;
-    stager.draw(item.id, positiveMod(boil, 3), x, stager.baseline(), stager.size, time, age);
-    // Sky cameos are painted in screen space, so they report the sky centre as their
-    // position instead of the world x that would sit off the left edge.
-    staged.push({id: item.type + ':' + source.index + ':' + item.id, type: item.type, layer, kind: item.kind,
-      x: layer === 'sky' ? w * .5 : x, y: layer === 'sky' ? h * .25 : stager.baseline(), age, size: stager.size});
+    const age = time - source.start - beat.start;
+    if (age < 0 || age > beat.visible) continue;
+    const {x, y, scale, flip} = beatTransform(beat, age);
+    if (layer !== 'sky' && (x < -640 || x > w + 640)) continue;
+    // A mirrored entry paints the piece facing the way it travels.
+    if (flip) { ctx.save(); ctx.translate(x * 2, 0); ctx.scale(-1, 1); }
+    stager.draw(beat.id, positiveMod(boil, 3), x, y, scale, time, age);
+    if (flip) ctx.restore();
+    staged.push({id: beat.type + ':' + source.index + ':' + beat.id, type: beat.type, layer, kind: beat.kind,
+      entry: beat.entry, x, y, age, size: scale});
   }
   return staged;
 }
@@ -961,11 +1022,14 @@ function drawDust(){
  }
 }
 // The act title card is a pure function of simulation time: seeks replay it exactly.
+// It stays up for the whole act, dimmed after the opening seconds, so an act is
+// never announced and then dropped.
 function updateActCard(plan){
  const age=time-plan.start,label=actLabel(plan);
  if(actCardText!==label){actCardText=label;actCard.textContent=label;}
- const fadeIn=Math.min(1,age*2.2),fadeOut=age>3.6?Math.max(0,(4.4-age)/.8):1;
- actCard.style.opacity=String(fadeIn*fadeOut);
+ const fadeIn=Math.min(1,age*1.4),dim=age>5?.55:1;
+ const fadeOut=age>plan.length-1.5?Math.max(0,(plan.length-age)/1.5):1;
+ actCard.style.opacity=String(fadeIn*dim*fadeOut);
 }
 function draw(){
  boil=Math.floor(time*12);ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#050507';ctx.fillRect(0,0,w,h);ctx.lineJoin='round';ctx.lineCap='round';
@@ -997,8 +1061,9 @@ function draw(){
  const events=[...skyEvents,...farEvents,...nearEvents,...frontEvents];
  const rendered=forest.filter(o=>o.layer<4);
  debug={time,frame,boil,seed,viewport:{w,h},figure:{x,y,width:figureWidth,height:figureHeight},butterflies,path,forest:rendered,foreground,
-   events:events.map(e=>({id:e.id,type:e.type,layer:e.layer,kind:e.kind,x:e.x,y:e.y,age:e.age})),
-   act:{index:plan.index,name:plan.name,ambient:plan.ambient,event:plan.event,cameo:plan.cameo,rare:plan.rare,length:plan.length,progress:plan.progress,start:plan.start},
+   events:events.map(e=>({id:e.id,type:e.type,layer:e.layer,kind:e.kind,entry:e.entry,x:e.x,y:e.y,age:e.age})),
+   act:{index:plan.index,name:plan.name,ambient:plan.ambient,event:plan.event,cameo:plan.cameo,rare:plan.rare,length:plan.length,progress:plan.progress,start:plan.start,
+     beats:plan.beats.map(b=>({type:b.type,kind:b.kind,entry:b.entry,start:b.start,visible:b.visible,size:b.size}))},
    mood:dreamMood().name,foregroundEnabled,cacheSize:forestCache.size,activeCount:butterflies.length+path.length+rendered.length+foreground.length+events.length};
 }
 function tick(now){if(last!==null&&playing&&!document.hidden)time+=Math.min((now-last)/1000,.05)*pace;last=now;if(ready&&playing)draw();requestAnimationFrame(tick);}
