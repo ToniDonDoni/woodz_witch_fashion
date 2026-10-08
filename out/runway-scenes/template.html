@@ -150,7 +150,7 @@ function draw(){
  const events=[...skyEvents,...farEvents,...nearEvents,...frontEvents];
  const rendered=forest.filter(o=>o.layer<4);
  debug={time,frame,boil,seed,viewport:{w,h},figure:{x,y,width:figureWidth,height:figureHeight},butterflies,path,forest:rendered,foreground,
-   events:events.map(e=>({id:e.id,type:e.type,layer:e.layer,kind:e.kind,entry:e.entry,x:e.x,y:e.y,age:e.age})),
+   events:events.map(e=>({id:e.id,type:e.type,layer:e.layer,kind:e.kind,entry:e.entry,x:e.x,y:e.y,age:e.age,size:e.size})),
    act:{index:plan.index,name:plan.name,ambient:plan.ambient,event:plan.event,cameo:plan.cameo,rare:plan.rare,length:plan.length,progress:plan.progress,start:plan.start,
      beats:plan.beats.map(b=>({type:b.type,kind:b.kind,entry:b.entry,start:b.start,visible:b.visible,size:b.size}))},
    mood:dreamMood().name,foregroundEnabled,cacheSize:forestCache.size,activeCount:butterflies.length+path.length+rendered.length+foreground.length+events.length};

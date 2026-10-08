@@ -14,10 +14,10 @@
   ],
   "actStartsContiguous": true,
   "drawMilliseconds": {
-    "mean": 13.525,
-    "median": 12.9,
-    "p95": 16.3,
-    "worst": 52.2,
+    "mean": 12.908,
+    "median": 12.3,
+    "p95": 14.9,
+    "worst": 50.8,
     "samples": 120,
     "physicalPhoneTested": false
   },
@@ -41,11 +41,11 @@
   },
   "distinctSignatureEvents": 7,
   "firstSeenAgeSeconds": {
-    "stag": 6.5,
+    "stag": 6,
     "choir": 6.5,
-    "moths": 4,
-    "bloom": 7,
-    "lanterns": 6,
+    "moths": 3.5,
+    "bloom": 6.5,
+    "lanterns": 5.5,
     "fairring": 5,
     "wisps": 2
   },
@@ -74,64 +74,71 @@
     }
   },
   "beatsPerAct": 3,
-  "worstBeatCoverage": 0.99,
+  "worstBeatCoverage": 1,
   "entryModes": {
     "hold": 30,
     "rise": 40,
     "right": 25,
     "left": 25
   },
-  "stageOccupancy": [
+  "stageOccupancyVisible": [
     {
       "index": 0,
       "act": "SPORE FALL",
       "length": 52.3,
-      "samples": 53,
-      "busySeconds": 51,
-      "occupancy": 0.962
+      "samples": 105,
+      "visibleSeconds": 49.5,
+      "occupancy": 0.943,
+      "longestVisibleGapSeconds": 3
     },
     {
       "index": 1,
       "act": "THE STAR CHOIR",
       "length": 40.2,
-      "samples": 41,
-      "busySeconds": 41,
-      "occupancy": 1
+      "samples": 81,
+      "visibleSeconds": 39,
+      "occupancy": 0.963,
+      "longestVisibleGapSeconds": 1.5
     },
     {
       "index": 2,
       "act": "THE PETAL VEIL",
       "length": 51.9,
-      "samples": 52,
-      "busySeconds": 51,
-      "occupancy": 0.981
+      "samples": 104,
+      "visibleSeconds": 47.5,
+      "occupancy": 0.913,
+      "longestVisibleGapSeconds": 3
     },
     {
       "index": 3,
       "act": "HOUR OF THE STAG",
       "length": 32.1,
-      "samples": 33,
-      "busySeconds": 33,
-      "occupancy": 1
+      "samples": 65,
+      "visibleSeconds": 30,
+      "occupancy": 0.923,
+      "longestVisibleGapSeconds": 2
     },
     {
       "index": 4,
       "act": "LANTERN PROCESSION",
       "length": 43.5,
-      "samples": 44,
-      "busySeconds": 43,
-      "occupancy": 0.977
+      "samples": 87,
+      "visibleSeconds": 39,
+      "occupancy": 0.897,
+      "longestVisibleGapSeconds": 2.5
     },
     {
       "index": 5,
       "act": "THE STAR CHOIR",
       "length": 60.7,
-      "samples": 61,
-      "busySeconds": 60,
-      "occupancy": 0.984
+      "samples": 122,
+      "visibleSeconds": 57.5,
+      "occupancy": 0.943,
+      "longestVisibleGapSeconds": 3
     }
   ],
-  "meanStageOccupancy": 0.984,
+  "meanStageOccupancyVisible": 0.93,
+  "worstVisibleGapSeconds": 3,
   "actCardAtMidAct": {
     "text": "ACT VI · THE STAR CHOIR",
     "opacity": 0.55

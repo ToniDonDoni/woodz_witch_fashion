@@ -17,13 +17,17 @@ const PHONE = {width: 430, height: 932};
   const rows = [];
   for (let index = 0; index < 4; index++) {
     const plan = await page.evaluate(i => runway.plan(i), index);
-    let busy = 0, samples = 0;
-    for (let age = 0; age < plan.length; age += 1) {
+    let busy = 0, samples = 0, gap = 0, maxGap = 0;
+    for (let age = 0; age < plan.length; age += .5) {
       const state = await page.evaluate(t => runway.seek(t), plan.start + age);
       samples++;
-      if (state.events.some(e => e.kind === 'signature' || e.kind === 'support')) busy++;
+      const visible = state.events.some(e => (e.kind === 'signature' || e.kind === 'support')
+        && e.x > 0 && e.x < PHONE.width && e.size > .05);
+      if (visible) { busy++; maxGap = Math.max(maxGap, gap); gap = 0; } else gap += .5;
     }
-    rows.push({act: plan.name, length: Number(plan.length.toFixed(1)), samples, busySeconds: busy, occupancy: Number((busy / samples).toFixed(3)),
+    maxGap = Math.max(maxGap, gap);
+    rows.push({act: plan.name, length: Number(plan.length.toFixed(1)), samples,
+      visibleSeconds: Number((busy / 2).toFixed(1)), occupancy: Number((busy / samples).toFixed(3)), longestVisibleGapSeconds: maxGap,
       cast: plan.beats.map(beat => `${beat.kind}:${beat.type}@${beat.entry}`)});
   }
   const card = await page.evaluate(() => {

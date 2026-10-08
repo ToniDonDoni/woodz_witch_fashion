@@ -210,23 +210,31 @@ const canvasSignature = page => page.evaluate(() => {
   }
   await page.setViewportSize(PHONE);
   await page.waitForTimeout(200);
-  // 11 — the stage is busy. This is the property the one-fly-past-per-act version
-  // failed: measured over six acts, something has to be happening on the stage for
-  // most of every act, not for a quarter of it.
+  // 11 — the stage is busy, measured on what is actually on screen: a beat counts
+  // only while its piece is inside the viewport, never while its anchor is still
+  // travelling through the off-screen margin. (An earlier version of this check
+  // counted off-screen anchors and overstated the occupancy.)
   const occupancy = [];
+  let worstVisibleGap = 0;
   for (let index = 0; index < 6; index++) {
     const plan = await page.evaluate(i => runway.plan(i), index);
-    let busy = 0, samples = 0;
-    for (let age = 0; age < plan.length; age += 1) {
+    let busy = 0, samples = 0, gap = 0, maxGap = 0;
+    for (let age = 0; age < plan.length; age += .5) {
       const state = await page.evaluate(t => runway.seek(t), plan.start + age);
       samples++;
-      if (state.events.some(e => e.kind === 'signature' || e.kind === 'support')) busy++;
+      const visible = state.events.some(e => (e.kind === 'signature' || e.kind === 'support')
+        && e.x > 0 && e.x < PHONE.width && e.size > .05);
+      if (visible) { busy++; maxGap = Math.max(maxGap, gap); gap = 0; } else gap += .5;
     }
-    occupancy.push({index, act: plan.name, length: Number(plan.length.toFixed(1)), samples, busySeconds: busy, occupancy: Number((busy / samples).toFixed(3))});
+    maxGap = Math.max(maxGap, gap);
+    worstVisibleGap = Math.max(worstVisibleGap, maxGap);
+    occupancy.push({index, act: plan.name, length: Number(plan.length.toFixed(1)), samples,
+      visibleSeconds: Number((busy / 2).toFixed(1)), occupancy: Number((busy / samples).toFixed(3)), longestVisibleGapSeconds: maxGap});
   }
   const meanOccupancy = occupancy.reduce((sum, row) => sum + row.occupancy, 0) / occupancy.length;
-  for (const row of occupancy) assert(row.occupancy >= .45, `Act ${row.index} left the stage empty (${row.occupancy})`);
-  assert(meanOccupancy >= .6, `The stage was empty for most of the show (${meanOccupancy.toFixed(2)})`);
+  for (const row of occupancy) assert(row.occupancy >= .7, `Act ${row.index} was mostly empty on screen (${row.occupancy})`);
+  assert(meanOccupancy >= .8, `The stage was empty too often on screen (${meanOccupancy.toFixed(2)})`);
+  assert(worstVisibleGap <= 6, `The stage went blank for ${worstVisibleGap} seconds`);
   // 12 — the title card stays with its act instead of announcing it and vanishing.
   const midAct = await page.evaluate(() => {
     const plan = runway.act();
@@ -260,7 +268,7 @@ const canvasSignature = page => page.evaluate(() => {
     activeCountRange: [Math.min(...counts), Math.max(...counts)], simulatedSeconds: 600,
     foregroundOcclusionDelta: {...occlusion, atTime: overlayTime, legsBox, torsoBox},
     beatsPerAct: 3, worstBeatCoverage: Number(worstCoverage.toFixed(3)), entryModes: entryCounts,
-    stageOccupancy: occupancy, meanStageOccupancy: Number(meanOccupancy.toFixed(3)),
+    stageOccupancyVisible: occupancy, meanStageOccupancyVisible: Number(meanOccupancy.toFixed(3)), worstVisibleGapSeconds: worstVisibleGap,
     actCardAtMidAct: midAct,
     walkFramesDigest: digest(built), errors, networkRequests: requests, physicalPhoneTested: false
   };
