@@ -228,32 +228,32 @@ function drawNightSky(){
   const sky=ctx.createLinearGradient(0,0,0,horizon);
   sky.addColorStop(0,'#070711');sky.addColorStop(.55,'#0a0a16');sky.addColorStop(1,'#0d0d19');
   ctx.fillStyle=sky;ctx.fillRect(0,0,w,horizon);
-  // Stars: sparse, dim, seeded per world index, twinkling on the boil clock.
-  const spacing=44*forestUnit(),speed=6*forestUnit(),offset=time*speed;
+  // Stars: seeded per world index, twinkling on the boil clock, clearly visible.
+  const spacing=34*forestUnit(),speed=6*forestUnit(),offset=time*speed;
   const start=Math.floor((-offset-40)/spacing),end=Math.ceil((w-offset+40)/spacing);
   for(let i=start;i<=end;i++){
     const id=i*613+40009;
     const x=i*spacing+offset+nrand(id+1)*spacing*.4;
     const y=horizon*(.06+rand(id+2)*.62);
-    const twinkle=.10+.13*(.5+.5*Math.sin(time*(.7+rand(id+3))+rand(id+4)*TAU));
-    const size=.5+rand(id+5)*.9;
-    ellipse(x,y,size,size*.8,`rgba(214,206,228,${twinkle})`);
-    if(rand(id+6)>.86)ellipse(x+size*1.6,y+size*.5,size*.4,size*.35,`rgba(214,206,228,${twinkle*.5})`);
+    const twinkle=.45+.35*(.5+.5*Math.sin(time*(.7+rand(id+3))+rand(id+4)*TAU));
+    const size=.7+rand(id+5)*1.3;
+    ellipse(x,y,size,size*.8,`rgba(224,218,238,${twinkle})`);
+    if(rand(id+6)>.86)ellipse(x+size*1.6,y+size*.5,size*.4,size*.35,`rgba(224,218,238,${twinkle*.5})`);
   }
   // Additional distant star-fields for depth: two seeded layers of faint dust.
   for(let j=0; j<90; j++){
     const jid=j*997+12345;
     const jx=rand(jid)*w;
     const jy=rand(jid+1)*horizon;
-    const jTwinkle=.05+.08*(.5+.5*Math.sin(time*(.5+rand(jid+2))+rand(jid+3)*TAU));
-    ellipse(jx, jy, .4, .4, `rgba(214,206,228,${jTwinkle})`);
+    const jTwinkle=.18+.20*(.5+.5*Math.sin(time*(.5+rand(jid+2))+rand(jid+3)*TAU));
+    ellipse(jx, jy, .5, .5, `rgba(220,212,232,${jTwinkle})`);
   }
   for(let j=0; j<60; j++){
     const jid=j*613+77003;
     const jx=rand(jid)*w;
     const jy=horizon*(.03+rand(jid+1)*.7);
-    const jTwinkle=.04+.06*(.5+.5*Math.sin(time*(.4+rand(jid+2))+rand(jid+3)*TAU));
-    ellipse(jx, jy, .3, .3, `rgba(224,216,236,${jTwinkle})`);
+    const jTwinkle=.12+.16*(.5+.5*Math.sin(time*(.4+rand(jid+2))+rand(jid+3)*TAU));
+    ellipse(jx, jy, .4, .4, `rgba(228,222,240,${jTwinkle})`);
   }
   // The moon: a pale disc sunk into the dark, haloed, and only slightly brighter
   // than the sky. It hangs high left and drifts slower than any forest layer.
