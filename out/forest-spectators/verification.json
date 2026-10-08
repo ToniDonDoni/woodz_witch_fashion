@@ -1,0 +1,36 @@
+{
+  "browser": "154.0.8037.98",
+  "offline": true,
+  "realTimeAdvance": 7.999600000000041,
+  "simulatedSeconds": 120,
+  "activeCountRange": [
+    53,
+    60
+  ],
+  "errors": [],
+  "networkRequests": [],
+  "viewports": [
+    "430x932",
+    "320x568",
+    "844x390",
+    "1440x900"
+  ],
+  "forestCategories": [
+    "tree",
+    "fern",
+    "mushroom",
+    "stump",
+    "leshy"
+  ],
+  "spectatorStudies": [
+    "H1",
+    "W1",
+    "S1",
+    "M2",
+    "M1",
+    "A2",
+    "A1",
+    "O1"
+  ],
+  "physicalPhoneTested": false
+}

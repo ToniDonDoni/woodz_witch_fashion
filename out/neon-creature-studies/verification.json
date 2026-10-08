@@ -1,0 +1,14 @@
+{
+  "browser": "154.0.8037.98",
+  "offline": true,
+  "sketchCount": 8,
+  "deterministic": true,
+  "lineBoilHz": 12,
+  "viewports": [
+    "1420x1160",
+    "390x844"
+  ],
+  "errors": [],
+  "networkRequests": [],
+  "physicalPhoneTested": false
+}
