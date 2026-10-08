@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#050507">
+<title>Woodz — Into the Woods</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050507;color:#eee8df}body{font:12px Arial,sans-serif}canvas{display:block;width:100%;height:100%;touch-action:manipulation}.masthead{position:fixed;top:max(25px,env(safe-area-inset-top));left:28px;right:28px;display:flex;align-items:start;justify-content:space-between;pointer-events:none}.brand{font-size:19px;letter-spacing:.24em;font-weight:600}.edition{font-size:9px;letter-spacing:.19em;color:#a49ba9;line-height:1.7;text-align:right}.caption{position:fixed;left:28px;top:83px;pointer-events:none}.caption h1{font:italic 30px Georgia,serif;margin:0 0 7px}.caption p{font-size:9px;letter-spacing:.17em;text-transform:uppercase;color:#aaa0ad;margin:0}.controls{position:fixed;bottom:max(22px,env(safe-area-inset-bottom));left:25px;right:25px;display:flex;align-items:center;justify-content:space-between;gap:14px}button{color:#dcd2df;background:#131017cc;border:1px solid #d9bfe62a;border-radius:100px;min-height:44px;padding:0 17px;font:10px Arial,sans-serif;letter-spacing:.1em;cursor:pointer}button:hover{border-color:#b693c9}button:focus-visible,input:focus-visible{outline:2px solid #d2b2ec;outline-offset:5px}.tempo{display:flex;align-items:center;gap:9px;color:#9c92a4;font-size:9px;letter-spacing:.08em}.tempo input{width:75px;accent-color:#c3a2dc}.hint{position:fixed;bottom:87px;left:0;right:0;text-align:center;color:#665a70;font-size:8px;letter-spacing:.23em;pointer-events:none}#loading{position:fixed;top:50%;left:0;right:0;text-align:center;color:#cbb0e0;letter-spacing:.15em}@media(max-height:550px){.caption{top:65px}.caption h1{font-size:23px}.hint{display:none}.controls{bottom:12px}.masthead{top:18px}}
+@media(max-width:500px) and (max-height:700px){.caption{top:65px}.caption h1{font-size:23px}.caption p,.hint{display:none}.controls{left:16px;right:16px;gap:9px}button{padding:0 12px;white-space:nowrap;font-size:9px}.tempo{gap:6px}.tempo input{width:50px}}
+</style>
+</head>
+<body>
+<canvas id="scene" aria-label="A woman walking on an infinite illustrated forest runway among trees, mushrooms and woodland spirits"></canvas>
+<header class="masthead"><div class="brand">WOODZ</div><div class="edition">INFINITE RUNWAY<br>STUDY 02 / ENCHANTED FOREST</div></header>
+<div class="caption"><h1>Into the woods.</h1><p>An endless woodland procession</p></div>
+<div id="loading" role="status">Entering the night…</div>
+<div class="hint">EVERY PASS, A DIFFERENT DREAM</div>
+<div class="controls"><button id="play" aria-label="Pause animation">Ⅱ PAUSE</button><label class="tempo">PACE <input id="pace" aria-label="Walking pace" type="range" min="0.6" max="1.6" value="1" step="0.1"></label><button id="dream">NEW DREAM ↗</button></div>
+<script>
+'use strict';
+(() => {
+const canvas=document.querySelector('#scene'),ctx=canvas.getContext('2d',{alpha:false});
+const atlas=new Image();
+const TAU=Math.PI*2,FRAME_COUNT=33,FW=420,FH=790,COLS=6;
+const colors=[['#d8a6ff','#8052cc','#f4d2ff'],['#ffd88c','#de7d49','#fff0bd'],['#7de4d0','#328eab','#c1fff1'],['#ffa1c8','#a9437a','#ffd7de'],['#98bdff','#596ecc','#dbeaff']];
+let w=0,h=0,dpr=1,time=0,last=null,playing=true,pace=1,seed=12731,ready=false,boil=0;
+let debug={};
+function rand(n){let x=(n^seed)|0;x=Math.imul(x^(x>>>16),0x45d9f3b);x=Math.imul(x^(x>>>16),0x45d9f3b);return ((x^(x>>>16))>>>0)/4294967296;}
+function nrand(n){return rand(n)*2-1;}
+function jitter(id,k){return nrand(id*173+k*919+boil*107)*.68;}
+function resize(){w=innerWidth;h=innerHeight;dpr=Math.min(devicePixelRatio||1,1.75);canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);if(ready)draw();}
+function line(points,color,width=1,id=0){ctx.beginPath();points.forEach((p,i)=>{const x=p[0]+jitter(id,i*2),y=p[1]+jitter(id,i*2+1);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();}
+function ellipse(x,y,rx,ry,color){ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,TAU);ctx.fillStyle=color;ctx.fill();}
+__FOREST_CODE__
+function pathHeight(x){return h*.84+Math.sin(x/w*2.7+.5)*h*.012;}
+function drawPath(){
+ const top=h*.785,bottom=h*.936;
+ const wash=ctx.createLinearGradient(0,top,0,bottom);wash.addColorStop(0,'#0b0910');wash.addColorStop(.45,'#18121f');wash.addColorStop(1,'#050507');ctx.fillStyle=wash;ctx.fillRect(0,top,w,bottom-top);
+ // Parallel chalk tracks. World coordinates translate continuously to the right.
+ const unit=Math.min(h/850,1.2),speed=82*unit,spacing=66*unit,offset=time*speed;
+ const start=Math.floor((-offset-150)/spacing),end=Math.ceil((w-offset+150)/spacing);
+ const objects=[];
+ for(let i=start;i<=end;i++){
+   const id=i*23+8001,x=i*spacing+offset,yp=pathHeight(x);
+   objects.push({id:i,x});
+   for(let row=0;row<5;row++){
+     const a=rand(id+row*19),length=(30+a*45)*unit,xx=x+rand(id+row*71)*19*unit,y=yp+(row-1.8)*16*unit;
+     const tone=['#9774b65b','#c5a8cc65','#daa6b745','#839ac04f','#b995b841'][row];
+     line([[xx-length*.5,y+4],[xx,y+nrand(id+row)*2],[xx+length*.5,y-2]],tone,.8+row*.1,id+row);
+     if(row===1||row===3)line([[xx-length*.5,y+4],[xx-length*.5-8*unit,y+12*unit]],'#b699bd35',.8,id+row+40);
+   }
+   // Small plants along the moving edges, each derived from a stable world ID.
+   if(rand(id+77)>.28){
+     const y=yp+(rand(id+40)>.5?43:-39)*unit,stem=(10+rand(id+34)*16)*unit;
+     line([[x,y],[x+2,y-stem]],'#85928588',.8,id+100);
+     for(let k=0;k<3;k++){const py=y-stem*k/3;line([[x+1,py],[x-6*unit,py-6*unit],[x-2,py-3]],'#839d8b77',.7,id+k+101);}
+     if(rand(id+43)>.5){const c=colors[Math.floor(rand(id+91)*colors.length)][0];for(let p=0;p<5;p++){let a=p*TAU/5;ellipse(x+2+Math.cos(a)*3*unit,y-stem+Math.sin(a)*3*unit,2*unit,1.3*unit,c+'a0');}}
+   }
+ }
+ // The lane edges stay in place while their chalk dashes pass beneath her.
+ for(let edge of [-34,44]){const pts=[];for(let x=-10;x<w+20;x+=24)pts.push([x,pathHeight(x)+edge*unit]);line(pts,'#b894c33b',.7,edge+600);}
+ return objects;
+}
+function wing(side,type,palette,id,flap,size){
+ ctx.save();ctx.scale(side*flap,1);
+ const a=jitter(id,1)*.35,b=jitter(id,2)*.35;
+ // Upper and lower wings form a four-wing silhouette with species-specific tips.
+ ctx.beginPath();ctx.moveTo(0,0);ctx.bezierCurveTo(10,-22,25,-42-type*4,37+a,-30);ctx.bezierCurveTo(49,-16,23,2,3,5);ctx.bezierCurveTo(27,0,32,18,23,25+type*3);ctx.bezierCurveTo(8,37,1,15,0,0);ctx.closePath();
+ ctx.fillStyle=palette[1];ctx.fill();ctx.strokeStyle=palette[0];ctx.lineWidth=1;ctx.stroke();
+ ctx.beginPath();ctx.moveTo(3,-2);ctx.bezierCurveTo(10,-18,25,-32,32,-27);ctx.bezierCurveTo(35,-18,18,-6,3,-2);ctx.fillStyle=palette[0];ctx.fill();
+ ctx.beginPath();ctx.moveTo(3,6);ctx.bezierCurveTo(16,4,27,16,19,24);ctx.bezierCurveTo(11,30,6,18,3,6);ctx.fillStyle=palette[0];ctx.globalAlpha=.65;ctx.fill();ctx.globalAlpha=1;
+ for(let k=0;k<3;k++)line([[2,1],[12+k*4,-7-k*5],[29+k*2,-18-k*5]],palette[2]+'a0',.55,id+k+100);
+ line([[3,5],[11,13],[19+b,23]],palette[2]+'a0',.55,id+200);
+ if(type===1){ellipse(24,-20,5.4,6,'#12101ccc');ellipse(24,-20,2.5,3,palette[2]);ellipse(17,19,3.7,4,'#12101cbb');ellipse(17,19,1.5,1.7,palette[2]);}
+ else{for(let k=0;k<5;k++){const ang=-2+k*.27;ellipse(26+Math.cos(ang)*12,-12+Math.sin(ang)*15,1.1,1.7,palette[2]);}}
+ if(type===2)line([[23,22],[26,36],[19,29]],palette[0],1.2,id+300);
+ ctx.restore();
+}
+function butterfly(i,layer){
+ const id=i*113+layer*13999+9701,r=rand(id),scale=Math.min(w/470,h/800,1.3);
+ const spacing=(layer?330:430)*scale,speed=(layer?39:22)*scale;
+ const x=i*spacing+time*speed+(rand(id+1)-.5)*spacing*.4;
+ const y=h*(.23+rand(id+2)*.40)+Math.sin(time*(.43+rand(id+3)*.6)+r*TAU)*(12+18*r)*scale;
+ const size=(layer?.48:.27)*(0.7+rand(id+4)*.85)*scale;
+ const flap=.18+.82*Math.pow((Math.sin(time*(6.2+r*3)+r*TAU)+1)/2,.6);
+ const palette=colors[Math.floor(rand(id+5)*colors.length)],type=Math.floor(rand(id+6)*3);
+ ctx.save();ctx.translate(x,y);ctx.rotate(-.2+Math.sin(time*.7+r*9)*.23);ctx.scale(size,size);ctx.globalAlpha=layer?.92:.55;
+ wing(-1,type,palette,id,flap,size);wing(1,type,palette,id+17,flap,size);
+ ellipse(0,1,1.4,12,palette[2]);ellipse(0,-10,2.5,2.7,palette[2]);
+ line([[0,-10],[-4,-18],[-7,-19]],palette[2],.8,id+81);line([[0,-10],[4,-18],[7,-19]],palette[2],.8,id+82);
+ ctx.restore();
+ return {id:`${layer}:${i}`,x,y,palette:Math.floor(rand(id+5)*colors.length),type};
+}
+function drawButterflies(){
+ const objects=[],scale=Math.min(w/470,h/800,1.3);
+ for(let layer=0;layer<2;layer++){
+   const spacing=(layer?330:430)*scale,offset=time*(layer?39:22)*scale;
+   const start=Math.floor((-offset-120)/spacing),end=Math.ceil((w-offset+120)/spacing);
+   for(let i=start;i<=end;i++)objects.push(butterfly(i,layer));
+ }
+ return objects;
+}
+function drawDust(){
+ const spacing=51,offset=time*13;
+ for(let i=Math.floor((-offset-50)/spacing);i<Math.ceil((w-offset+50)/spacing);i++){
+   const id=i*331+781,x=i*spacing+offset,y=h*(.22+rand(id)*.55)+Math.sin(time*.6+id)*7;
+   const alpha=.16+.20*(.5+.5*Math.sin(time+id));ellipse(x,y,.7+rand(id+1),.7+rand(id+1),`rgba(219,191,144,${alpha})`);
+ }
+}
+function draw(){
+ boil=Math.floor(time*12);ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#050507';ctx.fillRect(0,0,w,h);ctx.lineJoin='round';ctx.lineCap='round';
+ // A faint light pool separates the dark clothes from the black stage.
+ const glow=ctx.createRadialGradient(w*.5,h*.50,0,w*.5,h*.50,h*.48);glow.addColorStop(0,'#1a1422');glow.addColorStop(.55,'#0c0a10');glow.addColorStop(1,'#050507');ctx.fillStyle=glow;ctx.fillRect(0,0,w,h);
+ drawNightSky();
+ const woodland=drawForestBackground();drawDust();const butterflies=drawButterflies(),path=drawPath();const forest=drawForestGround(woodland);
+ const figureHeight=Math.min(h*.68,w*1.42),figureWidth=figureHeight*FW/FH;
+ const x=(w-figureWidth)/2,y=h*.858-figureHeight;
+ ellipse(w*.5-figureWidth*.08,h*.849,figureWidth*.38,figureHeight*.012,'#00000080');
+ const frame=Math.floor(time*24)%FRAME_COUNT;
+ ctx.drawImage(atlas,(frame%COLS)*FW,Math.floor(frame/COLS)*FH,FW,FH,x,y,figureWidth,figureHeight);
+ debug={time,frame,boil,seed,viewport:{w,h},figure:{x,y,width:figureWidth,height:figureHeight},butterflies,path,forest,cacheSize:forestCache.size,activeCount:butterflies.length+path.length+forest.length};
+}
+function tick(now){if(last!==null&&playing&&!document.hidden)time+=Math.min((now-last)/1000,.05)*pace;last=now;if(ready&&playing)draw();requestAnimationFrame(tick);}
+const play=document.querySelector('#play');
+function setPlaying(value){playing=value;last=null;play.textContent=playing?'Ⅱ PAUSE':'▶ PLAY';play.setAttribute('aria-label',playing?'Pause animation':'Play animation');}
+play.onclick=()=>setPlaying(!playing);
+document.querySelector('#pace').oninput=e=>{pace=Number(e.target.value)};
+document.querySelector('#dream').onclick=()=>{seed=(seed+7919)|0;if(ready)draw()};
+document.addEventListener('visibilitychange',()=>{last=null});window.addEventListener('resize',resize);
+// Deterministic review controls; they do not load assets or alter the selected walk cycle.
+window.runway={seek(t){setPlaying(false);time=Math.max(0,t);if(ready)draw();return debug},play(){setPlaying(true)},state(){return debug},get ready(){return ready}};
+atlas.onload=()=>{ready=true;document.querySelector('#loading').remove();draw()};atlas.onerror=()=>{document.querySelector('#loading').textContent='The embedded walk frames could not be loaded.'};
+resize();atlas.src='data:image/webp;base64,__ATLAS_DATA__';requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
