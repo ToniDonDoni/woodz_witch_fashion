@@ -1,0 +1,43 @@
+name: Check Release Candidate GPT
+
+on:
+  pull_request:
+    paths:
+      - 'out/release-candidate-gpt/**'
+      - 'site/release-candidate-gpt/**'
+      - '.github/workflows/check-release-candidate-gpt.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install build and browser dependencies
+        run: |
+          python -m pip install pillow
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Rebuild candidate
+        run: python out/release-candidate-gpt/build.py
+      - name: Verify offline and deterministic browser behavior
+        run: node out/release-candidate-gpt/verify.cjs
+      - name: Upload captures and report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-candidate-gpt-check
+          path: |
+            out/release-candidate-gpt/verification.json
+            out/release-candidate-gpt/captures
+          if-no-files-found: ignore
