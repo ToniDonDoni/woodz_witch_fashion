@@ -101,7 +101,7 @@ const encounterGrammar = (() => {
       genes, palette,
       side: r(19) < 0.5 ? -1 : 1,
       altitude: 0.28 + r(20) * 0.39,
-      distance: 0.16 + r(21) * 0.11,
+      distance: 0.30 + r(21) * 0.045,
       size: 0.80 + 0.32 * r(22),
       arrival: r(23) < .5 ? 0 : 1
     };
