@@ -64,6 +64,8 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 
   for(const viewport of [{width:320,height:568},{width:844,height:390},{width:1440,height:900}]){
     await page.setViewportSize(viewport);
+    // Viewport resize events are asynchronous; wait for the scene canvas to resize.
+    await page.waitForFunction(v => runway.state().viewport.w === v.width && runway.state().viewport.h === v.height, viewport);
     const st = await page.evaluate(() => runway.seek(12));
     assert(st.figure.x >= 0 && st.figure.y >= 0);
     assert(st.figure.x + st.figure.width <= viewport.width + .1);
