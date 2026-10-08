@@ -1,0 +1,43 @@
+name: Check living paint V2
+
+on:
+  pull_request:
+    paths:
+      - "out/living-paint-encounters/**"
+      - "site/living-paint-v2/**"
+      - ".github/workflows/check-living-paint-v2.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install the offline asset builder and browser
+        run: |
+          python -m pip install pillow
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Rebuild the candidate from the original walk sprite frames
+        run: python out/living-paint-encounters/build.py
+      - name: Check offline shader, encounter variety, no overlaps, and viewports
+        run: node out/living-paint-encounters/verify.cjs
+      - name: Upload runtime screenshots and verification details
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: living-paint-v2-visual-review
+          path: |
+            out/living-paint-encounters/captures
+            out/living-paint-encounters/verification.json
+          if-no-files-found: ignore

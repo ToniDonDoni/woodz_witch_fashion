@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>WOODZ — Living Paint Encounters</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;color:#e8e0ee}
+body{font:12px/1.4 system-ui,-apple-system,sans-serif}
+.stage{position:fixed;inset:0;background:#000;overflow:hidden}
+.stage canvas{position:absolute;inset:0;display:block;width:100%;height:100%;pointer-events:none}
+#pigment{z-index:2}
+#fallback{z-index:2;display:none}
+#walker{z-index:1}
+.header{position:fixed;top:max(18px,env(safe-area-inset-top));left:20px;right:20px;
+ display:flex;align-items:start;justify-content:space-between;z-index:3;
+ pointer-events:none;opacity:.8;text-shadow:0 1px 8px #000}
+.brand{font-weight:750;font-size:17px;letter-spacing:.29em}
+.version{text-align:right;font-size:9px;letter-spacing:.16em;color:#b3a1bd}
+.controls{position:fixed;left:12px;right:12px;bottom:max(20px,env(safe-area-inset-bottom));
+ z-index:4;display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+button{cursor:pointer;min-height:44px;border-radius:28px;padding:0 15px;border:1px solid #b69ad266;
+ background:#100c15e6;color:#e6dbea;font-size:10px;letter-spacing:.12em}
+button:focus-visible{outline:2px solid #e4b4ff;outline-offset:3px}
+button:hover{border-color:#e7abff}
+.status{position:fixed;left:18px;bottom:max(76px,calc(env(safe-area-inset-bottom) + 66px));
+ z-index:3;pointer-events:none;font-size:9px;letter-spacing:.12em;
+ color:#807587;text-shadow:0 1px 5px #000}
+@media(max-width:365px){button{padding:0 10px;font-size:9px}.controls{gap:5px}}
+</style>
+</head>
+<body>
+<div class="stage">
+ <canvas id="pigment" aria-hidden="true"></canvas>
+ <canvas id="fallback" aria-hidden="true"></canvas>
+ <canvas id="walker" aria-label="A woman walking on black as one colorful procedural paint creature briefly arrives"></canvas>
+</div>
+<header class="header">
+ <div class="brand">WOODZ</div>
+ <div class="version">LIVING PAINT / V2<br>INFINITE ENCOUNTERS</div>
+</header>
+<div class="status" id="status" aria-live="off">ONE ENCOUNTER AT A TIME</div>
+<nav class="controls" aria-label="Runway controls">
+ <button id="toggle" aria-label="Pause animation">Ⅱ PAUSE</button>
+ <button id="next" aria-label="Skip to the next encounter">NEXT ENCOUNTER ↗</button>
+ <button id="dream" aria-label="Generate a new seeded dream">NEW DREAM ✧</button>
+</nav>
+<script>
+'use strict';
+(()=>{
+__GRAMMAR_CODE__
+__PAINT_CODE__
+
+const walk=document.getElementById('walker');
+const ctx=walk.getContext('2d',{alpha:true});
+const renderer=livingPaint.create(document.getElementById('pigment'),
+                                  document.getElementById('fallback'));
+const image=new Image();
+const FRAME_WIDTH=420,FRAME_HEIGHT=790,COLS=6,FRAMES=33;
+let w=0,h=0,dpr=1,time=0,lastFrame=null,playing=true,ready=false,debug={};
+function randomSeed(){
+  try{
+    const arr=new Uint32Array(1);
+    if(window.crypto&&window.crypto.getRandomValues){
+      window.crypto.getRandomValues(arr);
+      return arr[0]|0;
+    }
+  }catch(_){}
+  return (Date.now()^0x13579bdf)|0;
+}
+let seed=randomSeed();
+
+function resize(){
+ w=window.innerWidth;h=window.innerHeight;
+ dpr=Math.min(window.devicePixelRatio||1,1.35);
+ walk.width=Math.max(1,Math.floor(w*dpr));
+ walk.height=Math.max(1,Math.floor(h*dpr));
+ ctx.setTransform(dpr,0,0,dpr,0,0);
+ renderer.resize(w,h,dpr);
+ if(ready)draw();
+}
+function draw(){
+ if(!ready)return null;
+ const state=encounterGrammar.at(seed,time);
+ renderer.render(state,time);
+ ctx.clearRect(0,0,w,h);
+ const height=Math.min(h*.68,w*1.42),width=height*FRAME_WIDTH/FRAME_HEIGHT;
+ const x=(w-width)*.5,y=h*.858-height;
+ const frame=Math.floor(time*24)%FRAMES;
+ ctx.drawImage(image,(frame%COLS)*FRAME_WIDTH,
+                 Math.floor(frame/COLS)*FRAME_HEIGHT,
+                 FRAME_WIDTH,FRAME_HEIGHT,x,y,width,height);
+ debug={
+  ready,seed,time,frame,backend:renderer.backend,
+  fallbackReason:renderer.fallbackReason,
+  viewport:{width:w,height:h,dpr},
+  walker:{x,y,width,height},
+  activeEventCount:state.active?1:0,
+  slot:state.slot,slotLocalTime:state.local,
+  event:state.active?{
+    id:state.spec.id,topology:state.spec.bodyName,
+    appendage:state.spec.appendName,behavior:state.spec.behaviorName,
+    genomeSeed:state.spec.genomeSeed,elapsed:state.elapsed
+  }:null
+ };
+ return debug;
+}
+function tick(now){
+ if(playing&&ready&&!document.hidden&&lastFrame!==null)
+   time+=Math.max(0,Math.min((now-lastFrame)/1000,.05));
+ lastFrame=now;
+ if(ready&&playing&&!document.hidden)draw();
+ requestAnimationFrame(tick);
+}
+function play(v){
+ playing=!!v;lastFrame=null;
+ const btn=document.getElementById('toggle');
+ btn.textContent=playing?'Ⅱ PAUSE':'▶ PLAY';
+ btn.setAttribute('aria-label',playing?'Pause animation':'Resume animation');
+}
+function seek(t){
+ play(false);time=Math.max(0,Number.isFinite(t)?t:0);
+ return draw();
+}
+function seekSlot(i){return seek(Math.max(0,Math.floor(i))*encounterGrammar.SLOT_SECONDS);}
+function seekEvent(i){
+ const spec=encounterGrammar.specForSlot(seed,i);
+ if(spec.empty)return {emptySlot:true,slot:i};
+ return seek(i*encounterGrammar.SLOT_SECONDS+spec.start+1.2);
+}
+document.getElementById('toggle').onclick=()=>play(!playing);
+document.getElementById('next').onclick=()=>{
+ let n=Math.floor(time/encounterGrammar.SLOT_SECONDS)+1;
+ for(let k=0;k<20;k++,n++){
+   if(!encounterGrammar.specForSlot(seed,n).empty)break;
+ }
+ time=n*encounterGrammar.SLOT_SECONDS+.9;
+ if(ready)draw();
+};
+document.getElementById('dream').onclick=()=>{
+ seed=randomSeed();
+ time=0;
+ if(ready)draw();
+};
+window.addEventListener('resize',resize);
+document.addEventListener('visibilitychange',()=>{lastFrame=null;});
+image.onload=()=>{ready=true;draw();};
+image.onerror=()=>{document.getElementById('status').textContent='SPRITE ATLAS ERROR';};
+window.runway={
+ get ready(){return ready},
+ state(){return debug},
+ spec(slot){return encounterGrammar.specForSlot(seed,slot)},
+ inspect(t){const st=encounterGrammar.at(seed,t);
+  return {slot:st.slot,activeEventCount:st.active?1:0,
+          event:st.active?st.spec.id:null,elapsed:st.elapsed};
+ },
+ seek,seekSlot,seekEvent,play,
+ setSeed(s){seed=s|0;time=0;return draw();},
+ next(){document.getElementById('next').click();return debug}
+};
+resize();
+image.src='data:image/webp;base64,__ATLAS_DATA__';
+requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
