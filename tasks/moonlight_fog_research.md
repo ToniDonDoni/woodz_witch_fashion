@@ -1,19 +1,20 @@
 # Moonlight and Living Fog: Research and Rendering Proposal
 
-Status: research proposal / design review only (no renderer changes in this pull request)
+Status: reviewed/revised research proposal (no renderer changes in this pull request)
+Revision: 2026-10-08, incorporating six Codex inline findings and the separate in-PR source review.
 Date: 2026-10-08
 Target: procedural enchanted-forest runway, one offline HTML file, mobile-first Canvas 2D
 
+
 ## Decision in brief
 
-Prototype stylized moonbeams and drifting illuminated fog with **Canvas 2D gradients, seeded world-space geometry, lightweight occlusion by draw order, and precomputed low-resolution noise tiles**. Do **not** implement real-time ray tracing for this 2D scene.
+**Proceed with option A, but only as a small visual study: three soft moonbeams, one slowly drifting fog band, fixed quality, and a lights-on/off switch.** Use Canvas 2D gradients, noise tiles generated once, and seeded geometry taken from actual tree/canopy layout. Real-time ray tracing, WebGL and pixel-based screen-space scattering are unnecessary for this first iteration.
 
-Keep three independent clocks:
-- World translation, sprite playback, light-layer translations and fog advection: advance every requestAnimationFrame (as fast as the device can sustain).
-- Expensive appearance updates (contour boil and any dynamic light texture generation): at most 12 Hz, keyed to floor(simulationTime * 12).
-- Slow weather/light parameters (beam angle, density and intensity): evaluated analytically from simulation time and interpolated continuously; they do not need a new texture every animation frame.
+The **logical world** is a pure function of (world seed, simulation time, existing tree/world definitions). Geometry, positions, identities, light direction, intensities and fog phase may **not** depend on measured FPS. Define a separate explicit `qualityTier` for raster detail, plus CSS viewport size and physical backing dimensions for rendering. V1 fixes the tier; no automatic culling of fog bands or beam identities. For strict pixel comparison, fix the same browser, tier, DPR/backing dimensions and viewport.
 
-A 12 Hz *generation rate* is not the same as delivering only 12 visible frames per second. The latter would stutter during side-scrolling. Rendering/caching costs and real device frame rates remain to be measured, not assumed.
+Use independent rhythms: (a) walker sprite 24 source FPS and world/light/fog travel are updated continuously by simulation time on requestAnimationFrame; (b) expensive hand-drawn contour/optional appearance redraw at most 12 Hz at **canonical** `t0=floor(time*12)/12`; (c) static fog-noise textures built on seed/size/tier initialization, not at 12 Hz or every display frame. Optional interpolated appearances use `t1=(floor(time*12)+1)/12` and alpha derived from simulation time. Never cache the first RAF time that happens to observe a phase.
+
+The objective is **12 Hz costly generation with smoothly presented motion**, not a 12 FPS display. Physical-phone performance remains unmeasured.
 
 ## Existing project constraints and integration target
 
@@ -54,11 +55,33 @@ Refs:
 - https://developer.mozilla.org/en-US/docs/Web/API/OffscreenCanvas
 - https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/transferControlToOffscreen
 
+
+## Reviewer decisions incorporated (2026-10-08)
+
+This revision accepts all six Codex annotations and the separate in-PR review. Their points fix the original draft's contradictions:
+
+1. **P1 determinism:** fixed explicit quality tier; no FPS-triggered removal of logical beams/fog. A/B switch alters rendering only, not world identities, simulation time or seed. Future quality adaptation must be an explicit tier transition and separately tested.
+2. **P1 bounded caches:** no persistent map keyed by unbounded absolute boil phase. Reuse static tiles and buffers; keep at most current/next canonical phase per currently visible chunk, prune invisible entries each draw and clear old viewport generations on resize.
+3. **P1 frame delivery:** numeric p95/p99 RAF interval and missed-frame limits, hot-device A/B tests, and separate appearance-regeneration-frame statistics. Canvas call time alone cannot measure deferred raster/GPU work.
+4. **P2 canopy geometry:** openings must be derived from real seeded tree/crown positions, not independent randomly placed slots with merely matching speed.
+5. **P2 compositing:** fog + shafts belong before the near-tree pass. A second light pass over fog drawn later would undo tree occlusion.
+6. **P2 walker:** foot-level pools/glows must be painted before walker shadow and sprite, never after the final subject pass.
+
+The separate source review adds these v1 choices:
+- Existing near trees are painted at `globalAlpha=.91`, so draw order gives **partial stylized occlusion**, not opaque blocking or realistic projected shadows. V1 explicitly accepts slight transmission; if the visual result is wrong, use an opaque near-tree silhouette or low-resolution mask and *measure* cost.
+- Use one common moonlight direction with small deterministic variations to avoid stage-spotlight geometry.
+- Freeze quality and actual backing pixels during deterministic comparisons; buffers scale as **DPR squared** if DPI is blindly multiplied.
+- Ship **three beams and one band first**; expand only based on visual and measured device evidence.
+
+Review references:
+- https://github.com/ToniDonDoni/woodz_witch_fashion/pull/6#pullrequestreview-5460064946
+- https://github.com/ToniDonDoni/woodz_witch_fashion/pull/6#issuecomment-6064794762
+
 ## Technique comparison
 
 | Option | Visual result | Relative cost / risks | Decision |
 | --- | --- | --- | --- |
-| A: seeded soft shaft meshes + gradients, draw-order occlusion, scrollable fog tiles | Painterly moonbeams, atmospheric depth | Low; cheap Canvas primitives and cached textures; directional consistency is approximate | **Prototype first** |
+| A: tree-gap-anchored soft shafts + gradients, one cached fog band | Painterly moonbeams and atmospheric depth, imperfect stylized occlusion | Small incremental Canvas work; must measure on phone | **V1: three beams, one band, fixed tier** |
 | B: half/third-resolution light/occluder mask + directional radial accumulation | More scene-dependent silhouettes and beam breakup | Medium; extra passes, buffers, sampling; quality needs mobile testing | Only if A looks pasted on |
 | C: WebGL fragment shader for masked radial blur / light scattering | More realistic moving shafts from canopy silhouettes | Medium to high integration effort; WebGL state, GPU fill, context-loss/fallback tests | Optional measured later |
 | D: 2D ray casting per emitter against scene silhouettes | Directional hard/soft shadows, not automatically volumetric shafts | Extra geometric queries, light-by-light work, dynamic tree geometry | Not needed for v1 |
@@ -66,94 +89,100 @@ Refs:
 
 Complexity rankings are qualitative hypotheses, not benchmarks.
 
+
 ## Recommended first experiment: moonbeams
 
-Art direction: cool silver-lavender beams against the existing black, moss-green forest, restrained enough that the neon creatures and the model's silhouette remain prominent. 3-6 visible shafts on a phone-sized scene are an initial **tuning hypothesis**, not a hard invariant.
+Art direction: **three** subtle silver-lavender shafts, near-parallel, unified moonlight vector, tiny seeded variation in tilt and slowly breathing intensity. Do not create arbitrary diverging theatrical spotlights.
 
-Geometry:
-1. Choose sparse world-space "canopy opening" slots keyed by stable chunk ID and world seed. Make each opening's x, width, slant, color and intensity reproducible. Generate with a margin before entry; retire after full exit. Avoid frame-by-frame Math.random().
-2. Tie translation to the mid/back tree layer's existing world offset (the layer-1 speed is currently 22 * forestUnit()); never position each beam randomly in screen space. A shaft should move smoothly along with its apparent opening.
-3. Draw each shaft as a softly feathered trapezoid or a few overlapping translucent polygons, widening downward, from an opening near the canopy into the midground. Use a horizontal-to-shaft-local linear gradient for soft sides and a vertical fade for onset/dissipation. Vary slowly (e.g. tiny sub-degree angle sway and low-frequency brightness breathing).
-4. Render beams **behind the nearer tree row**. Drawing that row afterward occludes light by actual foliage silhouettes with zero new mask pass. Make beams visible under gaps and near trunks, not across opaque trunks or over the walker. Optionally add a low-alpha radial light pool at path level below the same opening.
-5. Use screen blend at low alpha for moonlight and restore compositing state. Avoid additive clipping to white, per-stroke shadows and full-frame blur filters.
-6. Keep an independently seeded diffuse background glow near the high-canopy opening (very subtle); avoid a fixed screen-center white spotlight masquerading as moonlight.
+1. **Find openings from existing tree geometry.** Reuse published layer-1 tree IDs, deterministic placement, size, crown and branch shapes. Candidate openings are gaps between rendered/estimated canopies linked to adjacent stable tree IDs. Since the existing crowns can overlap past trunk midpoints, **midpoint between trunks is not automatically a gap**. Where geometric extents are insufficient, consult a low-resolution cached canopy-coverage mask generated from the *same* silhouettes; alternatively reserve sparse openings in the shared procedural tree generator. If a candidate is covered, omit it rather than invent a spotlight through a solid crown.
+2. Store IDs/anchors in world coordinates derived from the same layer-1 translation (currently `22*forestUnit()`); continuously transform to screen using time. Seed width, intensity and subtle direction variation from source tree IDs. Generate margin before entry and retire after full exit.
+3. Soft overlapping gradient trapezoids or ribbon-like polygons create diffuse beams, with vertical fade and weak halo associated with the *same* aperture. Use a restrained common illumination direction and avoid extreme downward widening.
+4. Draw far tree row (layer 0) first, then light/fog, then near tree row (layer 1). **Do not promise physical shadows**: the near row currently has `globalAlpha=.91`, so 9% of an underlying fully opaque color may show through even before considering image alpha. V1 accepts this stylized effect, subject to screenshot review. If trunks visibly glow, introduce selective opaque masks at small resolution before spending on any blur shader. Preserve the far-row illumination as an intentional art decision.
+5. Use low-alpha gradients and controlled blending; restore Canvas state. Never draw light over the final model sprite. Optional footpool is ground illumination **below** the walker shadow and sprite and is omitted from the first implementation unless visual review demands it.
 
-Draw-order modification likely needed: split the current drawForestBackground() into back-tree draw, moonbeam pass, nearer-tree draw, and final central subject-contrast wash. A fallback is to keep a beam image entirely behind both tree rows, though it will look weaker. Keep foreground forest, spectators and woman in front of the beams.
+**Beam acceptance:** every visible beam can be traced to real seeded tree IDs/an identified canopy gap, retains identity until full exit, has coherent direction, and never spuriously appears in a solid-looking crown.
 
-If shaft realism is weak, B can use the same known tree silhouette paths to draw black canopy masks on a *small* scratch canvas; apply the mask/light scattering there and upscale. Avoid reading pixels back to JavaScript every frame.
 
 ## Recommended first experiment: drifting illuminated fog
 
-1. Generate small RGBA fog/noise tiles deterministically at initialization/seed change (e.g. 256x128 source pixels, value-noise or 2-3 octave fBm with seamless wrapping). This is a one-time tile construction, **not** per-pixel noise computation each display frame.
-2. Draw two or three translucent fog bands, mostly below the midground canopy and near ground level. Use horizontal tile repetition, vertical gradient fades, different parallax speeds and low-amplitude sine warping or opacity changes.
-3. Translate tiles continuously with subpixel offsets each RAF; treat fog advection time separately from 12 Hz artistic contour updates. Use two different tiles, resolutions and flow speeds to prevent obvious repetition. For one-file output, create tiles via drawing code; do not load external textures.
-4. In the first version, fog is behind the walker and most front details; avoid opaque milky haze across her outfit. A later selective foreground pass may add wisps *only* near the margins and feet.
-5. If animated density fields are needed, create/cycle snapshots at <= 12 Hz and blend adjacent snapshots with alpha interpolation. Do not visibly switch randomized fog patterns on the boil beat.
-6. Use alpha gradients and cached drawImage compositing. Do not call ctx.getImageData() or ctx.filter = 'blur(...)' across the whole scene at every tick.
+Start with **one** translucent ground/midground band, not two or three.
 
-The fog should reveal shafts through very small intensity changes but not mandate costly per-pixel multiplication. A cheap visual trick is to draw low-opacity shafts over the fog and occlude with nearer silhouettes.
+1. At seed/tier/viewport generation, create one *seamlessly wrapping* seeded RGBA noise tile (e.g. 2-3 octave periodic value noise), with vertical alpha fading. This is built once and re-used, not recomputed per RAF or per 12 Hz contour phase. Verify wrap boundaries on slow motion.
+2. Scroll tiled samples continuously by a deterministic absolute-time advection formula at a chosen parallax rate, and apply subtle smooth opacity modulation. A repeatable mathematical time function—not fresh randomness per frame—governs the fog.
+3. Render the band and any light modulation **in the single atmosphere pass before near trees**. Do not draw shafts on top of a separate fog pass placed after near-tree trunks. Foreground fog, if desired later, is a **separately designed** masked effect and out of v1.
+4. Do not obscure the figure or turn the ink contours pale. Use low opacity and screen comparisons at 320x568 as well as desktop sizes.
+5. If scrolling a static tile is visibly lifeless, optionally blend at most **two canonical phase snapshots** generated at `t0=floor(t*12)/12` and `t1=t0+1/12`, interpolated every RAF. Recycle surfaces, drop old phases and measure the additional draw cost; *do not* mutate noise randomly per phase.
+
+Avoid `getImageData()`, whole-frame blur filters, texture reallocation, and JavaScript per-pixel work in the animation loop.
+
 
 ## Proposed render pipeline (after the research PR is approved)
 
-1. Clear stage / existing dark background glow.
-2. Draw far tree row (existing layer 0).
-3. Draw low-cost world-anchored moonbeams and optional halo.
-4. Draw near tree row (existing layer 1), obscuring light.
-5. Existing central contrast wash, dust and butterflies.
-6. Existing chalk runway and far ground objects.
-7. Draw back/mid fog bands as composited transparent images (adjust exact placement after visual inspection).
-8. Existing spectator/near-ground layers, maintaining face readability.
-9. Existing walker sprite and shadow last (sprite is not modified).
-10. Optional extremely faint foot-level light pool only if visual review needs it.
+1. Clear and draw existing dark backdrop.
+2. Draw **far** trees (forest layer 0).
+3. Draw one cohesive **transparent atmosphere pass**: single cached fog band, three canopy-anchored shafts, subtle halo and fog lighting. Any shaft-over-fog illumination happens inside this pass.
+4. Draw **near** trees (forest layer 1), intentionally giving partial stylized silhouette occlusion, with mask fallback if actual screenshots reveal unacceptable leakage.
+5. Draw current central-contrast wash, dust and butterflies in the same relative sequence as the published version.
+6. Draw existing path, ground rows and spectator layer in their present order.
+7. Optional restrained *path* light pool, **before** the walker; omit this from first pass.
+8. Draw the existing figure shadow and the walker sprite **last**, unchanged. No glow/light overlay after the walker.
 
-Lighting implementation suggestion for the next attempt: out/moonlight-fog/lighting.js and template.html, with a new build.py and verify.cjs. Keep all exploratory source and generated assets inside this dedicated attempt directory, then promote accepted code. Build one offline HTML; no runtime network requests or external libraries.
+Build a new exploratory source in `out/moonlight-fog/` on a **separate future implementation branch**, with lighting module, template, builder, tester and one offline HTML. The source baseline is the **pinned published spectator snapshot** (`0e6cf29d4059e305a975a77fade10cb3f7a1ecb2`), even though this documentation PR was branched from private main. Explicitly port/snapshot those source files; do not silently regress to the older private-main scene or change the 33 original sprites.
 
-## Scheduling and numerical budget (proposed, not measured)
 
-- Heavy appearance generation upper limit: 12 Hz. Cache keyed by seed + world chunk + boil phase + viewport-dependent parameters when necessary.
-- Existing 33-frame sprite cadence: unchanged at 24 source frames per second.
-- Continuous movement/composition: use rAF and real elapsed simulated time; aim for a stable 60 FPS on a 60 Hz reference device, falling back gracefully on slower phones.
-- Fog/light offscreen surfaces: initially at <= 1/3 viewport dimensions each, with a cap on total pixels; upscale using Canvas drawImage. At 390x844, a 130x282 RGBA buffer is about 147 KB (before implementation overhead).
-- Proposed initial effect-specific profiling target: <= 2 ms p95 added render time on the actual target phone, and no significant sustained frame-rate regression compared with a lights-off baseline. This is a gate to measure, not a claim already passed.
-- No growing arrays of past light/weather events; at most a bounded number of visible world chunks and reusable scratch buffers.
-- Adaptive quality: disable finest fog detail / reduce fog layers first, then cut beam count or resolution. Keep the walker and smooth scene translation intact.
+## Scheduling, memory contract and frame-delivery gates (proposed, not measured)
 
-Instrumentation:
-- expose optional debug timings for lighting pass and fog pass with performance.now(), plus active beam count, cache sizes and rolling rAF delta samples;
-- A/B switch to disable the entire new lighting stack without changing seed/time;
-- measure desktop and actual target phone (including Safari/iOS if applicable), at different devicePixelRatio settings and after 5 minutes of continuous playback.
+### Determinism and cache lifetime
+- Define rendering inputs `(worldSeed, simulationTime, CSSWidth, CSSHeight, qualityTier, backingWidth, backingHeight, effectsEnabled)`. Logical identities and positions are derived only from seed, time and world geometry; raster output may depend on explicit tier/size. Pixel equivalence is required for the **same browser, backing pixels, tier and seek time**, not bytewise across different GPUs.
+- V1 uses a **fixed explicit qualityTier**. Do not adapt by cutting fog bands/beam count after slow frames. A future explicit tier may reduce *raster* resolution/detail while preserving logical beams/fog. Freeze tier for A/B and seek tests.
+- Canonical appearance sample `phase=floor(t*12)`, `t0=phase/12`; optional second sample `t1=(phase+1)/12`. No cache keyed indefinitely by `seed + chunk + absolutePhase`. Reuse one static tile and recyclable scratch canvas(es), and if snapshots are required, retain only current/next sample for each *visible* chunk. Clear stale chunks and old viewport generations on resize/quality changes. Large seeks must not allocate all intermediate phases.
+- Raw backing pixels are capped **after any DPR decision**. Initial proposed caps: <=100,000 *actual pixel cells per light/fog scratch surface* (~400 KB RGBA) and <=250,000 total scratch + tile pixel cells (~1 MB raw RGBA), excluding browser/GPU overhead and existing forest caches. A 390x844 CSS viewport at 1/3 CSS resolution is 130x282=36,660 pixels (~147 KB), but silently multiplying both axes by DPR 3 produces 390x846=329,940 pixels (~1.32 MB), already over the cap. Choose and report the real backing size; don't automatically apply stage DPR to scratch textures.
+- Monitor new buffers plus existing forest/spectator caches and browser memory trends over continuous runtime, seed change and repeated resize/orientation, not merely isolated `seek(t)` calls.
+
+### Frame delivery (numerical **acceptance targets**, not verified facts)
+- Record matched lights-OFF baseline and lights-ON trial at identical seed, time interval, viewport, DPR/backing resolution, device/browser and **fixed** tier. On a real target phone, warm up at least 3 minutes per condition, then observe 5 uninterrupted minutes per condition; preferably reverse A/B order to reduce thermal-order bias. A failed baseline must be reported, not hidden by relative statistics.
+- On a 60 Hz target screen use `T=16.67 ms` (otherwise explicitly measure visible screen cadence and define T). Excluding background/visibility pauses, **lights ON must meet** p95 RAF interval <= **1.10*T** (~18.34 ms), p99 <= **2.10*T** (~35.0 ms), and <= **2%** active frame intervals exceeding `1.5*T`. Missed-frame rate must increase by **no more than one percentage point** versus matched OFF baseline. Also report OFF vs ON p95/p99 side by side; a p99 regression by >1*T is a separate failure even if absolute limits pass.
+- Measure normal frames and **12 Hz appearance-regeneration frames separately**; report their CPU submission times, frame-delivery interval histogram and missed-frame rates, so occasional regeneration spikes cannot hide under averages. `<=2 ms p95` incremental CPU submission time remains a **tuning goal**, not proof that the GPU completed composition on time. Include render/present traces if tooling supports them.
+- For 120 Hz, choose and document whether rendering targets native cadence or is deliberately 60 Hz; do **not** apply 60 Hz RAF thresholds to uncapped 120 Hz callbacks.
+- Until representative-device measurements exist, performance status is **unknown**; if targets fail, reduce declared raster detail and retest, not silent semantic content changes.
+
+### Visual / resource goals
+- V1 contains three stable canopy-anchored beams and one fog band; no extra procedural characters, no added scene video, no network dependency.
+- No continuously growing cache after a fixed-size viewport reaches a stable active-world population. All noise/art/render history bounded by active world and declared tier.
+
 
 ## Acceptance checks for a future implementation PR
 
 Visual:
-- Clearly visible soft, cool moonlight emanates through coherent forest openings, with plausible occlusion by nearby trees; no sharp transparent wedges, overexposed trunks or screen-stuck beams.
-- Fog has visible depth and continuous drift. Nothing abruptly jumps on the 12 Hz update or when the world enters a new chunk.
-- The model's face, clothes, legs and walk silhouette remain readable, including at a 320x568 viewport.
-- A/B lights-on is materially richer without hiding the hand-drawn line art or turning the forest into constant flashing neon.
+- Every beam originates from a visible **actual** canopy aperture (tree-pair IDs or shared canopy mask), with unified moon direction, soft boundaries and no obvious spotlight. Document that near-tree `globalAlpha=.91` provides **partial** rather than hard occlusion; reject/mask the artifact if the tree visibly glows from within.
+- Fog drifts continuously and wraps without seam, flicker, or 12 Hz popping; illumination occurs before the near-tree pass. The woman, clothing and legs remain fully readable down to 320x568 and the sprite is always last.
+- Fixed-seed OFF/ON comparison shows a visibly more atmospheric result rather than overexposure.
 
-Determinism:
-- Same seed + simulation time + viewport => same beam identities, layout, opacity and fog phase, independent of previous seeks or device frame rate.
-- Pausing freezes weather animation; resuming/returning from a background tab does not jump several screens.
-- Beam entry/exit and caches remain bounded at t=0, 120s and 3600s and through real-time playback.
+Determinism and lifecycle:
+- Compare direct seek, stepped playback and a different prior draw history at the same **canonical within-phase time**, viewport, seed, fixed tier, backing size and browser. Compare logical IDs across declared tiers and after ON/OFF switching; rendering quality must not alter world placement.
+- Validate continuous entry to exit for a chosen canopy gap / beam, and fixed fog phase through pause, resume, background tab and resize. No screen-wide jump after background resume.
+- Validate on four viewport sizes. Run **10 continuous minutes on a real phone** and **30 continuous minutes desktop/browser**, plus spot checks at t=0/120/3600 and repeated resize/rotate operations. Assert caches/buffers settle within active viewport/tier bounds; phase number must not cause cache growth.
 
 Technical:
-- No new runtime network requests; all generation code is embedded in the offline HTML.
-- Original 33 sprite files and selected gait range are left intact; record the pre-existing 32->0 loop seam separately.
-- Verify four viewport sizes and sustained phone performance against the *same* scene with lighting disabled; report p50/p95 render costs, rAF intervals, memory trend and observed FPS.
-- The proposed limits are not considered met until the actual browser/phone measurements are recorded.
+- One truly offline standalone HTML, no network fetches and no runtime exceptions, unchanged 33 sprite images/cadence. Document pre-existing 32->0 gait seam.
+- Include actual device/OS/browser, CSS dimensions and backing sizes/DPR, steady-state memory samples, light/fog pixel counts, OFF vs ON p95/p99 RAF intervals and missed-frame share, and timings split by ordinary and 12 Hz update frames. Verify the **numerical frame-delivery gates** above before marking mobile acceptance.
+- No claims of performance or acceptance from screenshots and seek-only tests alone.
+
 
 ## Build sequence for a later implementation
 
-Phase 0: archive baseline images, and get a reliable lights-off profiler on the published audience source.
-Phase 1: add only 3-6 seeded beams with near-tree draw-order occlusion and A/B toggle.
-Phase 2: add precomputed/no-network drifting noise fog tiles, benchmark both effects together.
-Phase 3: art tune colors, placement and transitions, then optionally add canopy masks if obvious fake-beam artifacts remain.
-Phase 4: build a single HTML, run deterministic/offline/phone checks, review screenshots and open an implementation PR. Never merge a heavy shader pipeline without comparable mobile evidence.
+Phase 0: start a fresh branch from latest main; explicitly port the pinned **published forest-spectator source** into a new `out/moonlight-fog/` attempt; capture the same lights-OFF baseline and profiler.
+Phase 1: build exactly three canopy-anchored shafts, fixed tier and simple effects on/off switch. Check actual foliage gaps and silhouettes.
+Phase 2: add exactly one seeded scrolling fog band in the atmosphere pass **before** near trees. Check loop seam, contrast, determinism and fog/layer ordering.
+Phase 3: perform matched A/B screenshots and thermal-soaked phone benchmarks, including phase spikes, RAF delivery and long-running memory. Only then consider a second fog layer or small occluder mask if specifically needed.
+Phase 4: package offline HTML, verify browser/phone cases, preserve source-to-artifact provenance and open a **new separate implementation PR**. No renderer changes in this research PR.
 
 ## Key risks and explicit non-goals
 
 - Do not implement path tracing or volumetric ray marching in the first attempt.
 - Do not make light opacity flicker randomly at 12 FPS: 12 Hz is an **art update cadence**, not the physical movement rate.
+- Do not confuse draw-order silhouettes at tree globalAlpha=.91 with physically opaque shadows or promise cheap cross-tree ray occlusion.
+- Do not change deterministic world object counts as a hidden response to measured FPS; never retain unbounded per-absolute-phase cache entries.
 - Do not use a giant blurred whole-screen offscreen buffer each RAF; downsample and cache before proposing expensive postprocessing.
 - Do not bake a finite forest video or external GIF as a shortcut.
 - Keep the current visual language: pencil/brush neon on black with magical accents, not photorealistic 3D lighting.
