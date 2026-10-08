@@ -12,7 +12,7 @@
 </head>
 <body>
 <canvas id="scene" aria-label="A woman walking on an infinite illustrated forest runway while the woodland stages a new enchanted act around her"></canvas>
-<header class="masthead"><div class="brand">WOODZ</div><div class="edition">INFINITE RUNWAY<br>STUDY 05 / SCENES IN THE WOOD</div></header>
+<header class="masthead"><div class="brand">WOODZ</div><div class="edition">INFINITE RUNWAY<br>STUDY 03 / LIVING ACTS</div></header>
 <div class="caption"><h1>Into the woods.</h1><p>An endless woodland procession</p></div>
 <div id="loading" role="status">Entering the night…</div>
 <div id="actcard" role="status" aria-live="polite"></div>
@@ -111,14 +111,11 @@ function drawDust(){
  }
 }
 // The act title card is a pure function of simulation time: seeks replay it exactly.
-// It stays up for the whole act, dimmed after the opening seconds, so an act is
-// never announced and then dropped.
 function updateActCard(plan){
  const age=time-plan.start,label=actLabel(plan);
  if(actCardText!==label){actCardText=label;actCard.textContent=label;}
- const fadeIn=Math.min(1,age*1.4),dim=age>5?.55:1;
- const fadeOut=age>plan.length-1.5?Math.max(0,(plan.length-age)/1.5):1;
- actCard.style.opacity=String(fadeIn*dim*fadeOut);
+ const fadeIn=Math.min(1,age*2.2),fadeOut=age>3.6?Math.max(0,(4.4-age)/.8):1;
+ actCard.style.opacity=String(fadeIn*fadeOut);
 }
 function draw(){
  boil=Math.floor(time*12);ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#050507';ctx.fillRect(0,0,w,h);ctx.lineJoin='round';ctx.lineCap='round';
@@ -150,9 +147,8 @@ function draw(){
  const events=[...skyEvents,...farEvents,...nearEvents,...frontEvents];
  const rendered=forest.filter(o=>o.layer<4);
  debug={time,frame,boil,seed,viewport:{w,h},figure:{x,y,width:figureWidth,height:figureHeight},butterflies,path,forest:rendered,foreground,
-   events:events.map(e=>({id:e.id,type:e.type,layer:e.layer,kind:e.kind,entry:e.entry,x:e.x,y:e.y,age:e.age,size:e.size})),
-   act:{index:plan.index,name:plan.name,ambient:plan.ambient,event:plan.event,cameo:plan.cameo,rare:plan.rare,length:plan.length,progress:plan.progress,start:plan.start,
-     beats:plan.beats.map(b=>({type:b.type,kind:b.kind,entry:b.entry,start:b.start,visible:b.visible,size:b.size}))},
+   events:events.map(e=>({id:e.id,type:e.type,layer:e.layer,kind:e.kind,x:e.x,y:e.y,age:e.age})),
+   act:{index:plan.index,name:plan.name,ambient:plan.ambient,event:plan.event,cameo:plan.cameo,rare:plan.rare,length:plan.length,progress:plan.progress,start:plan.start},
    mood:dreamMood().name,foregroundEnabled,cacheSize:forestCache.size,activeCount:butterflies.length+path.length+rendered.length+foreground.length+events.length};
 }
 function tick(now){if(last!==null&&playing&&!document.hidden)time+=Math.min((now-last)/1000,.05)*pace;last=now;if(ready&&playing)draw();requestAnimationFrame(tick);}
