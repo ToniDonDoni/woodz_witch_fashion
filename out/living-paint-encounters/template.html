@@ -152,6 +152,10 @@ window.runway={
  get ready(){return ready},
  state(){return debug},
  spec(slot){return encounterGrammar.specForSlot(seed,slot)},
+ inspect(t){const st=encounterGrammar.at(seed,t);
+  return {slot:st.slot,activeEventCount:st.active?1:0,
+          event:st.active?st.spec.id:null,elapsed:st.elapsed};
+ },
  seek,seekSlot,seekEvent,play,
  setSeed(s){seed=s|0;time=0;return draw();},
  next(){document.getElementById('next').click();return state()}
