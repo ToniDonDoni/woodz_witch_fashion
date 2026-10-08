@@ -1,0 +1,53 @@
+const fs=require('fs');
+const path=require('path');
+const assert=require('assert');
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
+(async()=>{
+ const browser=await chromium.launch({headless:true,...(process.env.BROWSER_EXECUTABLE?{executablePath:process.env.BROWSER_EXECUTABLE}:{})});
+ try{
+  const context=await browser.newContext({viewport:{width:1420,height:1160},deviceScaleFactor:1,offline:true});
+  const page=await context.newPage(),errors=[],requests=[];
+  page.on('pageerror',e=>errors.push(String(e)));
+  page.on('request',r=>{if(/^https?:/.test(r.url()))requests.push(r.url());});
+  await page.goto('file://'+path.join(__dirname,'index.html'));
+  await page.waitForFunction(()=>window.studies?.state().count===8);
+  await page.waitForTimeout(1000);
+  assert((await page.evaluate(()=>studies.state().time))>.75,'Sketches did not animate');
+  await page.getByRole('button',{name:'Pause sketches',exact:true}).click();const paused=await page.evaluate(()=>studies.state().time);await page.waitForTimeout(150);assert.equal(await page.evaluate(()=>studies.state().time),paused);
+  await page.getByRole('button',{name:'Animate sketches',exact:true}).click();await page.waitForTimeout(200);assert((await page.evaluate(()=>studies.state().time))>paused);
+  await page.evaluate(()=>studies.seek(.5));
+  const a=await page.locator('.art').first().screenshot();
+  await page.evaluate(()=>studies.seek(7/12));
+  const b=await page.locator('.art').first().screenshot();
+  assert(!a.equals(b),'Line boil was not visible');
+  await page.evaluate(()=>studies.seek(.5));
+  assert(a.equals(await page.locator('.art').first().screenshot()),'Fixed-time artwork was not deterministic');
+  await page.evaluate(()=>studies.seek(0));
+  await page.screenshot({path:path.join(__dirname,'contact-sheet.png'),fullPage:true});
+  const canvases=page.locator('.art-button canvas');
+  for(let i=0;i<8;i++)await canvases.nth(i).screenshot({path:path.join(__dirname,'variant-'+i+'.png')});
+  fs.mkdirSync(path.join(__dirname,'motion'),{recursive:true});
+  for(let i=0;i<24;i++){await page.evaluate(t=>studies.seek(t),i/12);await page.locator('.grid').screenshot({path:path.join(__dirname,'motion',String(i).padStart(3,'0')+'.png')});}
+  await page.getByRole('button',{name:'Enlarge Violet Howl',exact:true}).click();
+  await page.waitForTimeout(100);
+  assert(await page.locator('dialog').evaluate(el=>el.open),'Enlarged view did not open');
+  await page.screenshot({path:path.join(__dirname,'wolf-detail.png')});
+  await page.getByRole('button',{name:'CLOSE ×',exact:true}).click();
+  const old=await page.evaluate(()=>studies.state().seed);
+  await page.getByRole('button',{name:'NEW SKETCHES'}).click();
+  assert.notEqual(await page.evaluate(()=>studies.state().seed),old);
+  const remix=await canvases.first().screenshot();assert(!a.equals(remix),'Remix did not change the drawing');
+  await page.locator('#energy').press('End');
+  assert.equal(await page.evaluate(()=>studies.state().energy),1.8);
+  await page.setViewportSize({width:390,height:844});await page.waitForTimeout(200);
+  await page.screenshot({path:path.join(__dirname,'phone.png')});
+  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Phone overflow');
+  await page.getByRole('button',{name:'Enlarge Moon Hare',exact:true}).click();
+  await page.waitForTimeout(100);await page.screenshot({path:path.join(__dirname,'hare-phone.png')});
+  assert((await page.locator('dialog').boundingBox()).width<=390,'Dialog overflow');
+  await page.getByRole('button',{name:'CLOSE ×',exact:true}).click();
+  assert.deepEqual(errors,[]);assert.deepEqual(requests,[]);
+  const report={browser:await browser.version(),offline:true,sketchCount:8,deterministic:true,lineBoilHz:12,viewports:['1420x1160','390x844'],errors,networkRequests:requests,physicalPhoneTested:false};
+  fs.writeFileSync(path.join(__dirname,'verification.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report));
+ }finally{await browser.close();}
+})().catch(e=>{console.error(e);process.exit(1);});
