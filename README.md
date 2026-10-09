@@ -4,6 +4,10 @@ An endless fashion runway through an illustrated enchanted forest. A woman walks
 
 [Open the live forest preview](https://tonidondoni.github.io/woodz-witch-fashion-preview/).
 
+## Separate study: Forest Casting / GPT
+
+[Open Forest Casting / GPT](https://tonidondoni.github.io/woodz-witch-fashion-preview/strange-passing-gpt/): a forest fashion show with one visitor at a time, seated leshy and owl buyers, a moon-antlered deer, unusual airborne creatures, and passing gusts. Eight procedural families vary through seeded drawing details and 12 Hz boiling pencil contours. See `out/strange-passing-gpt/README.md` for reproduction and verification. This study preserves the accepted root page and all 33 original sprites.
+
 ## Current runway: scenes in the wood
 
 Two layers of hand-drawn trees pass behind the walker. Moss, ferns, mushrooms, stumps and small woodland spirits line the runway, and a fourth, faster row of dark blades and fronds passes in front of her, so foreground vegetation genuinely occludes her sneakers. Seeded identities preserve each object's shape and details throughout its journey. Smooth parallax and secondary movements run independently of the 12 Hz boiling pencil contours. Butterflies and drifting dust remain as accents.

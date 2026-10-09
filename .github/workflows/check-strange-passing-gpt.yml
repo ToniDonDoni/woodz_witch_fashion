@@ -1,0 +1,45 @@
+name: Check Forest Casting GPT
+
+on:
+  pull_request:
+    paths:
+      - 'out/strange-passing-gpt/**'
+      - 'site/strange-passing-gpt/**'
+      - 'src/forest_scene.js'
+      - 'assets/walk/**'
+      - '.github/workflows/check-strange-passing-gpt.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install renderer and browser dependencies
+        run: |
+          python -m pip install pillow==12.3.0
+          npm install --no-save playwright@1.62.1
+          npx playwright install --with-deps chromium
+      - name: Build standalone suffix
+        run: python out/strange-passing-gpt/build.py
+      - name: Check offline rendering and procedural director
+        run: node out/strange-passing-gpt/verify.cjs
+      - name: Check uninterrupted playback
+        run: node out/strange-passing-gpt/live-check.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: forest-casting-gpt-review
+          path: |
+            out/strange-passing-gpt/*verification.json
+            out/strange-passing-gpt/captures
