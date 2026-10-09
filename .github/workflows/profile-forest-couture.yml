@@ -1,0 +1,38 @@
+name: Profile forest couture frame budget
+
+on:
+  pull_request:
+    paths:
+      - "out/forest-couture-perf/**"
+      - ".github/workflows/profile-forest-couture.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  profile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Retrieve the exact unoptimized forest couture candidate
+        run: |
+          git fetch origin codex/forest-couture-buyers-row
+          git show FETCH_HEAD:site/forest-couture-buyers/index.html > out/forest-couture-perf/couture.html
+          test -s out/forest-couture-perf/couture.html
+      - name: Install Chromium
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Measure original main, couture and offscreen-cached couture
+        run: node out/forest-couture-perf/benchmark.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: couture-frame-budget
+          path: out/forest-couture-perf/results.json
+          if-no-files-found: ignore
