@@ -1,0 +1,11 @@
+# Visual and behavioural review — cast variety correction
+
+The previous study had a real perceptual repetition problem: eight mostly fixed silhouettes and an adjacent-only guard. Varying colour and part count did not stop an owl from looking like the same owl.
+
+This attempt preserves the first study and changes the published suffix to a sixteen-family renderer. The seeded scheduler moves a family only within its four-position band, giving a provable minimum return gap of 13 slots. All tests use this actual gap rather than counting unique event IDs. Forms rotate per return; the four owl forms were drawn separately and visually compared in `captures/owl-forms.jpg`.
+
+Reviewed every family in `captures/contact-sheet.jpg`, the portrait owl, and individual full-size hare and mirror captures. The new families have recognizable separate silhouettes and gestures. The owl comparison shows a heart-faced tall figure on a stool, a round owl on a suitcase, an angular long-eared cape figure, and a wide-collared hat figure. They retain the same pencil and muted paint vocabulary. The new cast does not rely on colour changes alone.
+
+Offline Chromium checks passed for eight seeds × 1000 plans, sixteen rendered families, at most one guest on stage, a minimum return gap of 13 slots, bounded caches, exact nonblank pixel replay after a ten-hour seek, controls and reduced-motion startup. Four viewport sizes were checked; every family was captured at 390-pixel portrait width. Median timed drawing cost was 6.9 ms, p95 8.0 ms on this desktop. See `verification.json` and `live-verification.json` for measured results.
+
+Scope limits: sixteen authored families can eventually recur. The four-position band design prioritizes a guaranteed gap over completely arbitrary ordering. Rotating form and action indices are selection checks; the screenshot review establishes that the owl forms themselves visibly differ. The newly added species have distinct family body plans with details and accessories, not four completely separate drawings each. Reload and New Dream start a fresh programme and reset its spacing history. The original gait discontinuity and lack of physical-phone thermal/file-opening tests remain.
