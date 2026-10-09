@@ -1,9 +1,10 @@
-name: Profile forest couture frame budget
+name: Profile and verify cached forest couture
 
 on:
   pull_request:
     paths:
       - "out/forest-couture-perf/**"
+      - "site/forest-couture-buyers-optimized/**"
       - ".github/workflows/profile-forest-couture.yml"
   workflow_dispatch:
 
@@ -13,26 +14,39 @@ permissions:
 jobs:
   profile:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Retrieve the exact unoptimized forest couture candidate
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Retrieve exact original source from linked PR 16
         run: |
           git fetch origin codex/forest-couture-buyers-row
-          git show FETCH_HEAD:site/forest-couture-buyers/index.html > out/forest-couture-perf/couture.html
-          test -s out/forest-couture-perf/couture.html
-      - name: Install Chromium
+          git show FETCH_HEAD:site/forest-couture-buyers/index.html > out/forest-couture-perf/original.html
+          cp out/forest-couture-perf/original.html out/forest-couture-perf/couture.html
+          test -s out/forest-couture-perf/original.html
+      - name: Install offline browser and atlas builder
         run: |
+          python -m pip install pillow
           npm install --no-save playwright
           npx playwright install --with-deps chromium
-      - name: Measure original main, couture and offscreen-cached couture
+      - name: Rebuild optimized candidate using 33 original sprite frames
+        run: python out/forest-couture-perf/build.py
+      - name: Compare visually with original and verify cached background
+        run: node out/forest-couture-perf/verify.cjs
+      - name: Profile original and cached frame dispatch
         run: node out/forest-couture-perf/benchmark.cjs
-      - uses: actions/upload-artifact@v4
+      - name: Upload screenshots and frame budget
         if: always()
+        uses: actions/upload-artifact@v4
         with:
-          name: couture-frame-budget
-          path: out/forest-couture-perf/results.json
+          name: cached-couture-performance-review
+          path: |
+            out/forest-couture-perf/captures
+            out/forest-couture-perf/results.json
+            out/forest-couture-perf/verification.json
           if-no-files-found: ignore
