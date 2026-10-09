@@ -17,3 +17,7 @@ Eight visitor grammars: a seated leshy buyer wearing striped sportswear; an owl 
 - Pause, pace, new dream and next encounter controls; respect reduced-motion preference on initial load.
 - Render and inspect desktop and mobile-sized views, every family, the original 32-to-0 seam and a two-minute live run. Record real-phone and gait limitations accurately.
 - Dedicated branch and PR; publish only the new suffix in the existing public preview repository.
+
+## Variety correction
+
+The first version's eight silhouettes and adjacent-only repeat check were insufficient: the viewer recognized the owl and airborne pieces returning. The revised attempt is `out/forest-casting-variety-gpt/`, published to the same suffix. This revision supersedes the original eight-family scheduling criterion. It must render sixteen distinct families, show at least twelve other guests before a family returns, and use four clearly different owl body plans with rotating gestures. Validate eight seeds over 1000 events each, compare all four owl forms visually, and retain the previous attempt for comparison. The spacing guarantee applies within one programme; reload and New Dream restart it.

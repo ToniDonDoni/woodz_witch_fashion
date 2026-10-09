@@ -6,7 +6,7 @@ An endless fashion runway through an illustrated enchanted forest. A woman walks
 
 ## Separate study: Forest Casting / GPT
 
-[Open Forest Casting / GPT](https://tonidondoni.github.io/woodz-witch-fashion-preview/strange-passing-gpt/): a forest fashion show with one visitor at a time, seated leshy and owl buyers, a moon-antlered deer, unusual airborne creatures, and passing gusts. Eight procedural families vary through seeded drawing details and 12 Hz boiling pencil contours. See `out/strange-passing-gpt/README.md` for reproduction and verification. This study preserves the accepted root page and all 33 original sprites.
+[Open Forest Casting / GPT](https://tonidondoni.github.io/woodz-witch-fashion-preview/strange-passing-gpt/): a forest fashion show with one visitor at a time, seated leshy and owl buyers, a moon-antlered deer, unusual airborne creatures, and passing gusts. Sixteen procedural families use seeded drawing details and 12 Hz boiling pencil contours; at least twelve other guests appear before a family returns. Four distinct owl silhouettes replace the original repeated owl. See `out/forest-casting-variety-gpt/README.md` for reproduction and verification. This study preserves the accepted root page and all 33 original sprites.
 
 ## Current runway: scenes in the wood
 

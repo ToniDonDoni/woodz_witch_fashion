@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'out/strange-passing-gpt/**'
+      - 'out/forest-casting-variety-gpt/**'
       - 'site/strange-passing-gpt/**'
       - 'src/forest_scene.js'
       - 'assets/walk/**'
@@ -31,15 +32,15 @@ jobs:
           npm install --no-save playwright@1.62.1
           npx playwright install --with-deps chromium
       - name: Build standalone suffix
-        run: python out/strange-passing-gpt/build.py
+        run: python out/forest-casting-variety-gpt/build.py
       - name: Check offline rendering and procedural director
-        run: node out/strange-passing-gpt/verify.cjs
+        run: node out/forest-casting-variety-gpt/verify.cjs
       - name: Check uninterrupted playback
-        run: node out/strange-passing-gpt/live-check.cjs
+        run: node out/forest-casting-variety-gpt/live-check.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: forest-casting-gpt-review
           path: |
-            out/strange-passing-gpt/*verification.json
-            out/strange-passing-gpt/captures
+            out/forest-casting-variety-gpt/*verification.json
+            out/forest-casting-variety-gpt/captures
