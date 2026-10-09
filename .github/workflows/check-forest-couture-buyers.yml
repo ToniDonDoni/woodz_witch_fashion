@@ -1,0 +1,36 @@
+name: Check forest couture buyers
+on:
+  pull_request:
+    paths:
+      - "out/forest-couture-buyers/**"
+      - "site/forest-couture-buyers/**"
+      - ".github/workflows/check-forest-couture-buyers.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: |
+          pip install pillow
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - run: python out/forest-couture-buyers/build.py
+      - run: node out/forest-couture-buyers/verify.cjs
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: forest-couture-visual-review
+          path: |
+            out/forest-couture-buyers/desktop.png
+            out/forest-couture-buyers/mobile.png
+          if-no-files-found: ignore
