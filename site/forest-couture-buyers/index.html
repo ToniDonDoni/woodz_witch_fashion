@@ -105,7 +105,7 @@ const forestBuyers=(()=>{
   for(const side of [-1,1])line(c,[[w*(side<0?.42:.58),h*.60],[w*(side<0?.09:.91),h]],'#a3949e',1.4);
   const count=w<550?9:11,gap=w/(count+.3);
   for(let i=0;i<count;i++){
-   const xx=gap*(i+.65),s=Math.min(1.05,Math.max(.42,w/1280))*(.82+rnd(seed,i+100)*.24);
+   const xx=gap*(i+.65),s=Math.min(1.37,Math.max(.53,w/1000))*(.82+rnd(seed,i+100)*.24);
    buyer(c,i,xx,baseline-160*s,s,time,seed);
    c.fillStyle='#0b0a0f';c.fillRect(xx-42*s,baseline+5*s,84*s,18*s);
    c.strokeStyle='#4b444d';c.lineWidth=.65;c.strokeRect(xx-42*s,baseline+5*s,84*s,18*s);
