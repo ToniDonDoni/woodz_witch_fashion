@@ -4,6 +4,8 @@ The original woman walks continuously on pure black. New procedural creatures ap
 
 Hosted review URL: [Nocturne Creatures GPT](https://tonidondoni.github.io/woodz-witch-fashion-preview/nocturne-creatures-gpt/). The build also writes an identical release copy to `site/nocturne-creatures-gpt/index.html`; publication uses the existing public-preview repository's dedicated subpath.
 
+Publication PR: [public preview #15](https://github.com/ToniDonDoni/woodz-witch-fashion-preview/pull/15). Run `PUBLISHED_PREVIEW=1 PREVIEW_URL='<published-url>' npm run verify:live` to check the deployed page; this records `published-verification.json` and `captures/published/` rather than overwriting the local preview checks.
+
 ## Reproduce
 
 From this attempt directory, with Node.js 22 or newer:

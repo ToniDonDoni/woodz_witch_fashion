@@ -1,0 +1,31 @@
+{
+  "url": "https://tonidondoni.github.io/woodz-witch-fashion-preview/nocturne-creatures-gpt/",
+  "httpStatus": 200,
+  "deliveredHtmlMatchesBuild": true,
+  "htmlSha256": "c20c78548c19827eb5b408629edb226cfbd8c51f214bd0fd103cc959e1a69903",
+  "queryRoutesChecked": [
+    "/",
+    "/?runway=3",
+    "/?seed=1847",
+    "/index.html?seed=1847"
+  ],
+  "deploymentRun": "https://github.com/ToniDonDoni/woodz-witch-fashion-preview/actions/runs/38486135980",
+  "publicationPr": "https://github.com/ToniDonDoni/woodz-witch-fashion-preview/pull/15",
+  "publicationCommit": "f0004279ec225118f3eb79dccc3fa1f1d1468125",
+  "browserVerification": {
+    "method": "Codex in-app browser on the actual GitHub Pages URL",
+    "womanAndCreatureRendered": true,
+    "naturalVisitorChangeObserved": true,
+    "observedVisitorLabels": [
+      "001",
+      "002",
+      "003"
+    ],
+    "pauseNextReseedResumePassed": true,
+    "seedChangedFrom": 934143850,
+    "seedChangedTo": 1819938936,
+    "consoleErrors": []
+  },
+  "headlessChromeTransportCheck": "ERR_SOCKET_NOT_CONNECTED; superseded by successful in-app browser verification",
+  "physicalPhoneTested": false
+}

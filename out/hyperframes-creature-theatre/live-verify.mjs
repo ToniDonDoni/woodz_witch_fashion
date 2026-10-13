@@ -3,7 +3,8 @@ import { strict as assert } from 'node:assert';
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 const dir = fileURLToPath(new URL('.', import.meta.url));
-const base = process.env.PREVIEW_URL || 'http://localhost:4117';
+const base = (process.env.PREVIEW_URL || 'http://localhost:4117').replace(/\/$/, '');
+const published = process.env.PUBLISHED_PREVIEW === '1';
 const local = await readFile(dir + 'index.html', 'utf8');
 const routeChecks = [];
 for (const path of ['/', '/?runway=3', '/?seed=1847', '/index.html?seed=1847']) {
@@ -12,7 +13,7 @@ for (const path of ['/', '/?runway=3', '/?seed=1847', '/index.html?seed=1847']) 
   assert.equal(await response.text(), local, 'Server delivered stale or different HTML');
   routeChecks.push(path);
 }
-assert.equal((await fetch(base + '/favicon.ico')).status, 204);
+if (!published) assert.equal((await fetch(base + '/favicon.ico')).status, 204);
 assert.equal((await fetch(base + '/missing-file')).status, 404);
 const browser = await chromium.launch({headless: true,
   ...(process.env.BROWSER_EXECUTABLE ? {executablePath: process.env.BROWSER_EXECUTABLE} : {})});
@@ -23,7 +24,8 @@ page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
 page.on('requestfailed', r => failedRequests.push(r.url()));
 page.on('response', r => { if (r.status() >= 400) httpFailures.push({url: r.url(), status: r.status()}); });
 const samples = [];
-await mkdir(dir + 'captures/live', {recursive: true});
+const captureDirectory = published ? 'captures/published' : 'captures/live';
+await mkdir(dir + captureDirectory, {recursive: true});
 try {
   const response = await page.goto(base + '/?runway=3');
   assert.equal(response.status(), 200);
@@ -37,7 +39,7 @@ try {
     assert(state.running && state.ready);
     assert.equal(state.activeCreatures, 1);
     assert.equal(state.walkFrames, 33);
-    await page.screenshot({path: dir + `captures/live/visitor-${i}.png`});
+    await page.screenshot({path: dir + `${captureDirectory}/visitor-${i}.png`});
   }
   assert(samples[3].time - initial.time > 37, 'Animation did not advance over the live run');
   assert.equal(new Set(samples.map(s => s.specimen.id)).size, 4);
@@ -60,6 +62,6 @@ try {
     realPlaybackSeconds: samples[3].time - initial.time, naturalVisitors: samples.map(s => s.specimen),
     originalWalkFrames: 33, controlsPassed: true, errors, failedRequests, httpFailures,
     browser: await browser.version()};
-  await writeFile(dir + 'live-verification.json', JSON.stringify(report, null, 2) + '\n');
+  await writeFile(dir + (published ? 'published-verification.json' : 'live-verification.json'), JSON.stringify(report, null, 2) + '\n');
   console.log(JSON.stringify(report, null, 2));
 } finally { await browser.close(); }
