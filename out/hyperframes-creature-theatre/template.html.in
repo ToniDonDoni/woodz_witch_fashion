@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nocturne — Endless Creature Runway</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 100%; height: 100%; background: #000; overflow: hidden; color: #ece5d4; }
+    #root { width: 100%; height: 100%; position: relative; background: #000; }
+    canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    .chrome { position: relative; width: 100%; height: 100%; padding: clamp(24px, 4vw, 64px); display: flex; flex-direction: column; justify-content: space-between; pointer-events: none; }
+    header, footer { display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; }
+    .eyebrow, .serial, button, .phase, .note { font-family: monospace; font-size: 12px; line-height: 1.7; letter-spacing: .14em; text-transform: uppercase; }
+    .eyebrow, .serial, .note { color: #c0b9ad; }
+    h1 { font-family: serif; font-weight: 400; font-size: clamp(32px, 4vw, 62px); letter-spacing: -.045em; margin: 3px 0 0; line-height: 1.05; }
+    .serial { text-align: right; font-variant-numeric: tabular-nums; }
+    h2 { font-family: serif; font-size: clamp(24px, 2.8vw, 44px); font-weight: 400; margin: 0 0 5px; }
+    .phase { color: #bcfae2; font-size: 11px; }
+    .controls { display: flex; gap: 9px; align-self: flex-end; pointer-events: auto; }
+    button { border: 1px solid #514e48; border-radius: 0; padding: 10px 14px; color: #ece5d4; background: #000; cursor: pointer; font-size: 10px; letter-spacing: .08em; }
+    button:hover, button:focus-visible { border-color: #bcfae2; color: #bcfae2; outline: 1px solid #bcfae2; }
+    .progress { position: absolute; bottom: 0; height: 1px; background: #bcfae2; left: 0; width: 100%; transform-origin: left; }
+    .error { max-width: 40ch; padding: 30px; font-family: monospace; position: absolute; top: 40%; }
+    @media (max-width: 600px) { footer { flex-direction: column; gap: 24px; } .controls { align-self: flex-start; } .note { display: none; } .serial { max-width: 120px; font-size: 10px; } }
+  </style>
+</head>
+<body>
+  <div id="root">
+    <canvas id="creatures" aria-label="A woman walking endlessly while new procedural creatures approach and react to her"></canvas>
+    <div class="chrome">
+      <header>
+        <div><div class="eyebrow">Woodz / Studies in the unseen</div><h1>Nocturne</h1></div>
+        <div class="serial"><div>Endless encounters</div><div id="specimen">Visitor 001</div><div id="seed-label">Seed 01847</div></div>
+      </header>
+      <footer>
+        <div><h2 id="family">The antler spirit</h2><div class="phase" id="phase">Arriving from the dark</div><div class="note">An endless procession. No two visitors alike.</div></div>
+        <div class="controls" aria-label="Playback controls"><button id="pause" aria-label="Pause animation">Pause</button><button id="next">Next creature ↗</button><button id="dream">New seed</button></div>
+      </footer>
+    </div>
+    <div class="progress" id="progress" data-layout-ignore></div>
+  </div>
+  <script>window.__WALK_ATLAS__ = '__ATLAS_DATA_URL__';</script>
+  <script>__BUNDLE__</script>
+</body>
+</html>
