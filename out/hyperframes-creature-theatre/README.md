@@ -17,9 +17,12 @@ Open the URL printed by the server, or open `index.html` directly. Three.js, the
 ```sh
 npm run check
 npm run verify
+npm run verify:live
 ```
 
 Verification uses Playwright Chromium. Install it with `npx playwright install chromium`, or set `BROWSER_EXECUTABLE` to your local Chromium executable.
+
+Start the local server before `verify:live`. This check loads the exact handoff URL with its query string, verifies that the response matches the built page, watches forty seconds of natural playback through four visitors, and tests pause/next/reseed/resume. The local server routes on the URL pathname, so preview and reproducibility query parameters do not cause a 404. Results are recorded in `live-verification.json`.
 
 ## Stochastic anatomy
 

@@ -6,8 +6,9 @@
     "build": "node build.mjs",
     "start": "node preview.mjs",
     "dev": "node preview.mjs",
-    "check": "node --check theatre.js && node --check build.mjs && node --check preview.mjs && node --check verify.mjs",
-    "verify": "node verify.mjs"
+    "check": "node --check theatre.js && node --check build.mjs && node --check preview.mjs && node --check verify.mjs && node --check live-verify.mjs",
+    "verify": "node verify.mjs",
+    "verify:live": "node live-verify.mjs"
   },
   "dependencies": {
     "three": "0.181.2"
