@@ -1,5 +1,5 @@
 import { build } from 'esbuild';
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 const dir = fileURLToPath(new URL('.', import.meta.url));
 const bundled = await build({entryPoints: [dir + 'theatre.js'], bundle: true, minify: true,
@@ -13,4 +13,7 @@ const html = template.replace('__ATLAS_DATA_URL__', () => atlas[1])
   .replace('__BUNDLE__', () => bundled.outputFiles[0].text.replace(/<\/script/gi, '<\\/script'))
   .replace(/[\t ]+$/gm, '');
 await writeFile(dir + 'index.html', html);
+const release = dir + '../../site/nocturne-creatures-gpt/';
+await mkdir(release, {recursive: true});
+await writeFile(release + 'index.html', html);
 console.log(`Built endless offline runway: ${Buffer.byteLength(html)} bytes; original 33 walk frames`);

@@ -2,6 +2,8 @@
 
 The original woman walks continuously on pure black. New procedural creatures approach her one at a time, inspect or display themselves, transform and leave. The final deliverable is an endless self-contained HTML page. HyperFrames is only a graphics and motion reference.
 
+Hosted review URL: [Nocturne Creatures GPT](https://tonidondoni.github.io/woodz-witch-fashion-preview/nocturne-creatures-gpt/). The build also writes an identical release copy to `site/nocturne-creatures-gpt/index.html`; publication uses the existing public-preview repository's dedicated subpath.
+
 ## Reproduce
 
 From this attempt directory, with Node.js 22 or newer:
