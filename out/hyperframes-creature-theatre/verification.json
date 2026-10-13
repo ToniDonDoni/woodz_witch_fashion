@@ -1,0 +1,42 @@
+{
+  "browser": "155.0.8059.41",
+  "offline": true,
+  "liveClockAdvanceSeconds": 1.0166999999999993,
+  "pauseNextReseed": true,
+  "identitiesChecked": 300,
+  "distinctFamilies": 3,
+  "deterministicSeeks": [
+    4.5,
+    7.5,
+    17.5,
+    29.5,
+    40.5,
+    3604.5
+  ],
+  "anatomicalArchetypes": 12,
+  "palettes": 8,
+  "originalWalkFrames": 33,
+  "originalWalkAtlasEqual": true,
+  "maxGpuGeometries": 187,
+  "maxGpuTextures": 2,
+  "maxDrawCalls": 190,
+  "tenHourSeek": 3000,
+  "viewports": [
+    "390x844",
+    "320x568",
+    "844x390",
+    "1440x900"
+  ],
+  "captures": [
+    "spirit",
+    "crown",
+    "moth",
+    "bird",
+    "comet",
+    "spirit-002"
+  ],
+  "errors": [],
+  "externalRequests": [],
+  "physicalPhoneTested": false,
+  "originalWalkSeamPreserved": true
+}
