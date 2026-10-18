@@ -110,101 +110,68 @@
     background:'#302541',color:'#fff',border:'1px solid #77638c'});
   panel.appendChild(musicButton);
 
-  const MUSIC = Object.freeze({
-    referenceTempoBeatsPerMinute: 84, // Quarter notes per minute.
-    minimumTempoMultiplier: 0.5,       // Dimensionless.
-    maximumTempoMultiplier: 2.0,       // Dimensionless.
-    lookAheadSeconds: 0.12,            // Audio scheduler horizon.
-    schedulerIntervalMilliseconds: 25, // Scheduling tick.
-    sixteenthNotesPerBeat: 4,          // Subdivisions per quarter note.
-    secondsPerMinute: 60,              // s/min.
-    oscillatorDecaySeconds: 1.8,       // Piano-like envelope decay.
-    oscillatorAttackSeconds: 0.008,    // Piano-like envelope attack.
-    masterVolume: 0.19,                // Linear amplitude.
-    glitchProbability: 0.10,          // Chance per note.
-    grassProbability: 0.32,           // Chance per note.
-    semitonesPerOctave: 12,
-    concertA4Hertz: 440,
-    concertA4MidiNote: 69
-  });
-  // Degrees are MIDI semitone offsets from A3 (220 Hz).
-  const MUSIC_ROOT_MIDI = 57;
-  const MUSIC_ARPEGGIO = [0, 7, 12, 15, 12, 7, 3, 7, 0, 7, 12, 15, 19, 12, 7, 3];
+  // Same original score and metallic FM sound as the standalone space_music.html demo.
+  const MUSIC_CHORDS = [
+    [45,52,57,60,64], [41,48,53,57,60], [48,55,60,64,67],
+    [43,50,55,59,62], [50,57,62,65,69], [45,52,57,60,64],
+    [41,48,53,57,60], [40,47,52,56,62]
+  ];
+  const MUSIC_MELODY = [
+    69,72,76,79, 72,69,67,64, 67,72,76,74, 71,67,64,62,
+    65,69,74,76, 72,69,64,60, 72,76,81,79, 76,74,71,68
+  ];
   let audioContext = null, masterGain = null, musicTimer = null;
+  let musicFilter = null, musicDelay = null, musicFeedback = null, musicWet = null;
   let nextNoteTime = 0, noteIndex = 0;
 
-  function midiHertz(midi) {
-    return MUSIC.concertA4Hertz *
-      Math.pow(2, (midi - MUSIC.concertA4MidiNote) / MUSIC.semitonesPerOctave);
-  }
-  function makeNoise(durationSeconds, volume, highpassHertz, atSeconds) {
-    const count = Math.max(1, Math.floor(audioContext.sampleRate * durationSeconds));
-    const buffer = audioContext.createBuffer(1, count, audioContext.sampleRate);
-    const samples = buffer.getChannelData(0);
-    for (let i = 0; i < count; i++) samples[i] = Math.random() * 2 - 1;
-    const source = audioContext.createBufferSource();
-    source.buffer = buffer;
-    const filter = audioContext.createBiquadFilter();
-    filter.type = 'highpass';
-    filter.frequency.value = highpassHertz;
+  function playMetallic(midi, time, volume = 0.12, duration = 2.5) {
+    const frequency = 440 * Math.pow(2, (midi - 69) / 12);
+    const carrier = audioContext.createOscillator();
+    const modulator = audioContext.createOscillator();
+    const modulation = audioContext.createGain();
     const envelope = audioContext.createGain();
-    envelope.gain.setValueAtTime(volume, atSeconds);
-    envelope.gain.exponentialRampToValueAtTime(0.0001, atSeconds + durationSeconds);
-    source.connect(filter); filter.connect(envelope); envelope.connect(masterGain);
-    source.start(atSeconds); source.stop(atSeconds + durationSeconds);
+    carrier.type = 'sine';
+    modulator.type = 'sine';
+    carrier.frequency.value = frequency;
+    modulator.frequency.value = frequency * 2.01;
+    modulation.gain.value = frequency * 0.32;
+    modulator.connect(modulation);
+    modulation.connect(carrier.frequency);
+    envelope.gain.setValueAtTime(0.0001, time);
+    envelope.gain.exponentialRampToValueAtTime(volume, time + 0.08);
+    envelope.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+    carrier.connect(envelope);
+    envelope.connect(musicFilter);
+    carrier.start(time);
+    modulator.start(time);
+    carrier.stop(time + duration);
+    modulator.stop(time + duration);
   }
-  function playPiano(midi, atSeconds) {
-    const frequency = midiHertz(midi);
-    const envelope = audioContext.createGain();
-    envelope.gain.setValueAtTime(0.0001, atSeconds);
-    envelope.gain.exponentialRampToValueAtTime(0.28, atSeconds + MUSIC.oscillatorAttackSeconds);
-    envelope.gain.exponentialRampToValueAtTime(0.0001, atSeconds + MUSIC.oscillatorDecaySeconds);
-    envelope.connect(masterGain);
-    for (const [wave, harmonic, volume] of [['sine', 1, 1], ['triangle', 2, 0.13]]) {
-      const oscillator = audioContext.createOscillator();
-      const partialGain = audioContext.createGain();
-      oscillator.type = wave;
-      oscillator.frequency.setValueAtTime(frequency * harmonic, atSeconds);
-      partialGain.gain.value = volume;
-      oscillator.connect(partialGain); partialGain.connect(envelope);
-      oscillator.start(atSeconds);
-      oscillator.stop(atSeconds + MUSIC.oscillatorDecaySeconds);
-    }
-  }
+
   function scheduleMusic() {
-    if (!audioContext) return;
+    if (!audioContext || audioContext.state !== 'running') return;
     const speedPosition = Number(document.getElementById('gravity-speed-slider').value);
-    const harmonyPosition = Number(document.getElementById('gravity-strength-slider').value);
-    // Slowdown c controls musical tempo; left = slower, right = faster.
-    const tempoMultiplier = MUSIC.minimumTempoMultiplier +
-      (MUSIC.maximumTempoMultiplier - MUSIC.minimumTempoMultiplier) *
-      (speedPosition / GRAVITY_CONTROL_CONSTANTS.sliderMaximum);
-    const secondsPerNote = MUSIC.secondsPerMinute /
-      (MUSIC.referenceTempoBeatsPerMinute * tempoMultiplier * MUSIC.sixteenthNotesPerBeat);
-    while (nextNoteTime < audioContext.currentTime + MUSIC.lookAheadSeconds) {
-      const degree = MUSIC_ARPEGGIO[noteIndex % MUSIC_ARPEGGIO.length];
-      // Minor third (3 semitones) transitions to major third (4 semitones).
-      // Harmony is sampled at note boundaries to avoid retuning sustained notes.
-      const majorBlend = Math.max(0, Math.min(1,
-        harmonyPosition / GRAVITY_CONTROL_CONSTANTS.sliderMaximum));
-      const majorThird = majorBlend >= 0.5 ? 4 : 3;
-      const adjustedDegree = degree === 3 ? majorThird :
-        degree === 15 ? 12 + majorThird : degree;
-      // Gravity G also transposes the entire melody by up to one octave each way.
-      // Left = 12 semitones lower, middle = original pitch, right = 12 higher.
-      const transposeSemitones = Math.round(
-        (harmonyPosition - GRAVITY_CONTROL_CONSTANTS.sliderDefault) *
-        MUSIC.semitonesPerOctave
-      );
-      playPiano(MUSIC_ROOT_MIDI + adjustedDegree + transposeSemitones, nextNoteTime);
-      if (Math.random() < MUSIC.grassProbability) {
-        makeNoise(0.045, 0.035, 750, nextNoteTime);
+    const gravityPosition = Number(document.getElementById('gravity-strength-slider').value);
+    const tempoMultiplier = 0.5 + 1.5 * speedPosition / 2;
+    const beat = 0.6 / tempoMultiplier;
+    const transpose = Math.round((gravityPosition - 1) * 12);
+    while (nextNoteTime < audioContext.currentTime + 0.12) {
+      const bar = Math.floor(noteIndex / 4) % MUSIC_CHORDS.length;
+      const pass = Math.floor(noteIndex / (4 * MUSIC_CHORDS.length)) % 4;
+      const part = noteIndex % 4;
+      const chord = MUSIC_CHORDS[bar];
+      const time = nextNoteTime;
+      if (part === 0) {
+        playMetallic(chord[0] + transpose, time, 0.14, 3.5);
+        for (let i = 1; i < chord.length; i++) {
+          playMetallic(chord[i] + transpose, time + i * beat * 0.45,
+            0.035 + pass * 0.008, 2.8);
+        }
       }
-      if (Math.random() < MUSIC.glitchProbability) {
-        makeNoise(0.012, 0.055, 2800, nextNoteTime);
-      }
+      playMetallic(MUSIC_MELODY[bar * 4 + part] + transpose, time,
+        0.08 + pass * 0.025, 1.8);
       noteIndex++;
-      nextNoteTime += secondsPerNote;
+      nextNoteTime += beat;
     }
   }
   let musicEnabled = true;
@@ -217,8 +184,24 @@
     if (!audioContext) {
       audioContext = new AudioContextClass();
       masterGain = audioContext.createGain();
-      masterGain.gain.value = MUSIC.masterVolume;
+      masterGain.gain.value = 0.35;
       masterGain.connect(audioContext.destination);
+      musicFilter = audioContext.createBiquadFilter();
+      musicFilter.type = 'lowpass';
+      musicFilter.frequency.value = 1100;
+      musicFilter.Q.value = 0.6;
+      musicDelay = audioContext.createDelay(2);
+      musicDelay.delayTime.value = 0.48;
+      musicFeedback = audioContext.createGain();
+      musicFeedback.gain.value = 0.32;
+      musicWet = audioContext.createGain();
+      musicWet.gain.value = 0.35;
+      musicFilter.connect(masterGain);
+      musicFilter.connect(musicDelay);
+      musicDelay.connect(musicFeedback);
+      musicFeedback.connect(musicDelay);
+      musicDelay.connect(musicWet);
+      musicWet.connect(masterGain);
     }
     await audioContext.resume();
     if (!musicEnabled || audioContext.state !== 'running' || musicTimer !== null) return;
