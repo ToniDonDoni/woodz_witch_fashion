@@ -22,7 +22,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install build tools
-        run: sudo apt-get update && sudo apt-get install -y make python3 git pkg-config
+        run: |
+          sudo apt-get update && sudo apt-get install -y make python3 python3-pip git pkg-config
+          python3 -m pip install Pillow
       - name: Install Emscripten
         uses: emscripten-core/setup-emsdk@v15
         with:
@@ -32,6 +34,10 @@ jobs:
       - name: Verify deployable site
         run: |
           test -s dist/openframeworks/index.html
+          test -s dist/openframeworks/legacy/index.html
+          test -s dist/openframeworks/wasm/index.html
+          grep -q 'JavaScript' dist/openframeworks/index.html
+          grep -q 'WebAssembly' dist/openframeworks/index.html
           test -n "$(find dist/openframeworks -type f -name '*.wasm' -print -quit)"
           test -n "$(find dist/openframeworks -type f -name '*.js' -print -quit)"
           python3 -m http.server 8765 --directory dist/openframeworks &
