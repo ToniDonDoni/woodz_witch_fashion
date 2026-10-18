@@ -28,6 +28,7 @@ constexpr double kMaxSliderMultiplier = 10.0;        // Dimensionless.
 constexpr double kMinSourceRadiusPixels = 40.0;
 constexpr double kSourceHorizontalFraction = 0.5;    // Fraction of canvas width.
 constexpr double kSourceVerticalFraction = 0.84;     // Fraction of canvas height.
+constexpr double kGroundHeightFraction = 0.86;      // Fraction of canvas height.
 constexpr double kMaximumAbsoluteStrain = 2.0;      // Dimensionless visual safety limit.
 constexpr double kStrainToDisplacement = 0.5;        // Dimensionless, linearized strain relation.
 constexpr double kSecondsPerScene = 11.0;
@@ -46,7 +47,7 @@ public:
     }
     // Screen-space quadrupole-inspired strain, not a physical GR solver.
     // Fixed physical scale: 100 px/m, two 5 kg legs, 0.2 m excursion.
-    // The 140 px target at 480 px radius calibrates the reference strain.
+    // Strength and propagation speed are independently adjustable visual parameters.
     double gravityStrain(double x, double y, double t, double speed, double gain,
                          double w, double h) const {
         using namespace SimulationConstants;
@@ -72,7 +73,7 @@ public:
         ofBackground(3, 3, 9);
         ofPushStyle();
         ofEnableBlendMode(OF_BLENDMODE_ADD);
-        const float ground = h * .86f;
+        const float ground = h * SimulationConstants::kGroundHeightFraction;
         double speedFactor = SimulationConstants::kDefaultSpeedSlowdownMantissa;
         double gravityFactor = SimulationConstants::kDefaultGravityGainMantissa;
 #ifdef __EMSCRIPTEN__
@@ -95,7 +96,7 @@ public:
             const float baseX = std::fmod(tree.x * w + t * (12 + tree.depth * 23), w + 180);
             const float wave = gravityStrain(baseX, ground, t, speedFactor, gravityFactor, w, h);
             const float x = baseX + static_cast<float>(SimulationConstants::kStrainToDisplacement * wave * (baseX - w * SimulationConstants::kSourceHorizontalFraction));
-            const float trunk = h * (.20f + tree.depth * .27f) * (1.f - .5f * wave);
+            const float trunk = h * (.20f + tree.depth * .27f) * (1.f - static_cast<float>(SimulationConstants::kStrainToDisplacement * wave));
             ofSetColor(tree.tint, 40 + static_cast<int>(tree.depth * 55));
             ofSetLineWidth(1.2f + tree.depth * 2);
             ofDrawLine(x, ground, x + std::sin(t*.35f + tree.x*8)*9, ground-trunk);
