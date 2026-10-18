@@ -124,54 +124,74 @@
   let musicFilter = null, musicDelay = null, musicFeedback = null, musicWet = null;
   let nextNoteTime = 0, noteIndex = 0;
 
-  function playMetallic(midi, time, volume = 0.12, duration = 2.5) {
-    const frequency = 440 * Math.pow(2, (midi - 69) / 12);
-    const carrier = audioContext.createOscillator();
-    const modulator = audioContext.createOscillator();
-    const modulation = audioContext.createGain();
-    const envelope = audioContext.createGain();
-    carrier.type = 'sine';
-    modulator.type = 'sine';
-    carrier.frequency.value = frequency;
-    modulator.frequency.value = frequency * 2.01;
-    modulation.gain.value = frequency * 0.32;
-    modulator.connect(modulation);
-    modulation.connect(carrier.frequency);
-    envelope.gain.setValueAtTime(0.0001, time);
-    envelope.gain.exponentialRampToValueAtTime(volume, time + 0.08);
-    envelope.gain.exponentialRampToValueAtTime(0.0001, time + duration);
-    carrier.connect(envelope);
-    envelope.connect(musicFilter);
-    carrier.start(time);
-    modulator.start(time);
-    carrier.stop(time + duration);
-    modulator.stop(time + duration);
+  let noiseBuffer, musicCompressor;
+  const hz = n => 440*Math.pow(2,(n-69)/12);
+  function env(g,t,v,attack,duration) {
+    g.gain.setValueAtTime(.0001,t);
+    g.gain.exponentialRampToValueAtTime(v,t+attack);
+    g.gain.exponentialRampToValueAtTime(.0001,t+duration);
   }
-
-  function scheduleMusic() {
-    if (!audioContext || audioContext.state !== 'running') return;
-    const speedPosition = Number(document.getElementById('gravity-speed-slider').value);
-    const gravityPosition = Number(document.getElementById('gravity-strength-slider').value);
-    const tempoMultiplier = 0.5 + 1.5 * speedPosition / 2;
-    const beat = 0.6 / tempoMultiplier;
-    const transpose = Math.round((gravityPosition - 1) * 12);
-    while (nextNoteTime < audioContext.currentTime + 0.12) {
-      const bar = Math.floor(noteIndex / 4) % MUSIC_CHORDS.length;
-      const pass = Math.floor(noteIndex / (4 * MUSIC_CHORDS.length)) % 4;
-      const part = noteIndex % 4;
-      const chord = MUSIC_CHORDS[bar];
-      const time = nextNoteTime;
-      if (part === 0) {
-        playMetallic(chord[0] + transpose, time, 0.14, 3.5);
-        for (let i = 1; i < chord.length; i++) {
-          playMetallic(chord[i] + transpose, time + i * beat * 0.45,
-            0.035 + pass * 0.008, 2.8);
-        }
+  function kick(t) {
+    const o=audioContext.createOscillator(),g=audioContext.createGain();
+    o.frequency.setValueAtTime(165,t);
+    o.frequency.exponentialRampToValueAtTime(46,t+.12);
+    o.frequency.exponentialRampToValueAtTime(39,t+.45);
+    env(g,t,.86,.003,.47);o.connect(g);g.connect(masterGain);
+    o.start(t);o.stop(t+.49);
+  }
+  function noise(t,high,low,v,duration) {
+    const s=audioContext.createBufferSource(),hp=audioContext.createBiquadFilter();
+    const lp=audioContext.createBiquadFilter(),g=audioContext.createGain();
+    s.buffer=noiseBuffer;hp.type='highpass';hp.frequency.value=high;
+    lp.type='lowpass';lp.frequency.value=low;env(g,t,v,.002,duration);
+    s.connect(hp);hp.connect(lp);lp.connect(g);g.connect(masterGain);
+    s.start(t);s.stop(t+duration+.01);
+  }
+  function bass(t,n,d=.34) {
+    const o=audioContext.createOscillator(),sub=audioContext.createOscillator();
+    const f=audioContext.createBiquadFilter(),g=audioContext.createGain(),sg=audioContext.createGain();
+    o.type='sawtooth';o.frequency.value=hz(n);sub.frequency.value=hz(n-12);
+    f.type='lowpass';f.frequency.setValueAtTime(780,t);
+    f.frequency.exponentialRampToValueAtTime(130,t+d);f.Q.value=2;
+    env(g,t,.19,.009,d);env(sg,t,.21,.008,d);
+    o.connect(f);f.connect(g);g.connect(masterGain);
+    sub.connect(sg);sg.connect(masterGain);
+    o.start(t);sub.start(t);o.stop(t+d+.02);sub.stop(t+d+.02);
+  }
+  function synth(t,notes,v,d,lead=false) {
+    const f=audioContext.createBiquadFilter(),g=audioContext.createGain();
+    f.type='lowpass';f.frequency.setValueAtTime(lead?1850:1450,t);
+    if(lead)f.frequency.exponentialRampToValueAtTime(480,t+d);
+    f.Q.value=lead?.7:1.1;env(g,t,v,lead?.014:.035,d);
+    f.connect(g);g.connect(masterGain);g.connect(musicDelay);
+    for(const n of notes) {
+      for(const [type,level,detune] of (lead?
+        [['triangle',1,0],['sawtooth',.17,5]]:[['sawtooth',1,(n%3-1)*4]])) {
+        const o=audioContext.createOscillator(),pg=audioContext.createGain();
+        o.type=type;o.frequency.value=hz(n);o.detune.value=detune;
+        pg.gain.value=level;o.connect(pg);pg.connect(f);
+        o.start(t);o.stop(t+d+.03);
       }
-      playMetallic(MUSIC_MELODY[bar * 4 + part] + transpose, time,
-        0.08 + pass * 0.025, 1.8);
-      noteIndex++;
-      nextNoteTime += beat;
+    }
+  }
+  function scheduleMusic() {
+    if(!audioContext||audioContext.state!=='running')return;
+    const speed=Number(document.getElementById('gravity-speed-slider').value);
+    const gravity=Number(document.getElementById('gravity-strength-slider').value);
+    const dt=60/112/4/(.5+.75*speed),transpose=Math.round((gravity-1)*12);
+    while(nextNoteTime<audioContext.currentTime+.16) {
+      const s=noteIndex%16,bar=Math.floor(noteIndex/16),ix=bar%8;
+      const notes=MUSIC_CHORDS[ix],t=nextNoteTime;
+      if(s%4===0)kick(t);
+      if(s===4||s===12){noise(t,850,8500,.21,.12);noise(t+.025,1200,9000,.1,.09);}
+      if(s%2===0)noise(t+.005,5300,14000,.075,.055);
+      if([2,6,10,14].includes(s))noise(t+.01,5300,14000,.12,.26);
+      if([2,3,6,8,10,11,14].includes(s))
+        bass(t,notes[0]-12+transpose+([3,11].includes(s)?12:0),s===8?.23:.29);
+      if(s===3||s===11)synth(t,notes.slice(1).map(n=>n+transpose),s===11?.046:.063,.88);
+      if(s%4===0)synth(t,[MUSIC_MELODY[ix*4+s/4]+transpose],.105,.39,true);
+      if(s===15&&bar%4===3)noise(t,2200,10000,.10,.24);
+      noteIndex++;nextNoteTime+=dt;
     }
   }
   let musicEnabled = true;
@@ -184,29 +204,25 @@
     if (!audioContext) {
       audioContext = new AudioContextClass();
       masterGain = audioContext.createGain();
-      masterGain.gain.value = 0.35;
-      masterGain.connect(audioContext.destination);
-      musicFilter = audioContext.createBiquadFilter();
-      musicFilter.type = 'lowpass';
-      musicFilter.frequency.value = 1100;
-      musicFilter.Q.value = 0.6;
-      musicDelay = audioContext.createDelay(2);
-      musicDelay.delayTime.value = 0.48;
-      musicFeedback = audioContext.createGain();
-      musicFeedback.gain.value = 0.32;
-      musicWet = audioContext.createGain();
-      musicWet.gain.value = 0.35;
-      musicFilter.connect(masterGain);
-      musicFilter.connect(musicDelay);
-      musicDelay.connect(musicFeedback);
-      musicFeedback.connect(musicDelay);
-      musicDelay.connect(musicWet);
-      musicWet.connect(masterGain);
+      masterGain.gain.value=.62;
+      musicCompressor=audioContext.createDynamicsCompressor();
+      musicCompressor.threshold.value=-16;musicCompressor.knee.value=12;
+      musicCompressor.ratio.value=4;musicCompressor.attack.value=.005;
+      musicCompressor.release.value=.18;
+      masterGain.connect(musicCompressor);musicCompressor.connect(audioContext.destination);
+      musicDelay=audioContext.createDelay(1);musicDelay.delayTime.value=60/112*.75;
+      musicFeedback=audioContext.createGain();musicFeedback.gain.value=.23;
+      musicWet=audioContext.createGain();musicWet.gain.value=.18;
+      musicDelay.connect(musicFeedback);musicFeedback.connect(musicDelay);
+      musicDelay.connect(musicWet);musicWet.connect(masterGain);
+      noiseBuffer=audioContext.createBuffer(1,audioContext.sampleRate,audioContext.sampleRate);
+      const samples=noiseBuffer.getChannelData(0);
+      for(let i=0;i<samples.length;i++)samples[i]=Math.random()*2-1;
     }
     await audioContext.resume();
     if (!musicEnabled || audioContext.state !== 'running' || musicTimer !== null) return;
     nextNoteTime = audioContext.currentTime;
-    musicTimer = setInterval(scheduleMusic, MUSIC.schedulerIntervalMilliseconds);
+    musicTimer = setInterval(scheduleMusic, 25);
     musicButton.textContent = '■ Stop music';
     scheduleMusic();
   }
