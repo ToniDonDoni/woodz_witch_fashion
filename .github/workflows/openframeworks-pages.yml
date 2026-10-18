@@ -26,7 +26,7 @@ jobs:
       - name: Install Emscripten
         uses: emscripten-core/setup-emsdk@v15
         with:
-          version: '3.1.64'
+          version: 'latest'
       - name: Compile openFrameworks and package static site
         run: bash scripts/build_openframeworks_pages.sh
       - name: Verify deployable site
