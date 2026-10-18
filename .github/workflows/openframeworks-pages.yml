@@ -36,6 +36,11 @@ jobs:
           test -s dist/openframeworks/index.html
           test -s dist/openframeworks/legacy/index.html
           test -s dist/openframeworks/wasm/index.html
+          test -s dist/openframeworks/wasm/walk-atlas.webp
+          test -s dist/openframeworks/wasm/wasm_walker_overlay.js
+          grep -q 'wasm_walker_overlay.js' dist/openframeworks/wasm/index.html
+          grep -q 'frameCount:33' dist/openframeworks/wasm/wasm_walker_overlay.js
+          grep -q 'requestAnimationFrame(render)' dist/openframeworks/wasm/wasm_walker_overlay.js
           grep -q 'JavaScript' dist/openframeworks/index.html
           grep -q 'WebAssembly' dist/openframeworks/index.html
           test -n "$(find dist/openframeworks -type f -name '*.wasm' -print -quit)"
