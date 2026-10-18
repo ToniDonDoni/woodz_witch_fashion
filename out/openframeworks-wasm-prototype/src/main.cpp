@@ -1,5 +1,6 @@
 #include "ofMain.h"
 #include <cmath>
+#include <algorithm>
 #include <cstdint>
 #include <random>
 #include <vector>
@@ -15,25 +16,30 @@ public:
         const int next = static_cast<int>(ofGetElapsedTimef() / 11.0f);
         if (next != act_) buildAct(next);
     }
-    // Retarded field from two equal moving foot masses (m=1).
-    float gravityField(float x, float y, float t, float speed, float w, float h) const {
-        constexpr float tau = 6.28318530718f;
-        constexpr float walkHz = 24.f / 33.f;
-        constexpr float gravity = 260000.f; // Fixed simulation-unit G.
-        float field = 0.f;
-        for (int foot = 0; foot < 2; ++foot) {
-            const float sx = w * (.5f + (foot ? .04f : -.04f));
-            const float dy = y - h * .84f;
-            const float dx = x - sx;
-            const float distance = std::sqrt(dx*dx + dy*dy + 1600.f);
-            const float delayed = t - distance / speed;
-            if (delayed < 0.f) continue;
-            const float phase = tau * walkHz * delayed + foot * 3.14159265359f;
-            const float rx = x - (sx + 16.f * std::sin(phase));
-            const float acceleration = gravity / (rx*rx + dy*dy + 1600.f);
-            field += acceleration * std::sin(phase) / 140.f;
-        }
-        return field;
+    // Screen-space quadrupole-inspired strain, not a physical GR solver.
+    // Fixed physical scale: 100 px/m, two 5 kg legs, 0.2 m excursion.
+    // The 140 px target at 480 px radius calibrates the reference strain.
+    double gravityStrain(double x, double y, double t, double speed, double gain,
+                         double w, double h) const {
+        constexpr double pi = 3.141592653589793;
+        constexpr double lightSpeed = 299792458.0;
+        constexpr double physicalG = 6.67430e-11;
+        constexpr double pixelsPerMeter = 100.0;
+        constexpr double legMass = 5.0;
+        constexpr double excursion = 0.2;
+        constexpr double stepHz = 48.0 / 33.0;
+        constexpr double omega = 2.0 * pi * stepHz;
+        constexpr double quadAcceleration = 2.0 * legMass * excursion * excursion * omega * omega;
+        const double dx = x - w * 0.5, dy = y - h * 0.84;
+        const double radiusPx = std::max(40.0, std::hypot(dx, dy));
+        const double radiusM = radiusPx / pixelsPerMeter;
+        const double effectiveC = lightSpeed / (speed * 1.0e8);
+        const double effectiveG = physicalG * gain * 1.0e10;
+        const double retardedTime = t - radiusM / effectiveC;
+        if (retardedTime < 0.0 || gain <= 0.0) return 0.0;
+        const double amplitude = 2.0 * effectiveG * quadAcceleration /
+            (std::pow(effectiveC, 4.0) * radiusM);
+        return std::clamp(amplitude * std::cos(omega * retardedTime), -2.0, 2.0);
     }
     void draw() override {
         const float t = ofGetElapsedTimef(), w = ofGetWidth(), h = ofGetHeight();
@@ -41,17 +47,22 @@ public:
         ofPushStyle();
         ofEnableBlendMode(OF_BLENDMODE_ADD);
         const float ground = h * .86f;
-        float waveSpeed = 145.f;
+        double speedFactor = 1.25, gravityFactor = 2.1;
 #ifdef __EMSCRIPTEN__
-        waveSpeed = static_cast<float>(emscripten_run_script_double(
-            "(window.gravityWaveSpeed && Number.isFinite(window.gravityWaveSpeed)) ? window.gravityWaveSpeed : 145"));
+        speedFactor = emscripten_run_script_double(
+            "Number.isFinite(window.gravitySpeedFactor) ? window.gravitySpeedFactor : 1.25");
+        gravityFactor = emscripten_run_script_double(
+            "Number.isFinite(window.gravityStrengthFactor) ? window.gravityStrengthFactor : 2.1");
 #endif
-        waveSpeed = std::fmax(1.f, waveSpeed);
+        speedFactor = std::clamp(speedFactor, 0.01, 12.5);
+        gravityFactor = std::clamp(gravityFactor, 0.0, 21.0);
         // A new seeded woodland tableau appears every eleven seconds.
         for (const auto& tree : trees_) {
             // The walker faces left, so scenery must travel right toward her.
-            const float baseX = std::fmod(tree.x * w + t * (12 + tree.depth * 23), w + 180);\n            const float wave = gravityField(baseX, ground, t, waveSpeed, w, h);\n            const float x = baseX + 24.f * wave * tree.depth;
-            const float trunk = h * (.20f + tree.depth * .27f) * (1.f + .065f * wave);
+            const float baseX = std::fmod(tree.x * w + t * (12 + tree.depth * 23), w + 180);
+            const float wave = gravityStrain(baseX, ground, t, speedFactor, gravityFactor, w, h);
+            const float x = baseX + static_cast<float>(0.5 * wave * (baseX - w * .5f));
+            const float trunk = h * (.20f + tree.depth * .27f) * (1.f - .5f * wave);
             ofSetColor(tree.tint, 40 + static_cast<int>(tree.depth * 55));
             ofSetLineWidth(1.2f + tree.depth * 2);
             ofDrawLine(x, ground, x + std::sin(t*.35f + tree.x*8)*9, ground-trunk);
@@ -62,8 +73,10 @@ public:
             }
         }
         for (const auto& p : particles_) {
-            const float baseX = std::fmod(p.x * w + t * p.vx + w*10, w);\n            const float wave = gravityField(baseX, p.y*h, t, waveSpeed, w, h);\n            const float x = baseX + 17.f * wave;
-            const float y = p.y*h + std::sin(t*p.freq + p.phase)*p.amplitude - 10.f * wave;
+            const float baseX = std::fmod(p.x * w + t * p.vx + w*10, w);
+            const float wave = gravityStrain(baseX, p.y*h, t, speedFactor, gravityFactor, w, h);
+            const float x = baseX + static_cast<float>(.5 * wave * (baseX - w*.5f));
+            const float y = p.y*h + std::sin(t*p.freq + p.phase)*p.amplitude - static_cast<float>(.5 * wave * (p.y*h - h*.84f));
             ofSetColor(p.tint, 70 + static_cast<int>(80 * (.5f + .5f*std::sin(t + p.phase))));
             ofDrawCircle(x, y, p.size);
         }
