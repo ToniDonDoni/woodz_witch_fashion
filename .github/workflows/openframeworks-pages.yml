@@ -1,13 +1,10 @@
-name: Build openFrameworks WASM site
+name: Build & Test Site
 
 on:
   push:
-  workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 jobs:
   wasm-site:
@@ -73,23 +70,3 @@ jobs:
           path: dist/openframeworks/
           if-no-files-found: error
           retention-days: 14
-      - name: Upload GitHub Pages deployment artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist/openframeworks/
-
-  deploy-preview:
-    needs: wasm-site
-    # PRs validate only; manual runs build, test, and deploy.
-    if: github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-22.04
-    concurrency:
-      group: openframeworks-pages-preview
-      cancel-in-progress: true
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy preview to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
