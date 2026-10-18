@@ -6,29 +6,37 @@
   canvas.setAttribute('aria-label', 'Animated woman walking continuously through procedural woodland');
   Object.assign(canvas.style, {position:'fixed',inset:'0',width:'100vw',height:'100vh',pointerEvents:'none',zIndex:'20'});
   document.body.appendChild(canvas);
-  // Logarithmic speed control: center=145, left=/100, right=x100.
-  const panel = document.createElement('label');
-  panel.id = 'gravity-speed-control';
+  // Two linear controls: zero at left, reference in the middle, 10x at right.
+  const panel = document.createElement('div');
+  panel.id = 'gravity-controls';
   Object.assign(panel.style, {position:'fixed',right:'12px',top:'10px',zIndex:'2147483646',
-    background:'#171321e8',color:'#f3e6ff',padding:'9px 12px',borderRadius:'8px',
-    font:'12px monospace',display:'flex',alignItems:'center',gap:'8px'});
-  const title = document.createElement('span');
-  title.textContent = 'Gravity speed';
-  const slider = document.createElement('input');
-  slider.type = 'range'; slider.min = '-2'; slider.max = '2';
-  slider.step = '0.01'; slider.value = '0'; slider.id = 'gravity-speed-slider';
-  slider.setAttribute('aria-label', 'Gravity propagation speed multiplier');
-  const value = document.createElement('output');
-  value.id = 'gravity-speed-value';
-  function updateSpeed() {
-    const multiplier = Math.pow(10, Number(slider.value));
-    window.gravityWaveSpeed = 145 * multiplier;
-    value.textContent = window.gravityWaveSpeed.toFixed(1) + ' px/s';
+    background:'#171321e8',color:'#f3e6ff',padding:'10px 12px',borderRadius:'8px',
+    font:'12px monospace',display:'grid',gap:'7px'});
+  function addControl(id, label, base, exponent, property) {
+    const row = document.createElement('label');
+    Object.assign(row.style, {display:'flex',alignItems:'center',gap:'8px'});
+    const caption = document.createElement('span');
+    caption.textContent = label;
+    const slider = document.createElement('input');
+    slider.id = id;
+    slider.type = 'range'; slider.min = '0'; slider.max = '10';
+    slider.step = '0.01'; slider.value = '1';
+    slider.setAttribute('aria-label', label);
+    const value = document.createElement('output');
+    value.id = id + '-value';
+    function update() {
+      const factor = base * Number(slider.value);
+      window[property] = factor;
+      value.textContent = factor.toFixed(2) + ' × 10^' + exponent;
+    }
+    slider.addEventListener('input', update);
+    row.append(caption, slider, value);
+    panel.appendChild(row);
+    update();
   }
-  slider.addEventListener('input', updateSpeed);
-  panel.append(title, slider, value);
+  addControl('gravity-speed-slider', 'Slowdown c', 1.25, 8, 'gravitySpeedFactor');
+  addControl('gravity-strength-slider', 'Gravity G', 2.1, 10, 'gravityStrengthFactor');
   document.body.appendChild(panel);
-  updateSpeed();
   const ctx = canvas.getContext('2d');
   const atlas = new Image();
   atlas.src = 'walk-atlas.webp';
