@@ -46,8 +46,14 @@ from pathlib import Path
 p = Path(sys.argv[1])
 html = p.read_text()
 assert '</body>' in html
-# Hide the upstream Emscripten demo controls; keep its runtime and canvas intact.
-cleanup = """<script>
+# Emscripten's generated shell can install document-wide input handlers.
+# Keep the WASM canvas, but isolate it from controls and browser shortcuts.
+cleanup = """<style>
+html, body { overflow: auto !important; }
+#canvas { pointer-events: none !important; }
+#gravity-controls { pointer-events: auto !important; }
+</style>
+<script>
 document.addEventListener('DOMContentLoaded', () => {
   const controls = document.getElementById('controls');
   if (controls) controls.style.display = 'none';
