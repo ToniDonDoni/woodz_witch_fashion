@@ -24,6 +24,18 @@
   Object.assign(panel.style, {position:'fixed',right:'12px',top:'10px',zIndex:'2147483646',
     background:'#171321e8',color:'#f3e6ff',padding:'10px 12px',borderRadius:'8px',
     font:'12px monospace',display:'grid',gap:'7px'});
+  // Emscripten/openFrameworks registers global mouse and touch handlers.
+  // Keep slider gestures inside the controls so the scene cannot hijack dragging.
+  const CONTROL_POINTER_EVENTS = [
+    'pointerdown', 'pointermove', 'pointerup', 'pointercancel',
+    'mousedown', 'mousemove', 'mouseup',
+    'touchstart', 'touchmove', 'touchend', 'touchcancel',
+    'click', 'dblclick'
+  ];
+  for (const eventName of CONTROL_POINTER_EVENTS) {
+    panel.addEventListener(eventName, (event) => event.stopPropagation());
+  }
+  panel.style.pointerEvents = 'auto';
   function addControl(id, label, base, exponent, property) {
     const row = document.createElement('label');
     Object.assign(row.style, {display:'flex',alignItems:'center',gap:'8px'});
