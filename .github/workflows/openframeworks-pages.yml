@@ -52,6 +52,26 @@ jobs:
           trap 'kill "$SERVER_PID"' EXIT
           sleep 2
           curl --fail --silent http://localhost:8765/ > /dev/null
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.56.1
+          npx playwright install --with-deps chromium
+      - name: End-to-end WASM controls and audible signal
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist/openframeworks &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID"' EXIT
+          sleep 2
+          npx playwright test --config=playwright.config.cjs
+      - name: Upload Playwright failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm-playwright-failure-evidence
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
       - name: Upload deployable Pages artifact
         uses: actions/upload-artifact@v4
         with:
