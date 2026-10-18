@@ -1,0 +1,23 @@
+name: OpenFrameworks C++ tests
+
+on:
+  push:
+    branches:
+      - codex/openframeworks-effects
+  pull_request:
+    paths:
+      - 'out/openframeworks-wasm-prototype/**'
+      - '.github/workflows/openframeworks-cpp-tests.yml'
+
+jobs:
+  native-cpp:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile C++ regression tests
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror -pedantic \
+            out/openframeworks-wasm-prototype/tests/scene_rules_test.cpp \
+            -o /tmp/scene_rules_test
+      - name: Run C++ regression tests
+        run: /tmp/scene_rules_test
