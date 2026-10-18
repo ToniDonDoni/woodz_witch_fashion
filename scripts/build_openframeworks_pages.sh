@@ -17,14 +17,18 @@ cp "$ROOT/out/openframeworks-wasm-prototype/Makefile" "$PROJECT/Makefile"
   cd "$PROJECT"
   emmake make -j2 PLATFORM=emscripten
 )
-mkdir -p "$ROOT/dist/openframeworks"
-# Keep generated relative paths intact; fail if the compiler emitted no site.
+mkdir -p "$ROOT/dist/openframeworks/wasm" "$ROOT/dist/openframeworks/legacy"
+# Preserve the generated Emscripten page under /wasm/.
 test -d "$PROJECT/bin/em/forest_effects"
-cp -a "$PROJECT/bin/em/forest_effects/." "$ROOT/dist/openframeworks/"
-if [ ! -f "$ROOT/dist/openframeworks/index.html" ]; then
-  HTML="$(find "$ROOT/dist/openframeworks" -type f -name '*.html' -print -quit)"
+cp -a "$PROJECT/bin/em/forest_effects/." "$ROOT/dist/openframeworks/wasm/"
+if [ ! -f "$ROOT/dist/openframeworks/wasm/index.html" ]; then
+  HTML="$(find "$ROOT/dist/openframeworks/wasm" -type f -name '*.html' -print -quit)"
   test -n "$HTML"
-  cp "$HTML" "$ROOT/dist/openframeworks/index.html"
+  cp "$HTML" "$ROOT/dist/openframeworks/wasm/index.html"
 fi
-test -n "$(find "$ROOT/dist/openframeworks" -type f -name '*.wasm' -print -quit)"
+# Build the original standalone JavaScript scene without changing its source.
+python3 "$ROOT/scripts/build_forest_page.py"
+cp "$ROOT/site/index.html" "$ROOT/dist/openframeworks/legacy/index.html"
+cp "$ROOT/src/technology_selector.html" "$ROOT/dist/openframeworks/index.html"
+test -n "$(find "$ROOT/dist/openframeworks/wasm" -type f -name '*.wasm' -print -quit)"
 printf 'Static site prepared at %s\n' "$ROOT/dist/openframeworks"
