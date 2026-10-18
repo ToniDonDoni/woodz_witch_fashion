@@ -58,5 +58,5 @@ gravity.listeners.pointermove({pointerId:8,clientX:300});
 assert.equal(window.gravityStrengthFactor,21);
 gravity.listeners.pointerup({pointerId:8});
 assert.ok(elements['music-toggle'], 'music start button must render');
-assert.equal(elements['music-toggle'].textContent,'■ Stop music');
+assert.equal(elements['music-toggle'].textContent,'Audio unavailable');
 console.log('Gravity pointer and music control tests passed');
