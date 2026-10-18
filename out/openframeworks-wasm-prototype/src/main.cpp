@@ -124,13 +124,22 @@ public:
                 ofNoFill(); ofDrawCircle(cx, cy, r); ofFill();
             }
         }
+        // Twinkling stars replace the old green oval motif.
         if (motif == 2 || motif == 4) {
-            for (int i=0;i<9;++i) {
-                float x = w*(.08f + i*.105f);
-                float y = ground - 70 - std::sin(t*1.8f+i*1.7f)*34;
-                ofSetColor(100, 230, 200, 85);
-                ofDrawEllipse(x, y, 35, 9);
-                ofDrawEllipse(x, y-9, 14, 21);
+            for (int i = 0; i < 24; ++i) {
+                const float seed = static_cast<float>(i);
+                const float x = w * (.04f + std::fmod(seed * .618034f, .92f));
+                const float y = h * (.10f + std::fmod(seed * .414214f, .62f));
+                const float pulse = .5f + .5f * std::sin(t * (1.4f + std::fmod(seed, 5.f) * .31f) + seed * 2.17f);
+                const float radius = 1.1f + pulse * 1.8f;
+                ofSetColor(175, 190, 255, static_cast<int>(55 + pulse * 145));
+                ofDrawCircle(x, y, radius);
+                if (pulse > .78f && i % 3 == 0) {
+                    ofSetLineWidth(.8f);
+                    const float ray = radius * (1.8f + pulse);
+                    ofDrawLine(x - ray, y, x + ray, y);
+                    ofDrawLine(x, y - ray, x, y + ray);
+                }
             }
         }
         ofDisableBlendMode();
