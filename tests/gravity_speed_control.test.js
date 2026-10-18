@@ -21,7 +21,7 @@ function element(tag) {
 const body = element('body');
 const window = {};
 const context = {
-  document: {createElement: element, body},
+  document: {createElement: element, body, addEventListener() {}},
   window, Image: class { constructor() { this.complete=false; } },
   performance: {now:()=>0}, requestAnimationFrame() {},
   devicePixelRatio:1, innerWidth:960, innerHeight:540,
@@ -58,5 +58,5 @@ gravity.listeners.pointermove({pointerId:8,clientX:300});
 assert.equal(window.gravityStrengthFactor,21);
 gravity.listeners.pointerup({pointerId:8});
 assert.ok(elements['music-toggle'], 'music start button must render');
-assert.equal(elements['music-toggle'].textContent,'▶ Music');
+assert.equal(elements['music-toggle'].textContent,'■ Stop music');
 console.log('Gravity pointer and music control tests passed');
