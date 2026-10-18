@@ -190,7 +190,13 @@
       const majorThird = majorBlend >= 0.5 ? 4 : 3;
       const adjustedDegree = degree === 3 ? majorThird :
         degree === 15 ? 12 + majorThird : degree;
-      playPiano(MUSIC_ROOT_MIDI + adjustedDegree, nextNoteTime);
+      // Gravity G also transposes the entire melody by up to one octave each way.
+      // Left = 12 semitones lower, middle = original pitch, right = 12 higher.
+      const transposeSemitones = Math.round(
+        (harmonyPosition - GRAVITY_CONTROL_CONSTANTS.sliderDefault) *
+        MUSIC.semitonesPerOctave
+      );
+      playPiano(MUSIC_ROOT_MIDI + adjustedDegree + transposeSemitones, nextNoteTime);
       if (Math.random() < MUSIC.grassProbability) {
         makeNoise(0.045, 0.035, 750, nextNoteTime);
       }
