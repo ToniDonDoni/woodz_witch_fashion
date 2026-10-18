@@ -3,6 +3,9 @@
 #include <cstdint>
 #include <random>
 #include <vector>
+#ifdef __EMSCRIPTEN__
+#include <emscripten/emscripten.h>
+#endif
 
 // The C++ scene owns all environmental effects; the HTML host overlays the approved walk atlas.
 class ForestEffectsApp final : public ofBaseApp {
@@ -12,23 +15,23 @@ public:
         const int next = static_cast<int>(ofGetElapsedTimef() / 11.0f);
         if (next != act_) buildAct(next);
     }
-    // Stylized retarded gravity-like field: footfalls emit finite-speed ripples.
-    // This is intentionally visual physics, not measurable GR radiation.
-    float footWave(float x, float y, float t, float w, float h) const {
+    // Retarded field from two equal moving foot masses (m=1).
+    float gravityField(float x, float y, float t, float speed, float w, float h) const {
         constexpr float tau = 6.28318530718f;
-        constexpr float stepHz = 24.f / 33.f * 2.f; // Two footfalls per 33-frame walk cycle.
-        constexpr float propagation = 260.f; // Screen pixels per second.
-        constexpr float damping = 0.0045f;
-        const float feetX[2] = {w * .46f, w * .54f};
-        const float feetY = h * .84f;
+        constexpr float walkHz = 24.f / 33.f;
+        constexpr float gravity = 260000.f; // Fixed simulation-unit G.
         float field = 0.f;
         for (int foot = 0; foot < 2; ++foot) {
-            const float dx = x - feetX[foot], dy = y - feetY;
-            const float radius = std::sqrt(dx*dx + dy*dy);
-            const float delayed = t - radius / propagation;
+            const float sx = w * (.5f + (foot ? .04f : -.04f));
+            const float dy = y - h * .84f;
+            const float dx = x - sx;
+            const float distance = std::sqrt(dx*dx + dy*dy + 1600.f);
+            const float delayed = t - distance / speed;
             if (delayed < 0.f) continue;
-            const float phase = tau * stepHz * delayed + foot * 3.14159265359f;
-            field += std::sin(phase) * std::exp(-damping * radius);
+            const float phase = tau * walkHz * delayed + foot * 3.14159265359f;
+            const float rx = x - (sx + 16.f * std::sin(phase));
+            const float acceleration = gravity / (rx*rx + dy*dy + 1600.f);
+            field += acceleration * std::sin(phase) / 140.f;
         }
         return field;
     }
@@ -38,10 +41,16 @@ public:
         ofPushStyle();
         ofEnableBlendMode(OF_BLENDMODE_ADD);
         const float ground = h * .86f;
+        float waveSpeed = 145.f;
+#ifdef __EMSCRIPTEN__
+        waveSpeed = static_cast<float>(emscripten_run_script_double(
+            "(window.gravityWaveSpeed && Number.isFinite(window.gravityWaveSpeed)) ? window.gravityWaveSpeed : 145"));
+#endif
+        waveSpeed = std::fmax(1.f, waveSpeed);
         // A new seeded woodland tableau appears every eleven seconds.
         for (const auto& tree : trees_) {
             // The walker faces left, so scenery must travel right toward her.
-            const float baseX = std::fmod(tree.x * w + t * (12 + tree.depth * 23), w + 180);\n            const float wave = footWave(baseX, ground, t, w, h);\n            const float x = baseX + 24.f * wave * tree.depth;
+            const float baseX = std::fmod(tree.x * w + t * (12 + tree.depth * 23), w + 180);\n            const float wave = gravityField(baseX, ground, t, waveSpeed, w, h);\n            const float x = baseX + 24.f * wave * tree.depth;
             const float trunk = h * (.20f + tree.depth * .27f) * (1.f + .065f * wave);
             ofSetColor(tree.tint, 40 + static_cast<int>(tree.depth * 55));
             ofSetLineWidth(1.2f + tree.depth * 2);
@@ -53,7 +62,7 @@ public:
             }
         }
         for (const auto& p : particles_) {
-            const float baseX = std::fmod(p.x * w + t * p.vx + w*10, w);\n            const float wave = footWave(baseX, p.y*h, t, w, h);\n            const float x = baseX + 17.f * wave;
+            const float baseX = std::fmod(p.x * w + t * p.vx + w*10, w);\n            const float wave = gravityField(baseX, p.y*h, t, waveSpeed, w, h);\n            const float x = baseX + 17.f * wave;
             const float y = p.y*h + std::sin(t*p.freq + p.phase)*p.amplitude - 10.f * wave;
             ofSetColor(p.tint, 70 + static_cast<int>(80 * (.5f + .5f*std::sin(t + p.phase))));
             ofDrawCircle(x, y, p.size);
@@ -89,8 +98,8 @@ public:
         ofPopStyle();
     }
 private:
-    struct Particle { float x,y,vx,freq,phase,amplitude,size; ofColor tint; };
-    struct Tree { float x,depth; ofColor tint; };
+    struct Particle { float x,y,vx,freq,phase,amplitude,size; ofColor tint; float mass = .01f; };
+    struct Tree { float x,depth; ofColor tint; float mass = 100.f; };
     void buildAct(int index) {
         act_ = index;
         std::mt19937 rng(12731u + static_cast<std::uint32_t>(index)*7919u);
