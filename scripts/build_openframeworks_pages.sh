@@ -19,8 +19,8 @@ cp "$ROOT/out/openframeworks-wasm-prototype/Makefile" "$PROJECT/Makefile"
 )
 mkdir -p "$ROOT/dist/openframeworks"
 # Keep generated relative paths intact; fail if the compiler emitted no site.
-test -d "$PROJECT/bin"
-cp -a "$PROJECT/bin/." "$ROOT/dist/openframeworks/"
+test -d "$PROJECT/bin/em/forest_effects"
+cp -a "$PROJECT/bin/em/forest_effects/." "$ROOT/dist/openframeworks/"
 if [ ! -f "$ROOT/dist/openframeworks/index.html" ]; then
   HTML="$(find "$ROOT/dist/openframeworks" -type f -name '*.html' -print -quit)"
   test -n "$HTML"
