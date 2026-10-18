@@ -34,7 +34,7 @@ test('WASM controls drag and music produces an audible signal', async ({ page })
   });
 
   await page.goto('/');
-  await page.getByRole('button', { name: 'C++ / WebAssembly' }).click();
+  await page.getByRole('button', { name: 'openFrameworks / WebAssembly' }).click();
   const frame = page.frameLocator('#scene');
   const speed = frame.locator('#gravity-speed-slider');
   const gravity = frame.locator('#gravity-strength-slider');
@@ -64,7 +64,7 @@ test('WASM controls drag and music produces an audible signal', async ({ page })
   expect(parameters.speed).toBeGreaterThan(1.25);
   expect(parameters.gravity).toBeLessThan(2.1);
 
-  await music.click();
+  // Music is enabled by default; the first pointer gesture unlocks browser audio.
   await expect(music).toHaveText('■ Stop music');
   // The analyser is connected to the actual master gain feeding the speakers.
   // Nonzero RMS demonstrates synthesized samples, not merely a running timer.
