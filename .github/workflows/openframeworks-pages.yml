@@ -86,8 +86,8 @@ jobs:
 
   deploy-preview:
     needs: wasm-site
-    # Publish branch builds and PR builds for this branch, plus manual reruns.
-    if: github.ref == 'refs/heads/codex/openframeworks-effects' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request')
+    # PR refs are refs/pull/*/merge; use head_ref to identify the source branch.
+    if: (github.event_name == 'pull_request' && github.head_ref == 'codex/openframeworks-effects') || ((github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/codex/openframeworks-effects')
     runs-on: ubuntu-22.04
     concurrency:
       group: openframeworks-pages-preview
