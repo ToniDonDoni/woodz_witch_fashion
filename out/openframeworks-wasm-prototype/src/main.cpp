@@ -50,10 +50,12 @@ public:
         const float ground = h * .86f;
         double speedFactor = 1.25, gravityFactor = 2.1;
 #ifdef __EMSCRIPTEN__
-        speedFactor = emscripten_run_script_double(
-            "Number.isFinite(window.gravitySpeedFactor) ? window.gravitySpeedFactor : 1.25");
-        gravityFactor = emscripten_run_script_double(
-            "Number.isFinite(window.gravityStrengthFactor) ? window.gravityStrengthFactor : 2.1");
+        speedFactor = EM_ASM_DOUBLE({
+            return Number.isFinite(window.gravitySpeedFactor) ? window.gravitySpeedFactor : 1.25;
+        });
+        gravityFactor = EM_ASM_DOUBLE({
+            return Number.isFinite(window.gravityStrengthFactor) ? window.gravityStrengthFactor : 2.1;
+        });
 #endif
         speedFactor = std::clamp(speedFactor, 0.0, 12.5);
         gravityFactor = std::clamp(gravityFactor, 0.0, 21.0);
