@@ -1,6 +1,7 @@
 name: Build openFrameworks WASM site
 
 on:
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -79,7 +80,7 @@ jobs:
 
   deploy-preview:
     needs: wasm-site
-    # Publish only when explicitly triggered by a user on the selected branch.
+    # PRs validate only; manual runs build, test, and deploy.
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-22.04
     concurrency:
