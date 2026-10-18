@@ -4,9 +4,9 @@ An endless fashion runway through an illustrated enchanted forest. A woman walks
 
 [Open the live forest preview](https://tonidondoni.github.io/woodz-witch-fashion-preview/).
 
-## WebAssembly version
+## openFrameworks / WebAssembly
 
-An interactive forest scene built with **openFrameworks** and compiled to **WebAssembly**.
+An interactive forest scene written in **C++** using [openFrameworks](https://openframeworks.cc/) and compiled to **WebAssembly**.
 
 The scene uses a simplified gravitational-wave model: each footstep generates ripples that propagate through the environment and distort nearby objects.
 
