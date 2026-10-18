@@ -46,7 +46,23 @@ from pathlib import Path
 p = Path(sys.argv[1])
 html = p.read_text()
 assert '</body>' in html
-p.write_text(html.replace('</body>', '<script src="wasm_walker_overlay.js"></script></body>'))
+# Hide the upstream Emscripten demo controls; keep its runtime and canvas intact.
+cleanup = """<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const controls = document.getElementById('controls');
+  if (controls) controls.style.display = 'none';
+  document.querySelectorAll('input[type="checkbox"]').forEach(input => {
+    const label = input.closest('label');
+    if (label) label.style.display = 'none';
+    else if (input.parentElement) input.parentElement.style.display = 'none';
+  });
+  document.querySelectorAll('button,input[type="button"]').forEach(button => {
+    if (/fullscreen/i.test(button.textContent || button.value || ''))
+      button.style.display = 'none';
+  });
+});
+</script>"""
+p.write_text(html.replace('</body>', cleanup + '<script src="wasm_walker_overlay.js"></script></body>'))
 PY
 # Build the original standalone JavaScript scene without changing its source.
 python3 "$ROOT/scripts/build_forest_page.py"
