@@ -12,19 +12,33 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+      - name: Detect buildable site sources
+        id: source
+        run: |
+          if test -f tests/gravity_speed_control.test.js && test -f scripts/build_openframeworks_pages.sh && test -f out/openframeworks-wasm-prototype/src/main.cpp; then
+            echo 'present=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'Site sources not present on this branch; skipping site build (no artifact produced).'
+            echo 'present=false' >> "$GITHUB_OUTPUT"
+          fi
       - name: Install build tools
+        if: steps.source.outputs.present == 'true'
         run: |
           sudo apt-get update && sudo apt-get install -y make python3 python3-pip git pkg-config
           python3 -m pip install Pillow
       - name: Test gravity speed control
+        if: steps.source.outputs.present == 'true'
         run: node tests/gravity_speed_control.test.js
       - name: Install Emscripten
+        if: steps.source.outputs.present == 'true'
         uses: emscripten-core/setup-emsdk@v15
         with:
           version: 'latest'
       - name: Compile openFrameworks and package static site
+        if: steps.source.outputs.present == 'true'
         run: bash scripts/build_openframeworks_pages.sh
       - name: Verify deployable site
+        if: steps.source.outputs.present == 'true'
         run: |
           test -s dist/openframeworks/index.html
           test -s dist/openframeworks/legacy/index.html
@@ -44,10 +58,12 @@ jobs:
           sleep 2
           curl --fail --silent http://localhost:8765/ > /dev/null
       - name: Install Playwright Chromium
+        if: steps.source.outputs.present == 'true'
         run: |
           npm install --no-save --no-package-lock @playwright/test@1.56.1
           npx playwright install --with-deps chromium
       - name: End-to-end WASM controls and audible signal
+        if: steps.source.outputs.present == 'true'
         run: |
           python3 -m http.server 8765 --bind 127.0.0.1 --directory dist/openframeworks &
           SERVER_PID=$!
@@ -55,6 +71,7 @@ jobs:
           sleep 2
           npx playwright test --config=playwright.config.cjs
       - name: Upload Playwright failure evidence
+        if: steps.source.outputs.present == 'true'
         if: failure()
         uses: actions/upload-artifact@v4
         with:
@@ -64,6 +81,7 @@ jobs:
             test-results/
           if-no-files-found: ignore
       - name: Upload deployable Pages artifact
+        if: steps.source.outputs.present == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: openframeworks-pages-site
