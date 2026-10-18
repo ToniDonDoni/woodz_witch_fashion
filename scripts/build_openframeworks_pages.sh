@@ -50,6 +50,8 @@ assert '</body>' in html
 # Keep the WASM canvas, but isolate it from controls and browser shortcuts.
 cleanup = """<style>
 html, body { overflow: auto !important; }
+/* Remove the generated Emscripten shell's visible canvas frame. */
+canvas, #canvas { border: 0 !important; outline: 0 !important; box-shadow: none !important; }
 #canvas { pointer-events: none !important; }
 #gravity-controls { pointer-events: auto !important; }
 </style>
