@@ -1,0 +1,53 @@
+name: Build openFrameworks WASM site
+
+on:
+  push:
+    branches: [codex/openframeworks-effects]
+  pull_request:
+    paths:
+      - '.github/workflows/openframeworks-pages.yml'
+      - 'out/openframeworks-wasm-prototype/**'
+      - 'scripts/build_openframeworks_pages.sh'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  wasm-site:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build tools
+        run: sudo apt-get update && sudo apt-get install -y make python3 git pkg-config
+      - name: Install Emscripten
+        uses: emscripten-core/setup-emsdk@v15
+        with:
+          version: '3.1.64'
+      - name: Compile openFrameworks and package static site
+        run: bash scripts/build_openframeworks_pages.sh
+      - name: Verify deployable site
+        run: |
+          test -s dist/openframeworks/index.html
+          test -n "$(find dist/openframeworks -type f -name '*.wasm' -print -quit)"
+          test -n "$(find dist/openframeworks -type f -name '*.js' -print -quit)"
+          python3 -m http.server 8765 --directory dist/openframeworks &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID"' EXIT
+          sleep 2
+          curl --fail --silent http://localhost:8765/ > /dev/null
+      - name: Upload deployable Pages artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: openframeworks-pages-site
+          path: dist/openframeworks/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload GitHub Pages deployment artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/openframeworks/
+
+  # Deployment is intentionally disabled: this PR must not overwrite the existing live site.
+  # A separate, explicitly approved workflow can deploy the artifact after review.
