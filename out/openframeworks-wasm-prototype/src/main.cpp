@@ -20,7 +20,8 @@ public:
         const float ground = h * .86f;
         // A new seeded woodland tableau appears every eleven seconds.
         for (const auto& tree : trees_) {
-            const float x = std::fmod(tree.x * w - t * (12 + tree.depth * 23), w + 180) + (tree.x * w - t * (12 + tree.depth * 23) < 0 ? w + 180 : 0);
+            // The walker faces left, so scenery must travel right toward her.
+            const float x = std::fmod(tree.x * w + t * (12 + tree.depth * 23), w + 180);
             const float trunk = h * (.20f + tree.depth * .27f);
             ofSetColor(tree.tint, 40 + static_cast<int>(tree.depth * 55));
             ofSetLineWidth(1.2f + tree.depth * 2);
