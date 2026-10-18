@@ -71,8 +71,7 @@ jobs:
           sleep 2
           npx playwright test --config=playwright.config.cjs
       - name: Upload Playwright failure evidence
-        if: steps.source.outputs.present == 'true'
-        if: failure()
+        if: failure() && steps.source.outputs.present == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: wasm-playwright-failure-evidence
