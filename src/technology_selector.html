@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WOODZ — Rendering modes</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:#050507;color:#eee8df;font:13px Arial,sans-serif}
+#scene{width:100%;height:100%;border:0;display:block}
+nav{position:fixed;z-index:10;top:16px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:6px;padding:6px;border:1px solid #b693c955;border-radius:30px;background:#100e15e8;box-shadow:0 5px 30px #0009}
+button{border:0;border-radius:22px;padding:12px 18px;color:#cbbfd1;background:transparent;cursor:pointer;white-space:nowrap;font:12px Arial,sans-serif}
+button[aria-pressed="true"]{background:#d4b7e9;color:#16101c}
+button:focus-visible{outline:2px solid white;outline-offset:2px}
+#label{position:fixed;bottom:16px;right:16px;background:#100e15c9;padding:9px 13px;border-radius:18px;font-size:11px;color:#cbbfd1}
+</style>
+</head>
+<body>
+<nav aria-label="Rendering technology">
+<button id="classic" type="button" aria-pressed="true">JavaScript</button>
+<button id="wasm" type="button" aria-pressed="false">C++ / WebAssembly</button>
+</nav>
+<iframe id="scene" title="Woodz animation" allow="autoplay"></iframe>
+<div id="label" aria-live="polite"></div>
+<script>
+(() => {
+  const scene=document.getElementById('scene');
+  const label=document.getElementById('label');
+  const modes={classic:'legacy/index.html',wasm:'wasm/index.html'};
+  const buttons=Object.fromEntries(Object.keys(modes).map(key=>[key,document.getElementById(key)]));
+  function select(mode) {
+    if (!Object.hasOwn(modes,mode)) mode='classic';
+    scene.src=modes[mode];
+    for (const key of Object.keys(buttons)) buttons[key].setAttribute('aria-pressed',String(key===mode));
+    label.textContent=mode==='wasm'?'C++ / WebAssembly prototype':'Classic JavaScript scene';
+    const url=new URL(location.href);
+    url.searchParams.set('mode',mode);
+    history.replaceState(null,'',url);
+  }
+  for(const key of Object.keys(buttons)) buttons[key].addEventListener('click',()=>select(key));
+  select(new URL(location.href).searchParams.get('mode')||'classic');
+})();
+</script>
+</body>
+</html>
