@@ -53,9 +53,9 @@ test('WASM controls drag and music produces an audible signal', async ({ page })
   }
 
   await drag(speed, 0.95);
-  await expect.poll(() => speed.inputValue()).toSatisfy(value => Number(value) > 1.5);
+  await expect.poll(async () => Number(await speed.inputValue())).toBeGreaterThan(1.5);
   await drag(gravity, 0.05);
-  await expect.poll(() => gravity.inputValue()).toSatisfy(value => Number(value) < 0.5);
+  await expect.poll(async () => Number(await gravity.inputValue())).toBeLessThan(0.5);
 
   const parameters = await frame.locator('body').evaluate(() => ({
     speed: window.gravitySpeedFactor,
