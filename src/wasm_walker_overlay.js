@@ -207,14 +207,8 @@
       nextNoteTime += secondsPerNote;
     }
   }
-  musicButton.addEventListener('click', async () => {
-    if (musicTimer !== null) {
-      clearInterval(musicTimer);
-      musicTimer = null;
-      await audioContext.suspend();
-      musicButton.textContent = '▶ Music';
-      return;
-    }
+  let musicEnabled = true;
+  async function startMusic() {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     if (!AudioContextClass) {
       musicButton.textContent = 'Audio unavailable';
@@ -227,11 +221,31 @@
       masterGain.connect(audioContext.destination);
     }
     await audioContext.resume();
+    if (!musicEnabled || audioContext.state !== 'running' || musicTimer !== null) return;
     nextNoteTime = audioContext.currentTime;
     musicTimer = setInterval(scheduleMusic, MUSIC.schedulerIntervalMilliseconds);
     musicButton.textContent = '■ Stop music';
     scheduleMusic();
+  }
+  musicButton.addEventListener('click', async () => {
+    musicEnabled = !musicEnabled;
+    if (!musicEnabled) {
+      if (musicTimer !== null) clearInterval(musicTimer);
+      musicTimer = null;
+      if (audioContext) await audioContext.suspend();
+      musicButton.textContent = '▶ Music';
+      return;
+    }
+    await startMusic();
   });
+  // Start enabled by default. Browsers may block sound until the first gesture.
+  musicButton.textContent = '■ Stop music';
+  void startMusic();
+  const resumeOnGesture = () => {
+    if (musicEnabled && musicTimer === null) void startMusic();
+  };
+  document.addEventListener('pointerdown', resumeOnGesture, {capture:true});
+  document.addEventListener('keydown', resumeOnGesture, {capture:true});
 
   const ctx = canvas.getContext('2d');
   const atlas = new Image();
