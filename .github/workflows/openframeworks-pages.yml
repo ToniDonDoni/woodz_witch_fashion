@@ -25,6 +25,8 @@ jobs:
         run: |
           sudo apt-get update && sudo apt-get install -y make python3 python3-pip git pkg-config
           python3 -m pip install Pillow
+      - name: Test gravity speed control
+        run: node tests/gravity_speed_control.test.js
       - name: Install Emscripten
         uses: emscripten-core/setup-emsdk@v15
         with:
