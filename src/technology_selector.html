@@ -17,7 +17,7 @@ button:focus-visible{outline:2px solid white;outline-offset:2px}
 <body>
 <nav aria-label="Rendering technology">
 <button id="classic" type="button" aria-pressed="true">JavaScript</button>
-<button id="wasm" type="button" aria-pressed="false">C++ / WebAssembly</button>
+<button id="wasm" type="button" aria-pressed="false">openFrameworks / WebAssembly</button>
 </nav>
 <iframe id="scene" title="Woodz animation" allow="autoplay"></iframe>
 <div id="label" aria-live="polite"></div>
@@ -31,7 +31,7 @@ button:focus-visible{outline:2px solid white;outline-offset:2px}
     if (!Object.hasOwn(modes,mode)) mode='classic';
     scene.src=modes[mode];
     for (const key of Object.keys(buttons)) buttons[key].setAttribute('aria-pressed',String(key===mode));
-    label.textContent=mode==='wasm'?'C++ / WebAssembly prototype':'Classic JavaScript scene';
+    label.textContent=mode==='wasm'?'':'Classic JavaScript scene';
     const url=new URL(location.href);
     url.searchParams.set('mode',mode);
     history.replaceState(null,'',url);
