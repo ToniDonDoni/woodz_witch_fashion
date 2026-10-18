@@ -33,6 +33,7 @@ public:
         const double dx = x - w * 0.5, dy = y - h * 0.84;
         const double radiusPx = std::max(40.0, std::hypot(dx, dy));
         const double radiusM = radiusPx / pixelsPerMeter;
+        if (speed <= 0.0 || gain <= 0.0) return 0.0;
         const double effectiveC = lightSpeed / (speed * 1.0e8);
         const double effectiveG = physicalG * gain * 1.0e10;
         const double retardedTime = t - radiusM / effectiveC;
@@ -54,7 +55,7 @@ public:
         gravityFactor = emscripten_run_script_double(
             "Number.isFinite(window.gravityStrengthFactor) ? window.gravityStrengthFactor : 2.1");
 #endif
-        speedFactor = std::clamp(speedFactor, 0.01, 12.5);
+        speedFactor = std::clamp(speedFactor, 0.0, 12.5);
         gravityFactor = std::clamp(gravityFactor, 0.0, 21.0);
         // A new seeded woodland tableau appears every eleven seconds.
         for (const auto& tree : trees_) {
