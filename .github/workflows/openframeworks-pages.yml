@@ -86,9 +86,8 @@ jobs:
 
   deploy-preview:
     needs: wasm-site
-    # Only branch pushes may publish. PR workflows check out synthetic merge commits,
-    # whose SHA does not appear in the PR's Commits tab.
-    if: github.event_name == 'push' && github.ref == 'refs/heads/codex/openframeworks-effects'
+    # Publish branch builds and PR builds for this branch, plus manual reruns.
+    if: github.ref == 'refs/heads/codex/openframeworks-effects' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request')
     runs-on: ubuntu-22.04
     concurrency:
       group: openframeworks-pages-preview
