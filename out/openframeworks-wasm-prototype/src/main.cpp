@@ -133,14 +133,6 @@ public:
                 ofDrawEllipse(x, y-9, 14, 21);
             }
         }
-        if (motif == 3 || motif == 4) {
-            for (int i=0;i<12;++i) {
-                float x = w*(i+.5f)/12, y = h*(.22f + .15f*std::sin(i*2.f+t*.6f));
-                ofSetColor(255, 160, 105, 110);
-                ofDrawLine(x-14,y-10,x,y+15); ofDrawLine(x+14,y-10,x,y+15);
-                ofDrawCircle(x,y,3);
-            }
-        }
         ofDisableBlendMode();
         ofPopStyle();
     }
