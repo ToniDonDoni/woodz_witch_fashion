@@ -61,6 +61,33 @@
       value.textContent = factor.toFixed(2) + ' × 10^' + exponent;
     }
     slider.addEventListener('input', update);
+    // Explicit pointer-driven range update bypasses native drag conflicts with
+    // the openFrameworks/Emscripten event handlers.
+    let activePointerId = null;
+    function updateFromPointer(event) {
+      const bounds = slider.getBoundingClientRect();
+      if (!bounds.width) return;
+      const ratio = Math.max(0, Math.min(1, (event.clientX - bounds.left) / bounds.width));
+      const position = GRAVITY_CONTROL_CONSTANTS.sliderMinimum +
+        ratio * (GRAVITY_CONTROL_CONSTANTS.sliderMaximum - GRAVITY_CONTROL_CONSTANTS.sliderMinimum);
+      slider.value = String(Math.round(position / GRAVITY_CONTROL_CONSTANTS.sliderStep) *
+        GRAVITY_CONTROL_CONSTANTS.sliderStep);
+      update();
+    }
+    slider.style.touchAction = 'none';
+    slider.addEventListener('pointerdown', (event) => {
+      activePointerId = event.pointerId;
+      if (slider.setPointerCapture) slider.setPointerCapture(event.pointerId);
+      updateFromPointer(event);
+    });
+    slider.addEventListener('pointermove', (event) => {
+      if (event.pointerId === activePointerId) updateFromPointer(event);
+    });
+    for (const endEvent of ['pointerup', 'pointercancel', 'lostpointercapture']) {
+      slider.addEventListener(endEvent, (event) => {
+        if (event.pointerId === activePointerId) activePointerId = null;
+      });
+    }
     row.append(caption, slider, value);
     panel.appendChild(row);
     update();
