@@ -72,6 +72,134 @@
     GRAVITY_CONTROL_CONSTANTS.gravityGainMantissa,
     GRAVITY_CONTROL_CONSTANTS.gravityPowerOfTen, 'gravityStrengthFactor');
   document.body.appendChild(panel);
+
+  // Original cinematic arpeggio; no copyrighted film melody or score is embedded.
+  // Audio starts only after a user gesture, as required by browser autoplay rules.
+  const musicButton = document.createElement('button');
+  musicButton.type = 'button';
+  musicButton.id = 'music-toggle';
+  musicButton.textContent = '▶ Music';
+  Object.assign(musicButton.style, {cursor:'pointer',padding:'5px 9px',borderRadius:'5px',
+    background:'#302541',color:'#fff',border:'1px solid #77638c'});
+  panel.appendChild(musicButton);
+
+  const MUSIC = Object.freeze({
+    referenceTempoBeatsPerMinute: 84, // Quarter notes per minute.
+    minimumTempoMultiplier: 0.5,       // Dimensionless.
+    maximumTempoMultiplier: 2.0,       // Dimensionless.
+    lookAheadSeconds: 0.12,            // Audio scheduler horizon.
+    schedulerIntervalMilliseconds: 25, // Scheduling tick.
+    sixteenthNotesPerBeat: 4,          // Subdivisions per quarter note.
+    secondsPerMinute: 60,              // s/min.
+    oscillatorDecaySeconds: 1.8,       // Piano-like envelope decay.
+    oscillatorAttackSeconds: 0.008,    // Piano-like envelope attack.
+    masterVolume: 0.19,                // Linear amplitude.
+    glitchProbability: 0.10,          // Chance per note.
+    grassProbability: 0.32,           // Chance per note.
+    semitonesPerOctave: 12,
+    concertA4Hertz: 440,
+    concertA4MidiNote: 69
+  });
+  // Degrees are MIDI semitone offsets from A3 (220 Hz).
+  const MUSIC_ROOT_MIDI = 57;
+  const MUSIC_ARPEGGIO = [0, 7, 12, 15, 12, 7, 3, 7, 0, 7, 12, 15, 19, 12, 7, 3];
+  let audioContext = null, masterGain = null, musicTimer = null;
+  let nextNoteTime = 0, noteIndex = 0;
+
+  function midiHertz(midi) {
+    return MUSIC.concertA4Hertz *
+      Math.pow(2, (midi - MUSIC.concertA4MidiNote) / MUSIC.semitonesPerOctave);
+  }
+  function makeNoise(durationSeconds, volume, highpassHertz, atSeconds) {
+    const count = Math.max(1, Math.floor(audioContext.sampleRate * durationSeconds));
+    const buffer = audioContext.createBuffer(1, count, audioContext.sampleRate);
+    const samples = buffer.getChannelData(0);
+    for (let i = 0; i < count; i++) samples[i] = Math.random() * 2 - 1;
+    const source = audioContext.createBufferSource();
+    source.buffer = buffer;
+    const filter = audioContext.createBiquadFilter();
+    filter.type = 'highpass';
+    filter.frequency.value = highpassHertz;
+    const envelope = audioContext.createGain();
+    envelope.gain.setValueAtTime(volume, atSeconds);
+    envelope.gain.exponentialRampToValueAtTime(0.0001, atSeconds + durationSeconds);
+    source.connect(filter); filter.connect(envelope); envelope.connect(masterGain);
+    source.start(atSeconds); source.stop(atSeconds + durationSeconds);
+  }
+  function playPiano(midi, atSeconds) {
+    const frequency = midiHertz(midi);
+    const envelope = audioContext.createGain();
+    envelope.gain.setValueAtTime(0.0001, atSeconds);
+    envelope.gain.exponentialRampToValueAtTime(0.28, atSeconds + MUSIC.oscillatorAttackSeconds);
+    envelope.gain.exponentialRampToValueAtTime(0.0001, atSeconds + MUSIC.oscillatorDecaySeconds);
+    envelope.connect(masterGain);
+    for (const [wave, harmonic, volume] of [['sine', 1, 1], ['triangle', 2, 0.13]]) {
+      const oscillator = audioContext.createOscillator();
+      const partialGain = audioContext.createGain();
+      oscillator.type = wave;
+      oscillator.frequency.setValueAtTime(frequency * harmonic, atSeconds);
+      partialGain.gain.value = volume;
+      oscillator.connect(partialGain); partialGain.connect(envelope);
+      oscillator.start(atSeconds);
+      oscillator.stop(atSeconds + MUSIC.oscillatorDecaySeconds);
+    }
+  }
+  function scheduleMusic() {
+    if (!audioContext) return;
+    const speedPosition = Number(document.getElementById('gravity-speed-slider').value);
+    const harmonyPosition = Number(document.getElementById('gravity-strength-slider').value);
+    // Slowdown c controls musical tempo; left = slower, right = faster.
+    const tempoMultiplier = MUSIC.minimumTempoMultiplier +
+      (MUSIC.maximumTempoMultiplier - MUSIC.minimumTempoMultiplier) *
+      (speedPosition / GRAVITY_CONTROL_CONSTANTS.sliderMaximum);
+    const secondsPerNote = MUSIC.secondsPerMinute /
+      (MUSIC.referenceTempoBeatsPerMinute * tempoMultiplier * MUSIC.sixteenthNotesPerBeat);
+    while (nextNoteTime < audioContext.currentTime + MUSIC.lookAheadSeconds) {
+      const degree = MUSIC_ARPEGGIO[noteIndex % MUSIC_ARPEGGIO.length];
+      // Minor third (3 semitones) transitions to major third (4 semitones).
+      // Harmony is sampled at note boundaries to avoid retuning sustained notes.
+      const majorBlend = Math.max(0, Math.min(1,
+        harmonyPosition / GRAVITY_CONTROL_CONSTANTS.sliderMaximum));
+      const majorThird = majorBlend >= 0.5 ? 4 : 3;
+      const adjustedDegree = degree === 3 ? majorThird :
+        degree === 15 ? 12 + majorThird : degree;
+      playPiano(MUSIC_ROOT_MIDI + adjustedDegree, nextNoteTime);
+      if (Math.random() < MUSIC.grassProbability) {
+        makeNoise(0.045, 0.035, 750, nextNoteTime);
+      }
+      if (Math.random() < MUSIC.glitchProbability) {
+        makeNoise(0.012, 0.055, 2800, nextNoteTime);
+      }
+      noteIndex++;
+      nextNoteTime += secondsPerNote;
+    }
+  }
+  musicButton.addEventListener('click', async () => {
+    if (musicTimer !== null) {
+      clearInterval(musicTimer);
+      musicTimer = null;
+      await audioContext.suspend();
+      musicButton.textContent = '▶ Music';
+      return;
+    }
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) {
+      musicButton.textContent = 'Audio unavailable';
+      return;
+    }
+    if (!audioContext) {
+      audioContext = new AudioContextClass();
+      masterGain = audioContext.createGain();
+      masterGain.gain.value = MUSIC.masterVolume;
+      masterGain.connect(audioContext.destination);
+    }
+    await audioContext.resume();
+    nextNoteTime = audioContext.currentTime;
+    musicTimer = setInterval(scheduleMusic, MUSIC.schedulerIntervalMilliseconds);
+    musicButton.textContent = '■ Stop music';
+    scheduleMusic();
+  });
+
   const ctx = canvas.getContext('2d');
   const atlas = new Image();
   atlas.src = 'walk-atlas.webp';
