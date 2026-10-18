@@ -1,7 +1,7 @@
 name: Build openFrameworks WASM site
 
 on:
-  pull_request:
+  push:
   workflow_dispatch:
 
 permissions:
