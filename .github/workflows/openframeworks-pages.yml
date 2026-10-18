@@ -12,6 +12,8 @@ on:
 
 permissions:
   contents: read
+  pages: write
+  id-token: write
 
 jobs:
   wasm-site:
@@ -49,5 +51,17 @@ jobs:
         with:
           path: dist/openframeworks/
 
-  # Deployment is intentionally disabled: this PR must not overwrite the existing live site.
-  # A separate, explicitly approved workflow can deploy the artifact after review.
+  deploy-preview:
+    needs: wasm-site
+    if: github.event_name == 'push' && github.ref == 'refs/heads/codex/openframeworks-effects'
+    runs-on: ubuntu-22.04
+    concurrency:
+      group: openframeworks-pages-preview
+      cancel-in-progress: true
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy preview to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
