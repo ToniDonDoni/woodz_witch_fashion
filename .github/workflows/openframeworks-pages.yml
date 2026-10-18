@@ -1,13 +1,6 @@
 name: Build openFrameworks WASM site
 
 on:
-  push:
-    branches: [codex/openframeworks-effects]
-  pull_request:
-    paths:
-      - '.github/workflows/openframeworks-pages.yml'
-      - 'out/openframeworks-wasm-prototype/**'
-      - 'scripts/build_openframeworks_pages.sh'
   workflow_dispatch:
 
 permissions:
@@ -86,8 +79,8 @@ jobs:
 
   deploy-preview:
     needs: wasm-site
-    # PR refs are refs/pull/*/merge; use head_ref to identify the source branch.
-    if: (github.event_name == 'pull_request' && github.head_ref == 'codex/openframeworks-effects') || ((github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/codex/openframeworks-effects')
+    # Publish only when explicitly triggered by a user on the selected branch.
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-22.04
     concurrency:
       group: openframeworks-pages-preview
