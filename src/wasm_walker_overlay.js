@@ -19,13 +19,14 @@
     caption.textContent = label;
     const slider = document.createElement('input');
     slider.id = id;
-    slider.type = 'range'; slider.min = '0'; slider.max = '10';
+    slider.type = 'range'; slider.min = '0'; slider.max = '2';
     slider.step = '0.01'; slider.value = '1';
     slider.setAttribute('aria-label', label);
     const value = document.createElement('output');
     value.id = id + '-value';
     function update() {
-      const factor = base * Number(slider.value);
+      const position = Number(slider.value);
+      const factor = base * (position <= 1 ? position : 1 + 9 * (position - 1));
       window[property] = factor;
       value.textContent = factor.toFixed(2) + ' × 10^' + exponent;
     }
