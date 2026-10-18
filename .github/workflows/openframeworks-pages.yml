@@ -59,7 +59,7 @@ jobs:
 
   deploy-preview:
     needs: wasm-site
-    if: github.event_name == 'push' && github.ref == 'refs/heads/codex/openframeworks-effects'
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/codex/openframeworks-effects') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'codex/openframeworks-effects')
     runs-on: ubuntu-22.04
     concurrency:
       group: openframeworks-pages-preview
