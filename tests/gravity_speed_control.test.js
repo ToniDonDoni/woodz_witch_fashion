@@ -11,6 +11,8 @@ function element(tag) {
     append(...children) { this.children.push(...children); },
     appendChild(child) { this.children.push(child); },
     addEventListener(type, cb) { listeners[type] = cb; },
+    getBoundingClientRect() { return {left:100,width:200}; },
+    setPointerCapture(id) { this.capturedPointer = id; },
     getContext() { return {setTransform(){},clearRect(){},drawImage(){}}; },
     set id(value) { this._id = value; elements[value] = this; },
     get id() { return this._id; }
@@ -43,4 +45,18 @@ speed.value = '1'; speed.listeners.input();
 gravity.value = '1'; gravity.listeners.input();
 assert.equal(window.gravitySpeedFactor, 1.25);
 assert.equal(window.gravityStrengthFactor, 2.1);
-console.log('Gravity control tests passed');
+// Pointer dragging must update the actual WASM-facing globals, not just UI state.
+speed.listeners.pointerdown({pointerId:7,clientX:100});
+assert.equal(window.gravitySpeedFactor,0);
+speed.listeners.pointermove({pointerId:7,clientX:300});
+assert.equal(window.gravitySpeedFactor,12.5);
+speed.listeners.pointerup({pointerId:7});
+speed.listeners.pointermove({pointerId:7,clientX:100});
+assert.equal(window.gravitySpeedFactor,12.5);
+gravity.listeners.pointerdown({pointerId:8,clientX:100});
+gravity.listeners.pointermove({pointerId:8,clientX:300});
+assert.equal(window.gravityStrengthFactor,21);
+gravity.listeners.pointerup({pointerId:8});
+assert.ok(elements['music-toggle'], 'music start button must render');
+assert.equal(elements['music-toggle'].textContent,'▶ Music');
+console.log('Gravity pointer and music control tests passed');
