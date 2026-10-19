@@ -1,0 +1,73 @@
+{
+  "wallSeconds": 120,
+  "viewport": "390x844",
+  "offline": true,
+  "errors": [],
+  "samples": [
+    {
+      "time": 10.03330000000002,
+      "cache": 37,
+      "event": "owlbuyer"
+    },
+    {
+      "time": 20.03329999999983,
+      "cache": 39,
+      "event": null
+    },
+    {
+      "time": 30.049599999999483,
+      "cache": 38,
+      "event": "ribbon"
+    },
+    {
+      "time": 40.04999999999984,
+      "cache": 39,
+      "event": "ribbon"
+    },
+    {
+      "time": 50.04990000000045,
+      "cache": 38,
+      "event": "moonwalker"
+    },
+    {
+      "time": 60.06650000000108,
+      "cache": 40,
+      "event": "moonwalker"
+    },
+    {
+      "time": 70.06650000000205,
+      "cache": 38,
+      "event": null
+    },
+    {
+      "time": 80.06660000000389,
+      "cache": 39,
+      "event": "doorsnail"
+    },
+    {
+      "time": 90.08320000000569,
+      "cache": 38,
+      "event": "doorsnail"
+    },
+    {
+      "time": 100.08320000000757,
+      "cache": 38,
+      "event": "jellycap"
+    },
+    {
+      "time": 110.08310000000941,
+      "cache": 38,
+      "event": "jellycap"
+    },
+    {
+      "time": 120.09980000001123,
+      "cache": 39,
+      "event": "wind"
+    }
+  ],
+  "simulationTime": 120.09980000001123,
+  "frames": 7203,
+  "rafMedianMs": 16.69999999999709,
+  "rafP95Ms": 17,
+  "physicalPhoneTested": false
+}

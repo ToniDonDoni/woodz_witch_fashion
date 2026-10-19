@@ -1,0 +1,2 @@
+# Reproducible full-resolution review captures remain local / CI artifacts.
+captures/*.png

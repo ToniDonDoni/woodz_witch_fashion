@@ -1,0 +1,26 @@
+{
+  "browser": "149.0.7827.55",
+  "offline": true,
+  "errors": [],
+  "requests": [],
+  "families": [
+    "owlbuyer",
+    "ribbon",
+    "moonwalker",
+    "doorsnail",
+    "jellycap",
+    "wind",
+    "rainfish",
+    "leshy"
+  ],
+  "programmeChecked": 1000,
+  "maxVisitors": 1,
+  "maxCache": 68,
+  "maxActive": 79,
+  "deterministicPixels": true,
+  "simulatedSeconds": 36000,
+  "drawMedianMs": 6.800000011920929,
+  "drawP95Ms": 7.5,
+  "physicalPhoneTested": false,
+  "originalGaitSeam": "Unchanged; source frames 0–32 retained"
+}
