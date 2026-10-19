@@ -1,0 +1,43 @@
+name: Check infinite single event preview
+
+on:
+  pull_request:
+    paths:
+      - 'out/infinite-single-event/**'
+      - 'site/infinite-single-event-rc/**'
+      - '.github/workflows/check-infinite-single-event.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install browsers and builder
+        run: |
+          python -m pip install pillow
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Build standalone page from original sprites
+        run: python out/infinite-single-event/build.py
+      - name: Test offline event generation and screenshots
+        run: node out/infinite-single-event/verify.cjs
+      - name: Upload visual review captures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: infinite-single-event-preview
+          path: |
+            out/infinite-single-event/captures
+            out/infinite-single-event/verification.json
+          if-no-files-found: ignore
