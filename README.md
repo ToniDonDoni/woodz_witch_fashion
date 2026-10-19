@@ -2,6 +2,8 @@
 
 An endless fashion runway through an illustrated enchanted forest. A woman walks in place using the 33 existing footage-derived cutouts while a continuously generated world travels from left to right, staging one seeded act after another.
 
+Separate experiment: [Nocturne — Endless Creature Runway](out/hyperframes-creature-theatre/README.md) keeps the original woman walking on black while new procedural creatures approach her, combining stochastic anatomy and colors. HyperFrames supplies graphics and motion inspiration; the deliverable is an endless offline HTML page. It preserves the accepted forest preview.
+
 [Open the live forest preview](https://tonidondoni.github.io/woodz-witch-fashion-preview/).
 
 ## Current runway: scenes in the wood
