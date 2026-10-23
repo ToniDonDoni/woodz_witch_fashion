@@ -69,10 +69,13 @@ __DIRECTOR_CODE__
 __RENDERER_CODE__
 
 const layer=document.getElementById('walker'),ctx=layer.getContext('2d',{alpha:true});
+const mobileSafeMode=matchMedia('(pointer: coarse) and (max-width: 850px)').matches;
 const painter=threeFxRenderer.create(document.getElementById('fx'),
-                                    document.getElementById('fallback'));
+                                    document.getElementById('fallback'),mobileSafeMode);
 const atlas=new Image();
 const FW=420,FH=790,COLS=6,FRAME_COUNT=33;
+const ROWS_PER_TILE=3,FRAMES_PER_TILE=COLS*ROWS_PER_TILE;
+let atlasTiles=null;
 let w=0,h=0,dpr=1,time=0,playing=true,last=null,ready=false,seed=12731,debug={};
 function newSeed(){
  try{
@@ -103,8 +106,11 @@ function draw(){
  const height=Math.min(h*.68,w*1.42),width=height*FW/FH;
  const x=(w-width)*.5,y=h*.858-height;
  const frame=Math.floor(time*24)%FRAME_COUNT;
- ctx.drawImage(atlas,(frame%COLS)*FW,Math.floor(frame/COLS)*FH,
-               FW,FH,x,y,width,height);
+ if(atlas.naturalWidth){
+  const source=atlasTiles?atlasTiles[Math.floor(frame/FRAMES_PER_TILE)]:atlas;
+  const row=atlasTiles?Math.floor((frame%FRAMES_PER_TILE)/COLS):Math.floor(frame/COLS);
+  ctx.drawImage(source,(frame%COLS)*FW,row*FH,FW,FH,x,y,width,height);
+ }
  const desc=state.active?state.spec.name.replaceAll('-',' '):'From the darkness';
  document.getElementById('effect-name').textContent=desc;
  document.querySelectorAll('[data-effect]').forEach(el=>
@@ -114,7 +120,8 @@ function draw(){
   activeEventCount:state.active?1:0,slot:state.slot,slotLocalTime:state.local,
   event:state.active?{id:state.spec.id,type:state.spec.type,
        name:state.spec.name,side:state.spec.side,age:state.age}:null,
-  walker:{x,y,width,height},viewport:{width:w,height:h,dpr}};
+  walker:{x,y,width,height},viewport:{width:w,height:h,dpr},
+  atlasTilesReady:Boolean(atlasTiles),mobileSafeMode};
  return debug;
 }
 function tick(now){
@@ -157,8 +164,28 @@ window.runway={
  seek,seekSlot,seekEffect,play:setPlaying,
  setSeed(s){seed=s|0;time=0;return draw();}
 };
-atlas.onload=()=>{ready=true;draw();};
-atlas.onerror=()=>{document.getElementById('effect-name').textContent='Walking atlas failed';};
+atlas.onload=async()=>{
+ // Crop the tall 4740px source atlas into GPU-safe textures below 4096px.
+ try{
+  if(typeof createImageBitmap==='function'){
+   atlasTiles=await Promise.all([
+    createImageBitmap(atlas,0,0,COLS*FW,ROWS_PER_TILE*FH),
+    createImageBitmap(atlas,0,ROWS_PER_TILE*FH,COLS*FW,ROWS_PER_TILE*FH)
+   ]);
+  }
+ }catch(e){atlasTiles=null;console.warn('Atlas tiling unavailable',e);}
+ ready=true;draw();
+};
+atlas.onerror=()=>{
+ ready=true;
+ document.querySelector('.note').textContent='Walk frames unavailable · effects remain active';
+ draw();
+};
+if(mobileSafeMode)
+ document.querySelector('.note').textContent='Mobile compatible rendering · self-contained';
+setTimeout(()=>{
+ if(!ready)document.querySelector('.note').textContent='Waiting for walk frames · try reload';
+},7000);
 resize();
 atlas.src='data:image/webp;base64,__ATLAS_DATA__';
 requestAnimationFrame(tick);
