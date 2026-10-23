@@ -192,7 +192,7 @@ void main(){
   float r=hash21(cell+seed*121.37);
   float entrance=smoothstep(-.1,1.7,t);
   float exit=smoothstep(4.85,6.35,t);
-  float stable=smoothstep(.94,.14,r);
+  float stable=1.-smoothstep(.14,.94,r);
   float buildup=smoothstep(.0,.7,entrance+.4-r);
   float departure=1.-smoothstep(.1,.9,exit+r*.7);
   float show=stable*buildup*departure;
