@@ -130,6 +130,30 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
   };
   fs.writeFileSync(path.join(__dirname,'verification.json'),JSON.stringify(summary,null,2)+'\n');
   console.log(JSON.stringify(summary));
+  // Exercise phone-class touch input and verify visible 2D fallback pixels.
+  const mobile=await browser.newContext({viewport:{width:393,height:851},
+    deviceScaleFactor:2,isMobile:true,hasTouch:true,offline:true});
+  const phone=await mobile.newPage();
+  await phone.goto('file://'+filename);
+  await phone.waitForFunction(()=>window.runway?.ready,null,{timeout:45000});
+  const phoneState=await phone.evaluate(()=>{
+    const state=runway.seekSlot(0);
+    function visiblePixels(id){
+      const canvas=document.getElementById(id),g=canvas.getContext('2d');
+      const pixels=g.getImageData(0,0,canvas.width,canvas.height).data;
+      let count=0;
+      for(let i=3;i<pixels.length;i+=4)if(pixels[i]>20)count++;
+      return count;
+    }
+    return {...state,walkerPixels:visiblePixels('walker'),
+      effectPixels:visiblePixels('fallback')};
+  });
+  assert.equal(phoneState.backend,'canvas2d');
+  assert.equal(phoneState.mobileSafeMode,true);
+  assert(phoneState.walkerPixels>200,'Walker must be visible on a touch phone');
+  assert(phoneState.effectPixels>100,'Mobile fallback must have a visible creature');
+  await phone.screenshot({path:path.join(captures,'touch-mobile-393x851.png')});
+  await mobile.close();
   await context.close();
  }finally{await browser.close();}
 })().catch(error=>{console.error(error.stack||error);process.exitCode=1;});
