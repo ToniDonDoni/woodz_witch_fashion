@@ -1,0 +1,11 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WOODZ — Three procedural effects</title><style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;color:#fff;font:12px system-ui}
+canvas{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}#fx{z-index:1}#walker{z-index:2}
+header{position:fixed;top:22px;left:24px;z-index:3;letter-spacing:.18em}header strong{font-size:17px}
+#status{display:block;margin-top:9px;font-size:9px;color:#bba9c9}
+nav{position:fixed;bottom:24px;left:12px;right:12px;display:flex;gap:7px;justify-content:center;flex-wrap:wrap;z-index:4}
+button{background:#150e1bdc;color:#e5d9f2;border:1px solid #89689c;border-radius:25px;min-height:40px;padding:0 12px;cursor:pointer;font-size:11px}
+button[aria-pressed=true]{background:#64366e;border-color:#f2bbff}button:focus-visible{outline:2px solid #bff}
+</style></head><body><canvas id="fx"></canvas><canvas id="walker"></canvas><header><strong>WOODZ / EFFECT STUDIES</strong><span id="status">LOADING</span></header>
+<nav aria-label="Effects"><button data-mode="cycle" aria-pressed="true">ALL THREE</button><button data-mode="liquid" aria-pressed="false">LIQUID</button><button data-mode="pixels" aria-pressed="false">PIXEL DISSOLVE</button><button data-mode="smoke" aria-pressed="false">SMOKE / GLASS</button><button id="pause">Ⅱ PAUSE</button><button id="next">NEXT ↗</button><button id="new">NEW SEED ✧</button></nav>
+<script src="./effects.js"></script></body></html>
