@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>WOODZ — Three effects from the dark</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;color:#eee6f3}
+body{font:12px/1.4 system-ui,-apple-system,Arial,sans-serif}
+.stage{position:fixed;inset:0;background:#000;overflow:hidden}
+.stage canvas{display:block;position:absolute;inset:0;width:100%;height:100%}
+#walker{z-index:1}
+#fx{z-index:2}
+#fallback{z-index:2;display:none}
+.header{position:fixed;left:max(20px,env(safe-area-inset-left));right:20px;
+ top:max(19px,env(safe-area-inset-top));display:flex;align-items:start;justify-content:space-between;
+ pointer-events:none;z-index:4;gap:18px;text-shadow:0 1px 15px #000}
+.brand{font-size:17px;letter-spacing:.28em;font-weight:750}
+.edition{font-size:9px;letter-spacing:.16em;text-align:right;color:#a99bad}
+.caption{position:fixed;left:24px;bottom:max(88px,calc(env(safe-area-inset-bottom) + 76px));
+ z-index:4;pointer-events:none;display:flex;align-items:center;gap:9px;
+ text-transform:uppercase;letter-spacing:.14em;font-size:10px;color:#d6b9ed;text-shadow:0 0 12px #000}
+.caption .dot{width:5px;height:5px;border-radius:100%;background:#a9f2f2;box-shadow:0 0 10px #a9f2f2}
+.controls{position:fixed;left:max(12px,env(safe-area-inset-left));right:max(12px,env(safe-area-inset-right));
+ bottom:max(17px,env(safe-area-inset-bottom));z-index:5;display:flex;gap:7px;justify-content:center;flex-wrap:wrap}
+button{cursor:pointer;border:1px solid #cbb6e04c;min-height:44px;padding:0 14px;border-radius:24px;
+ background:#151019ea;color:#e7ddeb;font-size:10px;letter-spacing:.08em;white-space:nowrap}
+button[aria-pressed="true"]{border-color:#bfe8f1;background:#25202c;color:#fff}
+button:hover{border-color:#ecd6ff}
+button:focus-visible{outline:2px solid #a4eff6;outline-offset:3px}
+.note{position:fixed;left:24px;top:77px;color:#6f6474;font-size:9px;letter-spacing:.15em;
+ pointer-events:none;z-index:4;text-transform:uppercase}
+@media(max-width:440px){
+ .controls{gap:5px}
+ button{padding:0 10px;font-size:9px;min-height:42px}
+ .brand{font-size:14px}
+ .edition{font-size:8px}
+ .caption{font-size:9px;bottom:max(110px,calc(env(safe-area-inset-bottom) + 98px))}
+ .note{left:20px;top:70px}
+}
+</style>
+</head>
+<body>
+<div class="stage">
+ <canvas id="walker" aria-label="A woman walks continuously on a black runway, with one procedural apparition at a time"></canvas>
+ <canvas id="fx" aria-hidden="true"></canvas>
+ <canvas id="fallback" aria-hidden="true"></canvas>
+</div>
+<header class="header">
+ <strong class="brand">WOODZ</strong>
+ <span class="edition">THREE EFFECT STUDIES<br>BLACK STAGE / EXPERIMENTAL</span>
+</header>
+<div class="note">Procedural WebGL2 · self-contained</div>
+<div id="caption" class="caption"><span class="dot"></span><span id="effect-name">From the darkness</span></div>
+<nav class="controls" aria-label="Playback and effects">
+ <button id="pause">Ⅱ PAUSE</button>
+ <button data-effect="0" aria-pressed="false">LIQUID GLASS</button>
+ <button data-effect="1" aria-pressed="false">SMOKE</button>
+ <button data-effect="2" aria-pressed="false">PIXEL</button>
+ <button id="next">NEXT ↗</button>
+ <button id="dream">NEW DREAM ✧</button>
+</nav>
+<script>
+'use strict';
+(()=>{
+__DIRECTOR_CODE__
+__RENDERER_CODE__
+
+const layer=document.getElementById('walker'),ctx=layer.getContext('2d',{alpha:true});
+const painter=threeFxRenderer.create(document.getElementById('fx'),
+                                    document.getElementById('fallback'));
+const atlas=new Image();
+const FW=420,FH=790,COLS=6,FRAME_COUNT=33;
+let w=0,h=0,dpr=1,time=0,playing=true,last=null,ready=false,seed=12731,debug={};
+function newSeed(){
+ try{
+  if(crypto&&crypto.getRandomValues){
+   const a=new Uint32Array(1);crypto.getRandomValues(a);return a[0]|0;
+  }
+ }catch(e){}
+ return Date.now()|0;
+}
+function setPlaying(yes){
+ playing=Boolean(yes);last=null;
+ const b=document.getElementById('pause');
+ b.textContent=playing?'Ⅱ PAUSE':'▶ PLAY';
+ b.setAttribute('aria-label',playing?'Pause animation':'Resume animation');
+}
+function resize(){
+ w=innerWidth;h=innerHeight;dpr=Math.min(devicePixelRatio||1,1.4);
+ layer.width=Math.max(1,Math.round(w*dpr));
+ layer.height=Math.max(1,Math.round(h*dpr));
+ ctx.setTransform(dpr,0,0,dpr,0,0);painter.resize(w,h,dpr);
+ if(ready)draw();
+}
+function draw(){
+ if(!ready)return null;
+ const state=fxDirector.at(seed,time);
+ painter.draw(state,time);
+ ctx.clearRect(0,0,w,h);
+ const height=Math.min(h*.68,w*1.42),width=height*FW/FH;
+ const x=(w-width)*.5,y=h*.858-height;
+ const frame=Math.floor(time*24)%FRAME_COUNT;
+ ctx.drawImage(atlas,(frame%COLS)*FW,Math.floor(frame/COLS)*FH,
+               FW,FH,x,y,width,height);
+ const desc=state.active?state.spec.name.replaceAll('-',' '):'From the darkness';
+ document.getElementById('effect-name').textContent=desc;
+ document.querySelectorAll('[data-effect]').forEach(el=>
+  el.setAttribute('aria-pressed',String(state.active&&Number(el.dataset.effect)===state.spec.type)));
+ debug={ready,seed,time,frame,backend:painter.backend,
+  fallbackReason:painter.fallbackReason,
+  activeEventCount:state.active?1:0,slot:state.slot,slotLocalTime:state.local,
+  event:state.active?{id:state.spec.id,type:state.spec.type,
+       name:state.spec.name,side:state.spec.side,age:state.age}:null,
+  walker:{x,y,width,height},viewport:{width:w,height:h,dpr}};
+ return debug;
+}
+function tick(now){
+ if(last!==null&&playing&&ready&&!document.hidden)
+  time+=Math.max(0,Math.min(.05,(now-last)/1000));
+ last=now;
+ if(ready&&playing&&!document.hidden)draw();
+ requestAnimationFrame(tick);
+}
+function seek(t){
+ setPlaying(false);time=Math.max(0,Number.isFinite(t)?t:0);return draw();
+}
+function seekSlot(n){
+ return seek(Math.max(0,Math.floor(n))*fxDirector.SLOT_SECONDS+
+             fxDirector.spec(seed,n).start+1.7);
+}
+function seekEffect(type){
+ let slot=Math.floor(time/fxDirector.SLOT_SECONDS)+1;
+ for(let i=0;i<4;i++,slot++){
+  if(fxDirector.spec(seed,slot).type===type)break;
+ }
+ time=slot*fxDirector.SLOT_SECONDS+fxDirector.spec(seed,slot).start+1.6;
+ return draw();
+}
+document.getElementById('pause').onclick=()=>setPlaying(!playing);
+document.getElementById('next').onclick=()=>{
+ time=(Math.floor(time/fxDirector.SLOT_SECONDS)+1)*fxDirector.SLOT_SECONDS+1.8;
+ draw();
+};
+document.getElementById('dream').onclick=()=>{seed=newSeed();time=0;draw();};
+document.querySelectorAll('[data-effect]').forEach(btn=>
+ btn.addEventListener('click',()=>seekEffect(Number(btn.dataset.effect))));
+window.addEventListener('resize',resize);
+document.addEventListener('visibilitychange',()=>{last=null;});
+window.runway={
+ get ready(){return ready;},state(){return debug;},
+ spec(slot){return fxDirector.spec(seed,slot);},
+ inspect(t){const s=fxDirector.at(seed,t);return {slot:s.slot,activeEventCount:s.active?1:0,
+  type:s.active?s.spec.type:null};},
+ seek,seekSlot,seekEffect,play:setPlaying,
+ setSeed(s){seed=s|0;time=0;return draw();}
+};
+atlas.onload=()=>{ready=true;draw();};
+atlas.onerror=()=>{document.getElementById('effect-name').textContent='Walking atlas failed';};
+resize();
+atlas.src='data:image/webp;base64,__ATLAS_DATA__';
+requestAnimationFrame(tick);
+})();
+</script>
+</body>
+</html>
