@@ -1,4 +1,4 @@
-"""Build the standalone draft from the approved sprite frames."""
+"""Build the standalone forest runway page from the approved sprite frames."""
 import base64
 from io import BytesIO
 from pathlib import Path
@@ -14,7 +14,8 @@ for index in range(33):
 buffer = BytesIO()
 atlas.save(buffer, format='WEBP', quality=90, method=6)
 html = (SOURCE / 'forest_runway_template.html').read_text()
-html = html.replace('__FOREST_CODE__', (SOURCE / 'forest_scene.js').read_text())
+source = (SOURCE / 'forest_scene.js').read_text() + '\n' + (SOURCE / 'forest_acts.js').read_text()
+html = html.replace('__FOREST_CODE__', source)
 html = html.replace('__ATLAS_DATA__', base64.b64encode(buffer.getvalue()).decode('ascii'))
 (ROOT / 'index.html').write_text(html)
 (ROOT / 'site').mkdir(exist_ok=True)

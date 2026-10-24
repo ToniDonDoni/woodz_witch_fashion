@@ -1,0 +1,80 @@
+{
+  "browser": "153.0.8010.12",
+  "offline": true,
+  "realTimeAdvance": 8.0164,
+  "viewports": [
+    "430x932",
+    "320x568",
+    "844x390",
+    "1440x900"
+  ],
+  "actLengthSeconds": [
+    31.90701211988926,
+    61.70692351460457
+  ],
+  "actStartsContiguous": true,
+  "drawMilliseconds": {
+    "mean": 12.667,
+    "median": 12.1,
+    "p95": 15.7,
+    "worst": 44.5,
+    "samples": 120,
+    "physicalPhoneTested": false
+  },
+  "actNames": [
+    "HOUR OF THE STAG",
+    "THE STAR CHOIR",
+    "THE MOTH WAKE",
+    "THE PETAL VEIL",
+    "LANTERN PROCESSION",
+    "SPORE FALL",
+    "EMBER NIGHT"
+  ],
+  "signatureEvents": {
+    "stag": 7,
+    "choir": 6,
+    "moths": 6,
+    "bloom": 7,
+    "lanterns": 3,
+    "fairring": 5,
+    "wisps": 6
+  },
+  "distinctSignatureEvents": 7,
+  "firstSeenAgeSeconds": {
+    "stag": 6,
+    "choir": 5,
+    "moths": 4.5,
+    "bloom": 4,
+    "lanterns": 5,
+    "fairring": 6,
+    "wisps": 5.5
+  },
+  "cameoActsSeen": 6,
+  "rareActsSeen": 6,
+  "activeCountRange": [
+    56,
+    63
+  ],
+  "simulatedSeconds": 600,
+  "foregroundOcclusionDelta": {
+    "legs": 34.577,
+    "torso": 0,
+    "atTime": 2.25,
+    "legsBox": {
+      "x": 129,
+      "y": 690,
+      "w": 172,
+      "h": 121
+    },
+    "torsoBox": {
+      "x": 129,
+      "y": 298,
+      "w": 172,
+      "h": 121
+    }
+  },
+  "walkFramesDigest": "93729293f35afd3650af30ca9a27a20f159440aecd4056ac7a9e3836ef66fad7",
+  "errors": [],
+  "networkRequests": [],
+  "physicalPhoneTested": false
+}

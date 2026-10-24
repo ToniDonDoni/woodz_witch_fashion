@@ -1,10 +1,18 @@
 // Everything below is painted by Canvas. Three ink drawings per object create
 // a 12 Hz line boil; its identity and smooth world translation stay independent.
+// `artBounds` and `actPainters` are filled in by the act source that follows, so
+// staging code can reuse the same cached-ink drawing path as the woodland.
 const forestCache = new Map();
 const forestPalette = {
   ink: '#779279', bark: '#304538', light: '#cfb984',
   leaf: '#71946b', shadow: '#10201b', moss: '#637951'
 };
+const artBounds = {
+  tree: {w: 460, h: 720, ax: 60, ay: 681},
+  default: {w: 300, h: 220, ax: 0, ay: 196}
+};
+const actPainters = {};
+function artBoundsFor(type) { return artBounds[type] || artBounds.default; }
 function forestUnit() { return Math.min(w / 430, h / 900, 1.3); }
 function positiveMod(n, m) { return ((n % m) + m) % m; }
 function inkBrush(c, id, phase) {
@@ -149,6 +157,51 @@ function paintLeshy(b,x,y,id){
   }
   for(let k=0;k<5;k++)b.stroke([[x-13+k*7,y-26],[x-17+k*7,y-42]],'#90a17d77',.8,id+k+200);
 }
+// Foreground vegetation is drawn after the walker. A solid dark mass plus rim-lit
+// blades gives every group the weight of a real foreground plant, so it genuinely
+// occludes her sneakers instead of passing behind them.
+function paintTuft(c,id,phase){
+  const b=inkBrush(c,id,phase),x=190,y=430;
+  const mass=[];
+  for(let k=0;k<=18;k++){const t=k/18;mass.push([x-175+t*350,y-40-Math.pow(Math.sin(t*Math.PI),.7)*(115+rand(id+51)*115)]);}
+  mass.push([x+175,y+70],[x-175,y+70]);
+  b.stroke(mass,moodTint('#081310',.3),1,id+7,true,moodTint('#081310',.3));
+  const blades=12+Math.floor(rand(id+3)*4);
+  for(let k=0;k<blades;k++){
+    const spread=(k/(blades-1)-.5)*2, lean=spread*.55+nrand(id+k+10)*.3;
+    const hgt=195+rand(id+k+20)*135, tip=[x+lean*hgt*.8,y-hgt];
+    const pts=sampledCurve([x+spread*30,y-10],[x+spread*40+lean*24,y-hgt*.55],tip,6);
+    b.stroke(pts,moodTint('#0b1712',.3),3+rand(id+k+30)*3,id+k+40);
+    b.stroke(pts,moodTint('#4a7d63',.3)+'aa',.9,id+k+60);
+  }
+  for(let k=0;k<4;k++){
+    const lean=nrand(id+k+70),hgt=245+rand(id+k+80)*125,tip=[x+lean*40,y-hgt];
+    b.stroke([[x,y-20],[x+lean*24,y-hgt*.6],tip],moodTint('#0d1b15',.3),2.4,id+k+90);
+    b.oval(tip[0],tip[1],4+rand(id+k+95)*3,8+rand(id+k+98)*5,moodTint('#16302a',.3),moodTint('#4d7a64',.3)+'aa',id+k+100,.3);
+  }
+}
+function paintFrond(c,id,phase){
+  const b=inkBrush(c,id,phase),x=260,y=390;
+  const core=[];
+  for(let k=0;k<=12;k++){const t=k/12;core.push([x-190+t*380,y-30-Math.pow(Math.sin(t*Math.PI),.8)*(65+rand(id+61)*70)]);}
+  core.push([x+190,y+60],[x-190,y+60]);
+  b.stroke(core,moodTint('#081310',.3),1,id+5,true,moodTint('#081310',.3));
+  for(let fr=0;fr<5;fr++){
+    const angle=-Math.PI*.95+fr*.32, size=205+rand(id+fr*13)*120;
+    const tip=[x+Math.cos(angle)*size,y+Math.sin(angle)*size*.9];
+    const curve=sampledCurve([x,y-20],[x+Math.cos(angle)*size*.35,y-size*.72],tip,9);
+    b.stroke(curve,moodTint('#0c1913',.3),3,id+fr*7);
+    for(let k=2;k<9;k++){
+      const p=curve[k],q=curve[k-1],nx=p[1]-q[1],ny=q[0]-p[0],norm=Math.hypot(nx,ny)||1;
+      const breadth=(1-k/10)*size*.24;
+      for(const side of [-1,1])b.stroke([[p[0],p[1]],[p[0]+nx/norm*breadth*side,p[1]+ny/norm*breadth*side]],moodTint('#143023',.3),2.4,id+fr*9+k*3+side);
+    }
+  }
+}
+artBounds.tuft={w:380,h:460,ax:0,ay:430};
+artBounds.frond={w:520,h:420,ax:0,ay:390};
+actPainters.tuft=paintTuft;
+actPainters.frond=paintFrond;
 function paintGround(c,id,phase,kind){
   const b=inkBrush(c,id,phase),x=150,y=196;
   const mound=[];
@@ -176,23 +229,43 @@ function paintGround(c,id,phase,kind){
     paintMushroom(b,x-56,y,.64,id+1500,'#bba172');
   }
 }
+// Every block of four world indices holds all four ground kinds, in an order
+// derived from the world seed. New Dream therefore reshuffles the woodland while
+// each dream still guarantees mushrooms, stumps, leshies and ferns.
+function groundKind(i,layer){
+  const block=Math.floor(i/4),slot=positiveMod(i,4);
+  const pool=['mushroom','stump','leshy','fern'],order=[],key=block*613+layer*47+4001;
+  for(let k=0;k<4;k++){
+    const weight=rand(key*101+k*937);
+    let at=0;while(at<order.length&&weight>order[at].w)at++;
+    order.splice(at,0,{k,weight});
+  }
+  return pool[order[slot].k];
+}
 function getForestArt(key,id,type,far){
   const cached=forestCache.get(key);
   if(cached)return cached;
-  const width=type==='tree'?460:300,height=type==='tree'?720:220;
-  const variants=[];
+  const bounds=artBoundsFor(type),variants=[];
   for(let phase=0;phase<3;phase++){
-    const art=document.createElement('canvas'),resolution=far?.5:1;art.width=width*resolution;art.height=height*resolution;
-    const c=art.getContext('2d');c.scale(resolution,resolution);if(type==='tree')c.translate(60,0);c.lineJoin='round';c.lineCap='round';
-    type==='tree'?paintTree(c,id,phase,far):paintGround(c,id,phase,type);
+    const art=document.createElement('canvas'),resolution=far?.5:1;art.width=bounds.w*resolution;art.height=bounds.h*resolution;
+    const c=art.getContext('2d');c.scale(resolution,resolution);c.translate(bounds.ax,0);c.lineJoin='round';c.lineCap='round';
+    if(type==='tree')paintTree(c,id,phase,far);
+    else if(actPainters[type])actPainters[type](c,id,phase);
+    else paintGround(c,id,phase,type);
     variants.push(art);
   }
-  const entry={variants,width,height};forestCache.set(key,entry);return entry;
+  const entry={variants,width:bounds.w,height:bounds.h};forestCache.set(key,entry);return entry;
 }
+// Layer 4 is the foreground row: sparse, fast, drawn after the walker.
+const forestRows={
+  spacing:[109,201,212,239,250],
+  speed:[9,22,53,82,168],
+  alpha:[.52,.91,1,1,1]
+};
 function renderForestRow(layer,objects,used){
-  const unit=forestUnit(),tree=layer<2;
-  const spacing=[109,201,212,239][layer]*unit;
-  const speed=[9,22,53,82][layer]*unit;
+  const unit=forestUnit(),tree=layer<2,foreground=layer>=4;
+  const spacing=forestRows.spacing[layer]*unit;
+  const speed=forestRows.speed[layer]*unit;
   const offset=time*speed;
   const margin=(tree?345:280)*unit;
   const start=Math.floor((-offset-margin)/spacing),end=Math.ceil((w-offset+margin)/spacing);
@@ -200,14 +273,14 @@ function renderForestRow(layer,objects,used){
     const id=i*1777+layer*77113+19301;
     const x=i*spacing+offset+spacing*.31+nrand(id+1)*spacing*.12;
     const factor=tree?(layer===0?.67:.87): (layer===2?.62:.86);
-    const size=factor*(.86+rand(id+2)*.29)*unit;
-    const kind=tree?'tree':['mushroom','stump','leshy','fern'][positiveMod(i+layer,4)];
-    const y=tree?h*(layer===0?.775:.797):pathHeight(x)+(layer===2?-46:47)*Math.min(h/850,1.2);
+    const size=foreground?(h/900)*(.85+rand(id+2)*.35):factor*(.86+rand(id+2)*.29)*unit;
+    const kind=tree?'tree':(foreground?(positiveMod(i,2)?'tuft':'frond'):groundKind(i,layer));
+    const y=tree?h*(layer===0?.775:.797):(foreground?h*(1.02+rand(id+3)*.08):pathHeight(x)+(layer===2?-46:47)*Math.min(h/850,1.2));
     const key=seed+':'+layer+':'+i,art=getForestArt(key,id,kind,layer===0);used.add(key);
     ctx.save();ctx.translate(x,y);
     if(tree)ctx.rotate(Math.sin(time*.27+rand(id+4)*TAU)*.004);
-    ctx.globalAlpha=layer===0?.52:layer===1?.91:1;
-    const anchor=tree?681:196;
+    ctx.globalAlpha=forestRows.alpha[layer];
+    const anchor=artBoundsFor(kind).ay;
     ctx.drawImage(art.variants[positiveMod(boil,3)],-art.width*.5*size,-anchor*size,art.width*size,art.height*size);
     if(kind==='leshy'){
       const eyeY=(-113-rand(id+1018)*16+40)*size;
@@ -218,6 +291,88 @@ function renderForestRow(layer,objects,used){
     }
     ctx.restore();
     objects.push({id:layer+':'+i,kind,x,y,size,layer});
+  }
+}
+// A hushed night sky: a deep indigo wash, faint stars, and a barely-there moon.
+// Stars drift with the slowest parallax so the sky participates in the world's
+// travel without competing with the walker or the forest.
+function drawNightSky(){
+  const horizon=h*.785;
+  const sky=ctx.createLinearGradient(0,0,0,horizon);
+  sky.addColorStop(0,'#070711');sky.addColorStop(.55,'#0a0a16');sky.addColorStop(1,'#0d0d19');
+  ctx.fillStyle=sky;ctx.fillRect(0,0,w,horizon);
+  // Stars: seeded per world index, twinkling on the boil clock, clearly visible.
+  const spacing=34*forestUnit(),speed=6*forestUnit(),offset=time*speed;
+  const start=Math.floor((-offset-40)/spacing),end=Math.ceil((w-offset+40)/spacing);
+  for(let i=start;i<=end;i++){
+    const id=i*613+40009;
+    const x=i*spacing+offset+nrand(id+1)*spacing*.4;
+    const y=horizon*(.06+rand(id+2)*.62);
+    const twinkle=.45+.35*(.5+.5*Math.sin(time*(.7+rand(id+3))+rand(id+4)*TAU));
+    const size=.7+rand(id+5)*1.3;
+    ellipse(x,y,size,size*.8,`rgba(224,218,238,${twinkle})`);
+    if(rand(id+6)>.86)ellipse(x+size*1.6,y+size*.5,size*.4,size*.35,`rgba(224,218,238,${twinkle*.5})`);
+  }
+  // Additional distant star-fields for depth: two seeded layers of faint dust.
+  for(let j=0; j<90; j++){
+    const jid=j*997+12345;
+    const jx=rand(jid)*w;
+    const jy=rand(jid+1)*horizon;
+    const jTwinkle=.18+.20*(.5+.5*Math.sin(time*(.5+rand(jid+2))+rand(jid+3)*TAU));
+    ellipse(jx, jy, .5, .5, `rgba(220,212,232,${jTwinkle})`);
+  }
+  for(let j=0; j<60; j++){
+    const jid=j*613+77003;
+    const jx=rand(jid)*w;
+    const jy=horizon*(.03+rand(jid+1)*.7);
+    const jTwinkle=.12+.16*(.5+.5*Math.sin(time*(.4+rand(jid+2))+rand(jid+3)*TAU));
+    ellipse(jx, jy, .4, .4, `rgba(228,222,240,${jTwinkle})`);
+  }
+  // The moon: a pale disc sunk into the dark, haloed, and only slightly brighter
+  // than the sky. It hangs high left and drifts slower than any forest layer.
+  const moonR=Math.min(w,h)*.052;
+  const moonX=w*.24-time*1.1*forestUnit();
+  const moonY=horizon*.26;
+  const halo=ctx.createRadialGradient(moonX,moonY,moonR*.4,moonX,moonY,moonR*4.6);
+  halo.addColorStop(0,'rgba(226,222,214,0.12)');halo.addColorStop(.5,'rgba(226,222,214,0.04)');halo.addColorStop(1,'rgba(226,222,214,0)');
+  ctx.fillStyle=halo;ctx.fillRect(moonX-moonR*4.6,moonY-moonR*4.6,moonR*9.2,moonR*9.2);
+  ellipse(moonX,moonY,moonR,moonR,'rgba(228,224,216,0.18)');
+  // A soft terminator shadow gives the disc a waning read without a hard edge.
+  const shade=ctx.createRadialGradient(moonX+moonR*.3,moonY-moonR*.2,moonR*.1,moonX,moonY,moonR*1.2);
+  shade.addColorStop(0,'rgba(7,7,17,0.65)');shade.addColorStop(.6,'rgba(7,7,17,0.25)');shade.addColorStop(1,'rgba(7,7,17,0)');
+  ctx.fillStyle=shade;ctx.beginPath();ctx.arc(moonX,moonY,moonR,0,TAU);ctx.fill();
+  // Realistic lunar maria: sparse, irregular, seeded patches.
+  const maria = [
+    {ox: -.3, oy: .1, rx: .2, ry: .15, a: .12},
+    {ox: .1, oy: -.2, rx: .15, ry: .1, a: .10},
+    {ox: .2, oy: .3, rx: .12, ry: .18, a: .11},
+    {ox: -.1, oy: .4, rx: .1, ry: .08, a: .09}
+  ];
+  maria.forEach(m => {
+    ellipse(moonX+m.ox*moonR, moonY+m.oy*moonR, m.rx*moonR, m.ry*moonR, `rgba(130,126,120,${m.a})`);
+  });
+  // Small craters: sparse, seeded, and varied in size to add surface detail.
+  for(let k=0; k<12; k++){
+    const id=771+k*131;
+    const cx=moonX+nrand(id)*moonR*.8;
+    const cy=moonY+nrand(id+1)*moonR*.8;
+    if(Math.hypot(cx-moonX, cy-moonY) < moonR*.9){
+      const cr=moonR*(.03+rand(id+2)*.07);
+      ellipse(cx, cy, cr, cr*.8, `rgba(190,186,180,${.05+rand(id+3)*.08})`);
+    }
+  }
+  // Two prominent craters, seeded so the moon keeps its identity across frames.
+  ellipse(moonX-moonR*.34,moonY+moonR*.18,moonR*.16,moonR*.13,'rgba(190,186,180,0.10)');
+  ellipse(moonX+moonR*.12,moonY+moonR*.42,moonR*.10,moonR*.08,'rgba(190,186,180,0.08)');
+  // A thin cloud band crossing the moon, drifting a touch faster than the stars.
+  const cloudY=moonY+moonR*.9;
+  for(let k=0;k<3;k++){
+    const id=907+k*331;
+    const cx=w*(.06+k*.34)-time*(2.4+k*.5)*forestUnit();
+    const cw=moonR*(2.6+k*.9),ch=moonR*(.16+k*.05);
+    ctx.save();ctx.translate(((cx% (w+cw*2))+w+cw*2)%(w+cw*2)-cw,cloudY+k*moonR*.5);
+    ctx.fillStyle=`rgba(16,16,28,${.16+k*.05})`;
+    ctx.beginPath();ctx.ellipse(0,0,cw,ch,0,0,TAU);ctx.fill();ctx.restore();
   }
 }
 function drawForestBackground(){
@@ -231,6 +386,14 @@ function drawForestBackground(){
 }
 function drawForestGround(state){
   renderForestRow(2,state.objects,state.used);renderForestRow(3,state.objects,state.used);
-  for(const key of forestCache.keys())if(!state.used.has(key))forestCache.delete(key);
   return state.objects;
+}
+function drawForestForeground(state){
+  renderForestRow(4,state.objects,state.used);
+  return state.objects.filter(object=>object.layer===4);
+}
+// Pruning runs once, at the end of a frame, against the full set of objects that were
+// actually drawn, so cached art for anything that has left the world is released at once.
+function pruneForestCache(used){
+  for(const key of forestCache.keys())if(!used.has(key))forestCache.delete(key);
 }

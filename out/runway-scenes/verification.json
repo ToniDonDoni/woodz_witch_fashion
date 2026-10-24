@@ -1,0 +1,150 @@
+{
+  "browser": "153.0.8010.12",
+  "offline": true,
+  "realTimeAdvance": 8.0164,
+  "viewports": [
+    "430x932",
+    "320x568",
+    "844x390",
+    "1440x900"
+  ],
+  "actLengthSeconds": [
+    31.90701211988926,
+    61.70692351460457
+  ],
+  "actStartsContiguous": true,
+  "drawMilliseconds": {
+    "mean": 12.908,
+    "median": 12.3,
+    "p95": 14.9,
+    "worst": 50.8,
+    "samples": 120,
+    "physicalPhoneTested": false
+  },
+  "actNames": [
+    "HOUR OF THE STAG",
+    "THE STAR CHOIR",
+    "THE MOTH WAKE",
+    "THE PETAL VEIL",
+    "LANTERN PROCESSION",
+    "SPORE FALL",
+    "EMBER NIGHT"
+  ],
+  "signatureEvents": {
+    "stag": 7,
+    "choir": 6,
+    "moths": 6,
+    "bloom": 7,
+    "lanterns": 3,
+    "fairring": 5,
+    "wisps": 6
+  },
+  "distinctSignatureEvents": 7,
+  "firstSeenAgeSeconds": {
+    "stag": 6,
+    "choir": 6.5,
+    "moths": 3.5,
+    "bloom": 6.5,
+    "lanterns": 5.5,
+    "fairring": 5,
+    "wisps": 2
+  },
+  "cameoActsSeen": 6,
+  "rareActsSeen": 6,
+  "activeCountRange": [
+    57,
+    64
+  ],
+  "simulatedSeconds": 600,
+  "foregroundOcclusionDelta": {
+    "legs": 34.577,
+    "torso": 0,
+    "atTime": 2.25,
+    "legsBox": {
+      "x": 129,
+      "y": 690,
+      "w": 172,
+      "h": 121
+    },
+    "torsoBox": {
+      "x": 129,
+      "y": 298,
+      "w": 172,
+      "h": 121
+    }
+  },
+  "beatsPerAct": 3,
+  "worstBeatCoverage": 1,
+  "entryModes": {
+    "hold": 30,
+    "rise": 40,
+    "right": 25,
+    "left": 25
+  },
+  "stageOccupancyVisible": [
+    {
+      "index": 0,
+      "act": "SPORE FALL",
+      "length": 52.3,
+      "samples": 105,
+      "visibleSeconds": 49.5,
+      "occupancy": 0.943,
+      "longestVisibleGapSeconds": 3
+    },
+    {
+      "index": 1,
+      "act": "THE STAR CHOIR",
+      "length": 40.2,
+      "samples": 81,
+      "visibleSeconds": 39,
+      "occupancy": 0.963,
+      "longestVisibleGapSeconds": 1.5
+    },
+    {
+      "index": 2,
+      "act": "THE PETAL VEIL",
+      "length": 51.9,
+      "samples": 104,
+      "visibleSeconds": 47.5,
+      "occupancy": 0.913,
+      "longestVisibleGapSeconds": 3
+    },
+    {
+      "index": 3,
+      "act": "HOUR OF THE STAG",
+      "length": 32.1,
+      "samples": 65,
+      "visibleSeconds": 30,
+      "occupancy": 0.923,
+      "longestVisibleGapSeconds": 2
+    },
+    {
+      "index": 4,
+      "act": "LANTERN PROCESSION",
+      "length": 43.5,
+      "samples": 87,
+      "visibleSeconds": 39,
+      "occupancy": 0.897,
+      "longestVisibleGapSeconds": 2.5
+    },
+    {
+      "index": 5,
+      "act": "THE STAR CHOIR",
+      "length": 60.7,
+      "samples": 122,
+      "visibleSeconds": 57.5,
+      "occupancy": 0.943,
+      "longestVisibleGapSeconds": 3
+    }
+  ],
+  "meanStageOccupancyVisible": 0.93,
+  "worstVisibleGapSeconds": 3,
+  "actCardAtMidAct": {
+    "text": "ACT VI · THE STAR CHOIR",
+    "opacity": 0.55
+  },
+  "walkFramesDigest": "93729293f35afd3650af30ca9a27a20f159440aecd4056ac7a9e3836ef66fad7",
+  "errors": [],
+  "networkRequests": [],
+  "physicalPhoneTested": false
+}
