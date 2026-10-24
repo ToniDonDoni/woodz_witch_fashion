@@ -1,0 +1,44 @@
+name: Check Three FX Runway
+
+on:
+  pull_request:
+    paths:
+      - "out/teknium-three-fx/**"
+      - "site/teknium-three-fx/**"
+      - "tasks/teknium_three_fx_brief.md"
+      - ".github/workflows/check-teknium-three-fx.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install image builder and Chromium
+        run: |
+          python -m pip install pillow
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+      - name: Build self-contained offline page
+        run: python out/teknium-three-fx/build.py
+      - name: Browser and shader verification
+        run: node out/teknium-three-fx/verify.cjs
+      - name: Preserve screenshots and measurements
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: teknium-three-fx-review
+          path: |
+            out/teknium-three-fx/captures/
+            out/teknium-three-fx/verification.json
+          if-no-files-found: ignore
