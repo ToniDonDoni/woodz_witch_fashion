@@ -230,7 +230,7 @@ function compile(gl,kind,source){
  }
  return s;
 }
-function create(canvas,fallbackCanvas,preferCanvas2D=false){
+function create(canvas,fallbackCanvas){
  let gl=null,program=null,uniform={},error='',mode='webgl2',width=1,height=1,dpr=1;
  const names=['uCenter','uScale','uInfo','uGenes','uA','uB','uC'];
  const ctx=fallbackCanvas.getContext('2d');
@@ -239,7 +239,6 @@ function create(canvas,fallbackCanvas,preferCanvas2D=false){
   canvas.style.display='none';fallbackCanvas.style.display='block';
  }
  try{
-  if(preferCanvas2D)throw Error('Canvas2D selected for mobile GPU compatibility');
   gl=canvas.getContext('webgl2',{alpha:true,premultipliedAlpha:true,
     antialias:false,depth:false,stencil:false,preserveDrawingBuffer:true});
   if(!gl)throw Error('WebGL2 unavailable');

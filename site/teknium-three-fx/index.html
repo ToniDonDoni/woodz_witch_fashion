@@ -351,7 +351,7 @@ function compile(gl,kind,source){
  }
  return s;
 }
-function create(canvas,fallbackCanvas,preferCanvas2D=false){
+function create(canvas,fallbackCanvas){
  let gl=null,program=null,uniform={},error='',mode='webgl2',width=1,height=1,dpr=1;
  const names=['uCenter','uScale','uInfo','uGenes','uA','uB','uC'];
  const ctx=fallbackCanvas.getContext('2d');
@@ -360,7 +360,6 @@ function create(canvas,fallbackCanvas,preferCanvas2D=false){
   canvas.style.display='none';fallbackCanvas.style.display='block';
  }
  try{
-  if(preferCanvas2D)throw Error('Canvas2D selected for mobile GPU compatibility');
   gl=canvas.getContext('webgl2',{alpha:true,premultipliedAlpha:true,
     antialias:false,depth:false,stencil:false,preserveDrawingBuffer:true});
   if(!gl)throw Error('WebGL2 unavailable');
@@ -475,9 +474,9 @@ return {create};
 
 
 const layer=document.getElementById('walker'),ctx=layer.getContext('2d',{alpha:true});
-const mobileSafeMode=matchMedia('(pointer: coarse) and (max-width: 850px)').matches;
+const phoneGpuBudget=matchMedia('(pointer: coarse) and (max-width: 850px)').matches;
 const painter=threeFxRenderer.create(document.getElementById('fx'),
-                                    document.getElementById('fallback'),mobileSafeMode);
+                                    document.getElementById('fallback'));
 const atlas=new Image();
 const FW=420,FH=790,COLS=6,FRAME_COUNT=33;
 const ROWS_PER_TILE=3,FRAMES_PER_TILE=COLS*ROWS_PER_TILE;
@@ -501,7 +500,9 @@ function resize(){
  w=innerWidth;h=innerHeight;dpr=Math.min(devicePixelRatio||1,1.4);
  layer.width=Math.max(1,Math.round(w*dpr));
  layer.height=Math.max(1,Math.round(h*dpr));
- ctx.setTransform(dpr,0,0,dpr,0,0);painter.resize(w,h,dpr);
+ ctx.setTransform(dpr,0,0,dpr,0,0);
+ // Render expensive fragment shaders at CSS-pixel resolution on touch phones.
+ painter.resize(w,h,phoneGpuBudget?Math.min(dpr,1):dpr);
  if(ready)draw();
 }
 function draw(){
@@ -527,7 +528,7 @@ function draw(){
   event:state.active?{id:state.spec.id,type:state.spec.type,
        name:state.spec.name,side:state.spec.side,age:state.age}:null,
   walker:{x,y,width,height},viewport:{width:w,height:h,dpr},
-  atlasTilesReady:Boolean(atlasTiles),mobileSafeMode};
+  atlasTilesReady:Boolean(atlasTiles),phoneGpuBudget};
  return debug;
 }
 function tick(now){
@@ -587,8 +588,9 @@ atlas.onerror=()=>{
  document.querySelector('.note').textContent='Walk frames unavailable · effects remain active';
  draw();
 };
-if(mobileSafeMode)
- document.querySelector('.note').textContent='Mobile compatible rendering · self-contained';
+document.querySelector('.note').textContent=phoneGpuBudget
+ ? 'Mobile WebGL2 · fallback only if unavailable'
+ : 'Procedural WebGL2 · self-contained';
 setTimeout(()=>{
  if(!ready)document.querySelector('.note').textContent='Waiting for walk frames · try reload';
 },7000);

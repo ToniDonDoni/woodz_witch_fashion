@@ -130,30 +130,66 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
   };
   fs.writeFileSync(path.join(__dirname,'verification.json'),JSON.stringify(summary,null,2)+'\n');
   console.log(JSON.stringify(summary));
-  // Exercise phone-class touch input and verify visible 2D fallback pixels.
+  // Mobile emulation must run real shaders; no automatic downgrade to Canvas2D.
   const mobile=await browser.newContext({viewport:{width:393,height:851},
     deviceScaleFactor:2,isMobile:true,hasTouch:true,offline:true});
   const phone=await mobile.newPage();
   await phone.goto('file://'+filename);
   await phone.waitForFunction(()=>window.runway?.ready,null,{timeout:45000});
-  const phoneState=await phone.evaluate(()=>{
-    const state=runway.seekSlot(0);
-    function visiblePixels(id){
-      const canvas=document.getElementById(id),g=canvas.getContext('2d');
-      const pixels=g.getImageData(0,0,canvas.width,canvas.height).data;
-      let count=0;
-      for(let i=3;i<pixels.length;i+=4)if(pixels[i]>20)count++;
-      return count;
-    }
-    return {...state,walkerPixels:visiblePixels('walker'),
-      effectPixels:visiblePixels('fallback')};
-  });
-  assert.equal(phoneState.backend,'canvas2d');
-  assert.equal(phoneState.mobileSafeMode,true);
-  assert(phoneState.walkerPixels>200,'Walker must be visible on a touch phone');
-  assert(phoneState.effectPixels>100,'Mobile fallback must have a visible creature');
-  await phone.screenshot({path:path.join(captures,'touch-mobile-393x851.png')});
+  const mobileEffects=[];
+  for(let kind=0;kind<3;kind++){
+    const pixels=await phone.evaluate(k=>{
+      const slot=Array.from({length:3},(_,i)=>i).find(i=>runway.spec(i).type===k);
+      const state=runway.seekSlot(slot);
+      const fx=document.getElementById('fx'),gl=fx.getContext('webgl2');
+      let lit=0;
+      if(gl){
+        const rgba=new Uint8Array(fx.width*fx.height*4);
+        gl.readPixels(0,0,fx.width,fx.height,gl.RGBA,gl.UNSIGNED_BYTE,rgba);
+        for(let i=3;i<rgba.length;i+=4)if(rgba[i]>20)lit++;
+      }
+      const walker=document.getElementById('walker');
+      const walkPixels=walker.getContext('2d').getImageData(
+        0,0,walker.width,walker.height).data;
+      let walkerLit=0;
+      for(let i=3;i<walkPixels.length;i+=4)if(walkPixels[i]>20)walkerLit++;
+      return {...state,effectPixels:lit,walkerPixels:walkerLit};
+    },kind);
+    assert.equal(pixels.backend,'webgl2','Touch device should use actual WebGL shader');
+    assert.equal(pixels.event.type,kind);
+    assert.equal(pixels.phoneGpuBudget,true);
+    assert(pixels.walkerPixels>200,'The walking woman must be visible');
+    assert(pixels.effectPixels>200,'WebGL effect must be visibly rendered');
+    await phone.screenshot({path:path.join(captures,
+      ['touch-glass.png','touch-smoke.png','touch-pixel.png'][kind])});
+    mobileEffects.push(pixels.effectPixels);
+  }
   await mobile.close();
+
+  // Canvas2D is allowed only when actual WebGL2 is unavailable.
+  const noGpu=await browser.newContext({viewport:{width:393,height:851},
+    deviceScaleFactor:2,isMobile:true,hasTouch:true,offline:true});
+  await noGpu.addInitScript(()=>{
+    const get=HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext=function(kind,...args){
+      return kind==='webgl2'?null:get.call(this,kind,...args);
+    };
+  });
+  const fallbackPage=await noGpu.newPage();
+  await fallbackPage.goto('file://'+filename);
+  await fallbackPage.waitForFunction(()=>window.runway?.ready,null,{timeout:45000});
+  const fallback=await fallbackPage.evaluate(()=>{
+    const state=runway.seekEffect(1);
+    const canvas=document.getElementById('fallback'),g=canvas.getContext('2d');
+    const pixels=g.getImageData(0,0,canvas.width,canvas.height).data;
+    let lit=0;
+    for(let i=3;i<pixels.length;i+=4)if(pixels[i]>20)lit++;
+    return {backend:state.backend,lit,reason:state.fallbackReason};
+  });
+  assert.equal(fallback.backend,'canvas2d');
+  assert(fallback.reason.includes('WebGL2 unavailable'));
+  assert(fallback.lit>100,'Only the true no-WebGL case may render a fallback');
+  await noGpu.close();
   await context.close();
  }finally{await browser.close();}
 })().catch(error=>{console.error(error.stack||error);process.exitCode=1;});
