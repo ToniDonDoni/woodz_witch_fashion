@@ -130,27 +130,27 @@ const pixels=async p=>p.locator('canvas').evaluate(c=>c.toDataURL());
   assert.equal(effectState.effects.spores.length,6,'Six continuous spore plumes required');
   assert(effectState.effects.spores.every(p=>p.count>=16));
   assert.equal(effectState.scene.forest,false,'Spore effect unexpectedly enabled forest');
+  await page.evaluate(()=>{
+   const c=document.querySelector('#scene');
+   window.__sporeLit=c.getContext('2d').getImageData(0,0,c.width,c.height).data.slice();
+  });
+  await page.screenshot({path:path.join(RESULTS,'spores-visible-'+label+'.png')});
+  await sporesOnly.uncheck();
   const coverage=await page.evaluate(()=>{
-   const c=document.querySelector('#scene'),image=c.getContext('2d').getImageData(0,0,c.width,c.height);
-   // Save current pixels and draw the exact same paused frame with only spores OFF.
-   const lit=image.data.slice();
-   const check=document.querySelector('[data-effect="spores"]');
-   check.checked=false;enchantments.spores=false;draw();
-   const dark=c.getContext('2d').getImageData(0,0,c.width,c.height).data;
+   const c=document.querySelector('#scene'),dark=c.getContext('2d').getImageData(0,0,c.width,c.height).data;
+   const lit=window.__sporeLit;
    let hits=0,minX=c.width,maxX=-1,minY=c.height,maxY=-1;
    for(let y=0;y<c.height;y+=3)for(let x=0;x<c.width;x+=3){
     const p=(y*c.width+x)*4;
     const change=Math.abs(lit[p]-dark[p])+Math.abs(lit[p+1]-dark[p+1])+Math.abs(lit[p+2]-dark[p+2]);
     if(change>32){hits++;minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);}
    }
-   check.checked=true;enchantments.spores=true;draw();
+   delete window.__sporeLit;
    return {hits,width:(maxX-minX)/c.width,height:(maxY-minY)/c.height};
   });
   assert(coverage.hits>=180,'Spore trails too faint at '+label+': '+JSON.stringify(coverage));
   assert(coverage.width>.63,'Spore trails too narrow at '+label+': '+JSON.stringify(coverage));
   assert(coverage.height>.26,'Spore trails too short at '+label+': '+JSON.stringify(coverage));
-  await page.screenshot({path:path.join(RESULTS,'spores-visible-'+label+'.png')});
-  await sporesOnly.uncheck();
   assert.equal(await pixels(page),off,'Spore toggle did not restore paused image at '+label);
  }
  await page.setViewportSize({width:430,height:932});
