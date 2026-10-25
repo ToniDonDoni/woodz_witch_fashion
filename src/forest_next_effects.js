@@ -28,15 +28,13 @@ function drawPaintedConstellations() {
     const progress = (time * .055 + g * .31) % 1;
     ctx.lineWidth = 1.6 * u;
     ctx.strokeStyle = colors[g];
-    ctx.shadowColor = colors[g];
-    ctx.shadowBlur = 12 * u;
+    // Thin screen-blended strokes avoid expensive per-segment canvas shadows.
     ctx.globalAlpha = .46;
     for (let k = 1; k < points.length; k++) {
       const p = points[k - 1], q = points[k];
       ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(q.x, q.y);
       ctx.stroke();
     }
-    ctx.shadowBlur = 0;
     for (let k = 0; k < points.length; k++) {
       const p = points[k];
       const beat = .70 + .30 * Math.sin(time * 1.2 + k + id);
@@ -148,8 +146,7 @@ function drawMoonlitCaustics() {
     gradient.addColorStop(1,'rgba(0,0,0,0)');
     ctx.strokeStyle=gradient;
     ctx.lineWidth=8*u;
-    ctx.shadowBlur=8*u;
-    ctx.shadowColor='#83c8eb';
+    // The broad gradients already glow; avoid per-path shadow filters.
     for(let strand=0;strand<2;strand++){
       ctx.beginPath();
       for(let step=0;step<=32;step++){
