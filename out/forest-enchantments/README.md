@@ -37,12 +37,14 @@ python3 -m venv /tmp/woodz-build-venv
 . /tmp/woodz-build-venv/bin/activate
 python -m pip install Pillow
 python out/forest-enchantments/build.py
-python -m http.server 8000 --bind 0.0.0.0 --directory out/forest-enchantments
+python -m http.server 8000 --bind 0.0.0.0 --directory dist/forest-enchantments
 ```
 
 The builder reads the 33 PNGs from `assets/walk/`, the original forest and
 spectator drawing code from `out/forest-spectators/`, and this attempt's
-`template.html` and `enchantments.js`. It writes only this attempt's `index.html`.
+`template.html` and `enchantments.js`. Normal builds write
+`dist/forest-enchantments/index.html`, which is ignored by Git so rebuilding with
+a new HEAD does not create tracked changes or block the next `git pull`.
 Node.js, Three.js, bundlers and an internet connection are not needed to play it.
 
 ## Build identity
@@ -58,7 +60,7 @@ The committed preview is generated with `python out/forest-enchantments/build.py
 --snapshot` and explicitly says **HEAD · rebuild to identify**. A file cannot
 contain its own enclosing commit hash; recording a parent hash as if it were the
 current HEAD would be misleading. Normal local/CI builds replace this message
-with the actual build HEAD. The result remains one offline-capable HTML file.
+with the actual build HEAD. The result remains one offline-capable HTML file in `dist/forest-enchantments/`.
 
 The **Check Forest Enchantments** workflow checks out the PR head SHA explicitly,
 builds, verifies, and uploads an HTML artifact named after that same commit. It

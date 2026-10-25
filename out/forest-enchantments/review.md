@@ -75,3 +75,7 @@ rebuild rather than mislabeling its parent commit as its own current HEAD.
 The supplied user screenshot is the separate root "Into the woods" scene.
 The README now serves this attempt's directory directly at `/` to prevent that
 entry-point mix-up.
+
+Normal stamped builds are written to Git-ignored `dist/forest-enchantments/`.
+The verifier and CI artifact read that file. This keeps rebuilding the HEAD
+stamp from changing tracked files and blocking subsequent branch updates.

@@ -5,7 +5,7 @@
     "keyboard": true,
     "layoutChecked": true
   },
-  "buildHead": "a28bfe1c54a9383f14349649c2114af54bcc2220",
+  "buildHead": "b71838cc74a90017d1eb6167a502f195525377c4",
   "effects": {
     "simulatedSeconds": 180,
     "earlySporeSamples": 76,
@@ -15,7 +15,7 @@
   },
   "browser": "153.0.8010.0",
   "offline": true,
-  "realTimeAdvance": 8.01630000000002,
+  "realTimeAdvance": 8.016300000000026,
   "simulatedSeconds": 120,
   "activeCountRange": [
     53,

@@ -41,6 +41,9 @@ html = html.replace('__FOREST_CODE__', (BASE / 'forest.js').read_text(encoding='
 html = html.replace('__ENCHANTMENT_CODE__', (ATTEMPT / 'enchantments.js').read_text(encoding='utf-8'))
 html = html.replace('__BUILD_STAMP__', stamp)
 html = html.replace('__ATLAS_DATA__', base64.b64encode(buffer.getvalue()).decode('ascii'))
-(ATTEMPT / 'index.html').write_text(html, encoding='utf-8')
+output = ATTEMPT / 'index.html' if args.snapshot else ROOT / 'dist' / 'forest-enchantments' / 'index.html'
+output.parent.mkdir(parents=True, exist_ok=True)
+output.write_text(html, encoding='utf-8')
+print(f'Output: {output.relative_to(ROOT)}')
 print(f'Built standalone HTML: {len(html.encode())} bytes; 33 embedded frames')
 print('HEAD: rebuild required' if args.snapshot else f'HEAD: {revision} ({branch})')

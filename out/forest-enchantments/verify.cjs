@@ -12,7 +12,7 @@ const canvasPixels=async page=>Buffer.from(await page.locator('canvas').evaluate
   const errors=[],requests=[];
   page.on('pageerror',e=>errors.push(String(e)));
   page.on('request',r=>{if(/^https?:/.test(r.url()))requests.push(r.url())});
-  await page.goto('file://'+path.join(__dirname,'index.html'));
+  await page.goto('file://'+path.resolve(__dirname,'../../dist/forest-enchantments/index.html'));
   await page.waitForFunction(()=>window.runway?.ready);
   const expectedHead=execFileSync('git',['rev-parse','HEAD'],{cwd:path.join(__dirname,'../..'),encoding:'utf8'}).trim();
   assert.equal(await page.locator('#build-commit').getAttribute('data-head'),expectedHead,'Version does not match checked-out HEAD');

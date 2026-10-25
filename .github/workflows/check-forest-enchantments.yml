@@ -48,7 +48,7 @@ jobs:
         with:
           name: forest-enchantments-${{ github.event.pull_request.head.sha || github.sha }}
           path: |
-            out/forest-enchantments/index.html
+            dist/forest-enchantments/index.html
             out/forest-enchantments/verification.json
             out/forest-enchantments/desktop.png
             out/forest-enchantments/small-phone.png
