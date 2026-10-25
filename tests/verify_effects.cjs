@@ -58,7 +58,7 @@ const pixels=async p=>p.locator('canvas').evaluate(c=>c.toDataURL());
   await page.setViewportSize({width,height});await page.evaluate(()=>runway.seek(2));
   const box=await page.evaluate(()=>{const b=s=>{const r=document.querySelector(s).getBoundingClientRect();return {x:r.x,y:r.y,right:r.right,bottom:r.bottom}};return {fx:b('.effects'),controls:b('.controls'),commit:b('#build-commit'),edition:b('.edition'),card:b('#actcard'),labels:[...document.querySelectorAll('.effects label')].map(e=>{const r=e.getBoundingClientRect();return {x:r.x,right:r.right}})}});
   assert(box.fx.y>height*.6);assert(box.fx.bottom<=box.controls.y-5);assert(box.card.bottom<box.fx.y);
-  assert(box.labels.every(r=>r.x>=0&&r.right<=width));assert(box.commit.right<box.edition.x||box.commit.bottom<box.edition.y||box.commit.y>box.edition.bottom);
+  assert(box.labels.every(r=>r.x>=0&&r.right<=width));assert(box.commit.x>=0&&box.commit.right<=width,'HEAD clipped at '+width+'x'+height);assert(box.commit.right<box.edition.x||box.commit.bottom<box.edition.y||box.commit.y>box.edition.bottom,'HEAD overlaps edition at '+width+'x'+height);
   await page.mouse.move(width-1,0);await page.screenshot({path:path.join(RESULTS,'effects-'+name+'.png')});
  }
  assert.deepEqual(errors,[]);assert.deepEqual(requests,[]);
