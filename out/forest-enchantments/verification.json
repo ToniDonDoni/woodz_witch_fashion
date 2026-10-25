@@ -1,4 +1,11 @@
 {
+  "controls": {
+    "type": "checkbox",
+    "independentPixelChanges": true,
+    "keyboard": true,
+    "layoutChecked": true
+  },
+  "buildHead": "a28bfe1c54a9383f14349649c2114af54bcc2220",
   "effects": {
     "simulatedSeconds": 180,
     "earlySporeSamples": 76,
@@ -20,7 +27,8 @@
     "430x932",
     "320x568",
     "844x390",
-    "1440x900"
+    "1440x900",
+    "2048x1000"
   ],
   "forestCategories": [
     "tree",

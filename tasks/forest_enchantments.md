@@ -36,3 +36,14 @@ adaptations, not copied demo source or downloaded videos.
 - Paper/cardboard fractal styling:
   https://skillry.dev/ai-videos/opus-5-5/jrayon-054015
 - Reference collection: https://github.com/yihui-dev/awesome-opus5-5-videos
+
+## Follow-up: explicit controls and build identity
+
+- Replace the top toggle pills with three native bottom checkboxes: Fog,
+  Spore trails and Fractal ferns. Verify mouse and keyboard operation.
+- Put the actual build HEAD and branch at upper left. Read the checked-out Git
+  HEAD during the build; do not stamp a PR merge or query a remote branch at runtime.
+- Prove each effect independently changes canvas pixels on a paused frame and
+  unchecking it restores the pixels. Check control layout at all five sizes.
+- Document how to serve this attempt directly at `/`, since the screenshot shows
+  the separate older root "Into the woods" scene.

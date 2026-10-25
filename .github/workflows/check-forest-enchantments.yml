@@ -1,0 +1,54 @@
+name: Check Forest Enchantments
+
+on:
+  pull_request:
+    paths:
+      - 'out/forest-enchantments/**'
+      - 'out/forest-spectators/**'
+      - 'assets/walk/**'
+      - '.github/workflows/check-forest-enchantments.yml'
+  push:
+    branches: ['codex/forest-enchantments-preview']
+    paths:
+      - 'out/forest-enchantments/**'
+      - '.github/workflows/check-forest-enchantments.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # Stamp the branch commit, never GitHub's synthetic PR merge commit.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install build and verification dependencies
+        run: |
+          python -m pip install Pillow
+          npm install --prefix "$RUNNER_TEMP/forest-check" playwright
+          node "$RUNNER_TEMP/forest-check/node_modules/playwright/cli.js" install --with-deps chromium
+      - name: Build with the checked-out HEAD
+        run: python out/forest-enchantments/build.py
+      - name: Verify pixels, checkboxes, HEAD and offline playback
+        env:
+          PLAYWRIGHT_MODULE: ${{ runner.temp }}/forest-check/node_modules/playwright
+        run: node out/forest-enchantments/verify.cjs
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: forest-enchantments-${{ github.event.pull_request.head.sha || github.sha }}
+          path: |
+            out/forest-enchantments/index.html
+            out/forest-enchantments/verification.json
+            out/forest-enchantments/desktop.png
+            out/forest-enchantments/small-phone.png

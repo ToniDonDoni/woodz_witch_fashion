@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
+const {execFileSync} = require('child_process');
 const {chromium} = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 // Compare canvas pixels directly: element screenshots also capture overlaid UI.
 const canvasPixels=async page=>Buffer.from(await page.locator('canvas').evaluate(c=>c.toDataURL().split(',')[1]),'base64');
@@ -13,6 +14,23 @@ const canvasPixels=async page=>Buffer.from(await page.locator('canvas').evaluate
   page.on('request',r=>{if(/^https?:/.test(r.url()))requests.push(r.url())});
   await page.goto('file://'+path.join(__dirname,'index.html'));
   await page.waitForFunction(()=>window.runway?.ready);
+  const expectedHead=execFileSync('git',['rev-parse','HEAD'],{cwd:path.join(__dirname,'../..'),encoding:'utf8'}).trim();
+  assert.equal(await page.locator('#build-commit').getAttribute('data-head'),expectedHead,'Version does not match checked-out HEAD');
+  assert.equal(await page.locator('#build-commit').textContent(),'HEAD '+expectedHead.slice(0,12));
+  assert((await page.locator('#build-commit').getAttribute('href')).endsWith('/commit/'+expectedHead));
+  const checkControlLayout=async()=>{
+    const layout=await page.evaluate(()=>{
+      const box=e=>{const r=e.getBoundingClientRect();return {x:r.x,y:r.y,right:r.right,bottom:r.bottom};};
+      return {width:innerWidth,height:innerHeight,effects:box(document.querySelector('.effects')),playback:box(document.querySelector('.controls')),labels:[...document.querySelectorAll('.effects label')].map(box),version:box(document.querySelector('#build-commit'))};
+    });
+    assert(layout.effects.y>layout.height*.6,'Effects are not at the bottom');
+    assert(layout.effects.bottom<=layout.playback.y-5,'Effect checkboxes overlap playback controls');
+    assert(layout.labels.every(r=>r.x>=0&&r.right<=layout.width),'Checkbox label clipped');
+    assert(layout.version.x>=0&&layout.version.right<=layout.width&&layout.version.y<80,'HEAD is not readable at upper left');
+  };
+  assert.equal(await page.getByRole('checkbox').count(),3);
+  for(const name of ['Fog','Spore trails','Fractal ferns'])assert(await page.getByRole('checkbox',{name,exact:true}).isChecked());
+  await checkControlLayout();
   const initial=await page.evaluate(()=>runway.state().time);
   await page.waitForTimeout(8000);
   const after=await page.evaluate(()=>runway.state().time);
@@ -58,12 +76,23 @@ const canvasPixels=async page=>Buffer.from(await page.locator('canvas').evaluate
   assert(plantsSeen>0,'No fractal plants in the first 30 seconds');
   for(const name of ['fog','spores','plants']){
     await page.locator(`[data-effect="${name}"]`).click();
-    assert.equal(await page.locator(`[data-effect="${name}"]`).getAttribute('aria-pressed'),'false');
+    assert.equal(await page.locator(`[data-effect="${name}"]`).isChecked(),false);
     const fx=await page.evaluate(()=>runway.seek(10).effects);
     assert.equal(fx.enabled[name],false);
     if(name==='fog')assert.equal(fx.fogCount,0);
     else assert.equal(fx[name].length,0);
   }
+  // Prove each checkbox changes actual pixels independently, not just debug state.
+  await page.evaluate(()=>runway.seek(.5));const noEffects=await canvasPixels(page);
+  for(const name of ['fog','spores','plants']){
+    const checkbox=page.locator(`[data-effect="${name}"]`);
+    await checkbox.check();assert(!(await canvasPixels(page)).equals(noEffects),name+' did not change the rendered scene');
+    await checkbox.uncheck();assert((await canvasPixels(page)).equals(noEffects),name+' did not restore the rendered scene');
+  }
+  // Native checkbox keyboard interaction also updates the paused scene immediately.
+  const fogCheckbox=page.getByRole('checkbox',{name:'Fog',exact:true});await fogCheckbox.focus();await page.keyboard.press('Space');
+  assert(await fogCheckbox.isChecked());assert((await page.evaluate(()=>runway.state())).effects.enabled.fog);
+  await page.keyboard.press('Space');assert(!(await fogCheckbox.isChecked()));
   // Effects off must reproduce the exact original canvas, including walk sprites.
   await page.evaluate(()=>runway.seek(7.125));
   const restored=await canvasPixels(page);
@@ -85,12 +114,13 @@ const canvasPixels=async page=>Buffer.from(await page.locator('canvas').evaluate
   for(let i=0;i<screenshotTimes.length;i++){await page.evaluate(t=>runway.seek(t),screenshotTimes[i]);await page.screenshot({path:path.join(__dirname,`phone-${String(i).padStart(3,'0')}.png`)});}
   fs.mkdirSync(path.join(__dirname,'motion'),{recursive:true});
   for(let i=0;i<36;i++){await page.evaluate(t=>runway.seek(t),i/12);await page.locator('canvas').screenshot({path:path.join(__dirname,'motion',`${String(i).padStart(3,'0')}.png`)});}
-  await page.setViewportSize({width:1440,height:900});await page.waitForTimeout(300);await page.evaluate(()=>runway.seek(2));await page.screenshot({path:path.join(__dirname,'desktop.png')});await page.evaluate(()=>runway.seek(18));await page.screenshot({path:path.join(__dirname,'desktop-later.png')});
-  await page.setViewportSize({width:844,height:390});await page.waitForTimeout(300);await page.evaluate(()=>runway.seek(2));await page.screenshot({path:path.join(__dirname,'landscape.png')});
+  await page.setViewportSize({width:1440,height:900});await page.waitForTimeout(300);await page.evaluate(()=>runway.seek(2));await page.screenshot({path:path.join(__dirname,'desktop.png')});await checkControlLayout();await page.evaluate(()=>runway.seek(18));await page.screenshot({path:path.join(__dirname,'desktop-later.png')});
+  await page.setViewportSize({width:844,height:390});await page.waitForTimeout(300);await page.evaluate(()=>runway.seek(2));await page.screenshot({path:path.join(__dirname,'landscape.png')});await checkControlLayout();
   const s=await page.evaluate(()=>runway.state());assert(s.figure.y>=0&&s.figure.y+s.figure.height<=390);
-  await page.setViewportSize({width:320,height:568});await page.waitForTimeout(300);await page.evaluate(()=>runway.seek(2));await page.screenshot({path:path.join(__dirname,'small-phone.png')});
+  await page.setViewportSize({width:320,height:568});await page.waitForTimeout(300);await page.evaluate(()=>runway.seek(2));await page.screenshot({path:path.join(__dirname,'small-phone.png')});await checkControlLayout();
+  await page.setViewportSize({width:2048,height:1000});await page.evaluate(()=>runway.seek(.5));await checkControlLayout();await page.screenshot({path:path.join(__dirname,'wide-desktop.png')});
   const oldSeed=await page.evaluate(()=>runway.state().seed);await page.getByRole('button',{name:'NEW DREAM'}).click();assert.notEqual(await page.evaluate(()=>runway.state().seed),oldSeed);
   assert.deepEqual(errors,[]);assert.deepEqual(requests,[]);
-  const report={effects:{simulatedSeconds:180,earlySporeSamples:bursts,earlyPlantSamples:plantsSeen,maxPlantCache,originalCanvasRestored:true},browser:await browser.version(),offline:true,realTimeAdvance:after-initial,simulatedSeconds:120,activeCountRange:[Math.min(...counts),Math.max(...counts)],errors,networkRequests:requests,viewports:['430x932','320x568','844x390','1440x900'],forestCategories:Array.from(early),spectatorStudies:Array.from(spectatorKinds),physicalPhoneTested:false};
+  const report={controls:{type:'checkbox',independentPixelChanges:true,keyboard:true,layoutChecked:true},buildHead:expectedHead,effects:{simulatedSeconds:180,earlySporeSamples:bursts,earlyPlantSamples:plantsSeen,maxPlantCache,originalCanvasRestored:true},browser:await browser.version(),offline:true,realTimeAdvance:after-initial,simulatedSeconds:120,activeCountRange:[Math.min(...counts),Math.max(...counts)],errors,networkRequests:requests,viewports:['430x932','320x568','844x390','1440x900','2048x1000'],forestCategories:Array.from(early),spectatorStudies:Array.from(spectatorKinds),physicalPhoneTested:false};
   fs.writeFileSync(path.join(__dirname,'verification.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report));await browser.close();
 })().catch(e=>{console.error(e);process.exit(1)});

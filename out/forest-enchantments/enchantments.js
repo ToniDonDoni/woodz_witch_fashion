@@ -139,7 +139,8 @@ function drawFractalPlants(){
 }
 function bindEnchantmentControls(){
   for(const name of Object.keys(enchantments)){
-    const button=document.querySelector(`[data-effect="${name}"]`);
-    button.onclick=()=>{enchantments[name]=!enchantments[name];button.setAttribute('aria-pressed',String(enchantments[name]));if(ready)draw();};
+    const checkbox=document.querySelector(`[data-effect="${name}"]`);
+    checkbox.checked=enchantments[name];
+    checkbox.onchange=()=>{enchantments[name]=checkbox.checked;if(ready)draw();};
   }
 }
