@@ -12,6 +12,14 @@ const pixels=async p=>p.locator('canvas').evaluate(c=>c.toDataURL());
  await page.goto('file://'+path.join(ROOT,'dist','index.html'));await page.waitForFunction(()=>runway.ready);
  const head=execFileSync('git',['rev-parse','HEAD'],{cwd:ROOT,encoding:'utf8'}).trim();
  assert.equal(await page.locator('#build-commit').getAttribute('data-head'),head);
+ // Protect the intended scene graph order: sky -> sparks -> sky events ->
+ // background trees -> ground trees -> walker -> foreground trees.
+ const template=fs.readFileSync(path.join(ROOT,'src','forest_runway_template.html'),'utf8');
+ const frame=template.slice(template.indexOf('function draw(){'),template.indexOf('function tick(now)'));
+ const passes=['drawNightSky();','const sparks=drawBigSparks();','drawSkyEvents(plan);','drawForestBackground();','drawForestGround(woodland);','ctx.drawImage(atlas,','drawForestForeground(woodland)'];
+ const layers=passes.map(s=>frame.indexOf(s));
+ assert(layers.every(n=>n>=0)&&layers.every((n,i)=>i===0||n>layers[i-1]),
+  'Big sparks must render behind all trees, events and the walking sprite');
  assert.equal(await page.getByRole('checkbox').count(),6);
  for(const name of ['Fog','Spore trails','Fractal ferns','Living ink','Glass flowers','Big sparks'])assert(await page.getByRole('checkbox',{name,exact:true}).isChecked());
  await page.evaluate(()=>runway.seek(0));
