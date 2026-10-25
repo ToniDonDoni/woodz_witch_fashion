@@ -79,7 +79,7 @@ Ten bottom effect checkboxes enable independent original Canvas adaptations of e
 [yihui-dev/awesome-opus5-5-videos](https://github.com/yihui-dev/awesome-opus5-5-videos):
 
 - **Fog** — layered rolling mist ([reference](https://skillry.dev/ai-videos/opus-5-5/mondemsuraj-691517)).
-- **Spore trails** — glowing mushroom spores with curved trails ([reference](https://skillry.dev/ai-videos/opus-5-5/ishuagra02-678129)).
+- **Spore trails** — six continuously active, viewport-spanning clusters (96 luminous particles) with curved comet tails, soft halos and bright cores. Unlike the former mushroom-crossing-only trigger, they remain visibly active even when the original forest scenery is unchecked; the character and foreground scenery still occlude them. ([reference](https://skillry.dev/ai-videos/opus-5-5/ishuagra02-678129)).
 - **Fractal ferns** — unfolding folded-paper plants ([reference](https://skillry.dev/ai-videos/opus-5-5/jrayon-054015)).
 - **Living ink** — drifting wide dry-brush ribbons, pigment edges and fibers inspired by [interactive ink painting](https://github.com/yihui-dev/awesome-opus5-5-videos/blob/main/prompts/youwareai-259061.md) ([original](https://x.com/YouWareAI/status/2105656935622259061)).
 - **Glass flowers** — large translucent hibiscus-inspired petals, colored glass gradients and vein details inspired by [stained-glass hibiscus](https://github.com/yihui-dev/awesome-opus5-5-videos/blob/main/prompts/ivanainai-245918.md) ([original](https://x.com/ivanainai/status/2106481339193245918)).
