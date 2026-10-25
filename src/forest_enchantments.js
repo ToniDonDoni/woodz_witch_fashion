@@ -28,46 +28,64 @@ function drawFog(front=false){
   }
   ctx.restore();return end-start+1;
 }
+// Six seeded emission points keep the spore effect continuously visible.
+// The previous design required a mushroom to cross a narrow trigger window,
+// leaving most scenes with zero nearly invisible 1px spores.
 function sporePosition(age,k,id,origin,unit){
-  const phase=rand(id+k*17)*TAU,spread=(.4+rand(id+k*19))*(8+age*5)*unit;
+  const phase=rand(id+k*31)*TAU;
+  const lateral=(10+age*8)*unit;
   return {
-    x:origin.x+Math.sin(age*1.8+phase)*spread+age*7*unit,
-    y:origin.y-age*(13+rand(id+k*23)*12)*unit+Math.cos(age*1.5+phase)*5*unit
+    x:origin.x+Math.sin(age*1.25+phase)*lateral+age*(2+rand(id+k*17)*4)*unit,
+    y:origin.y-age*(35+rand(id+k*23)*8)*unit+Math.cos(age*1.65+phase)*6*unit
   };
 }
 function drawSpores(forest){
-  const bursts=[];if(!enchantments.spores)return bursts;
-  const unit=forestUnit();ctx.save();ctx.globalCompositeOperation='screen';
-  for(const mushroom of forest){
-    if(mushroom.kind!=='mushroom')continue;
-    const speed=forestRows.speed[mushroom.layer]*unit;
-    // A mushroom releases spores as it passes the anchored walker. Derive the
-    // crossing time analytically, so seeking, pausing and frame drops agree.
-    const age=(mushroom.x-w*.5)/speed;
-    if(age<0||age>8)continue;
-    const id=Number(mushroom.id.split(':')[1])*173+mushroom.layer*1301;
-    const origin={x:mushroom.x-38*mushroom.size,y:mushroom.y-70*mushroom.size};
-    const envelope=smoothstep(0,.55,age)*(1-smoothstep(5,8,age));
-    const color=mushroom.layer===2?'#92f5d9':'#ffd48c';
-    // A soft light in the emitting cap, then fine drawn ribbons and points.
-    const glow=ctx.createRadialGradient(origin.x,origin.y,0,origin.x,origin.y,26*unit);
-    glow.addColorStop(0,`rgba(170,224,180,${envelope*.17})`);glow.addColorStop(1,'#92f5d900');
-    ctx.fillStyle=glow;ctx.fillRect(origin.x-26*unit,origin.y-26*unit,52*unit,52*unit);
-    for(let k=0;k<22;k++){
-      const t=Math.max(0,age-rand(id+k*31)*.7),p=sporePosition(t,k,id,origin,unit);
+  const streams=[];if(!enchantments.spores)return streams;
+  const unit=Math.max(.75,forestUnit());
+  const colors=['#9df7df','#e8caff','#ffdba2','#9adbf6','#eab9ec','#b5f2b5'];
+  const lifetime=h*.38/(39*unit);
+  ctx.save();ctx.globalCompositeOperation='screen';ctx.lineCap='round';
+  // Viewport-spanning sources stay visible on empty forest scenes too. The
+  // walker and front-stage elements are composited afterward, so they occlude
+  // the trails rather than being hidden behind bright particle overlays.
+  for(let i=0;i<6;i++){
+    const id=78113+i*3917,origin={
+      x:w*(.10+i*.16)+Math.sin(time*.16+i*1.7)*12*unit,
+      y:h*(.81+(i%2)*.03)
+    };
+    const color=colors[i],count=16;
+    // A faint glowing source visually anchors each upward-moving plume.
+    ctx.globalAlpha=.21;
+    ctx.fillStyle=color;
+    ctx.beginPath();ctx.ellipse(origin.x,origin.y,14*unit,6*unit,0,0,TAU);ctx.fill();
+    for(let k=0;k<count;k++){
+      const age=positiveMod(time+k*lifetime/count+rand(id+k*59)*.32,lifetime);
+      const fade=smoothstep(0,.45,age)*(1-smoothstep(lifetime-1.05,lifetime,age));
+      if(fade<=0)continue;
+      const p=sporePosition(age,k,id,origin,unit);
+      // A long curved comet tail, a colored halo and a bright white core.
       ctx.beginPath();
-      for(let j=0;j<=7;j++){
-        const q=sporePosition(Math.max(0,t-j*.075),k,id,origin,unit);
-        j?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y);
+      for(let j=6;j>=0;j--){
+        const t=Math.max(0,age-j*.17),q=sporePosition(t,k,id,origin,unit);
+        j===6?ctx.moveTo(q.x,q.y):ctx.lineTo(q.x,q.y);
       }
-      ctx.strokeStyle=color;ctx.globalAlpha=envelope*.24;ctx.lineWidth=.65*unit;ctx.stroke();
-      ctx.globalAlpha=envelope*(.55+.35*Math.sin(time*2+k)**2);
-      ellipse(p.x,p.y,(k%5===0?1.8:1)*unit,(k%5===0?1.8:1)*unit,color);
-      if(k%7===0){ctx.globalAlpha=envelope*.32;ellipse(p.x,p.y,3.6*unit,3.6*unit,color);}
+      ctx.globalAlpha=fade*.68;
+      ctx.strokeStyle=color;
+      ctx.lineWidth=(1.5+rand(id+k*7)*.6)*unit;
+      ctx.stroke();
+      const r=(2.0+rand(id+k*13)*1.35)*unit;
+      ctx.globalAlpha=fade*.24;
+      ctx.fillStyle=color;
+      ctx.beginPath();ctx.arc(p.x,p.y,r*2.75,0,TAU);ctx.fill();
+      ctx.globalAlpha=fade*.92;
+      ctx.beginPath();ctx.arc(p.x,p.y,r,0,TAU);ctx.fill();
+      ctx.globalAlpha=fade*.82;
+      ctx.fillStyle='#fff8e9';
+      ctx.beginPath();ctx.arc(p.x,p.y,r*.43,0,TAU);ctx.fill();
     }
-    bursts.push({id:mushroom.id,age,origin,count:22});
+    streams.push({id:'spore-stream-'+i,origin,count});
   }
-  ctx.restore();return bursts;
+  ctx.restore();return streams;
 }
 function getPlantGeometry(id){
   const key=`${seed}:${id}`;

@@ -118,6 +118,51 @@ const pixels=async p=>p.locator('canvas').evaluate(c=>c.toDataURL());
  assert.deepEqual(skyBefore,skyAfter,'All OFF left animated stars or dust in the sky');
  await page.screenshot({path:path.join(RESULTS,'preview-all-off.png')});
 
+ // Spores used to depend on a rare mushroom crossing; verify visible pixels
+ // across the screen even with all native scenery and other effects OFF.
+ for(const [width,height,label] of [[430,932,'phone'],[1440,900,'desktop']]){
+  await page.setViewportSize({width,height});
+  await page.waitForFunction(({width,height})=>{
+   const scene=runway.state().viewport,canvas=document.querySelector('#scene');
+   return scene.w===width&&scene.h===height&&canvas.width===width&&canvas.height===height;
+  },{width,height});
+  await page.evaluate(()=>runway.seek(2));
+  const off=await pixels(page);
+  const sporesOnly=page.locator('[data-effect="spores"]');
+  await sporesOnly.check();
+  const effectState=await page.evaluate(()=>runway.state());
+  assert.equal(effectState.effects.spores.length,6,'Six continuous spore plumes required');
+  assert(effectState.effects.spores.every(p=>p.count>=16));
+  assert.equal(effectState.scene.forest,false,'Spore effect unexpectedly enabled forest');
+  await page.evaluate(()=>{
+   const c=document.querySelector('#scene');
+   window.__sporeLit=c.getContext('2d').getImageData(0,0,c.width,c.height).data.slice();
+  });
+  await page.screenshot({path:path.join(RESULTS,'spores-visible-'+label+'.png')});
+  await sporesOnly.uncheck();
+  const coverage=await page.evaluate(()=>{
+   const c=document.querySelector('#scene'),dark=c.getContext('2d').getImageData(0,0,c.width,c.height).data;
+   const lit=window.__sporeLit;
+   let hits=0,minX=c.width,maxX=-1,minY=c.height,maxY=-1;
+   for(let y=0;y<c.height;y+=3)for(let x=0;x<c.width;x+=3){
+    const p=(y*c.width+x)*4;
+    const change=Math.abs(lit[p]-dark[p])+Math.abs(lit[p+1]-dark[p+1])+Math.abs(lit[p+2]-dark[p+2]);
+    if(change>32){hits++;minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);}
+   }
+   delete window.__sporeLit;
+   return {hits,width:(maxX-minX)/c.width,height:(maxY-minY)/c.height};
+  });
+  assert(coverage.hits>=180,'Spore trails too faint at '+label+': '+JSON.stringify(coverage));
+  assert(coverage.width>.63,'Spore trails too narrow at '+label+': '+JSON.stringify(coverage));
+  assert(coverage.height>.26,'Spore trails too short at '+label+': '+JSON.stringify(coverage));
+  // Re-seek the same paused frame after the screenshot/viewport transition.
+  await page.evaluate(()=>runway.seek(2));
+  assert.equal(await pixels(page),off,'Spore toggle did not restore paused image at '+label);
+ }
+ await page.setViewportSize({width:430,height:932});
+ await page.evaluate(()=>runway.seek(10));
+
+
  // One master click restores all; individual changes make it indeterminate.
  await master.check();
  await page.evaluate(()=>runway.seek(10));
@@ -219,6 +264,6 @@ const pixels=async p=>p.locator('canvas').evaluate(c=>c.toDataURL());
   await page.mouse.move(width-1,0);await page.screenshot({path:path.join(RESULTS,'effects-'+name+'.png')});
  }
  assert.deepEqual(errors,[]);assert.deepEqual(requests,[]);
- const report={head,baselineCommit:'95ebb572944ad91eccd1c824568296af8e17814a',originalMainPixelsPreserved:true,independentPixelChanges:true,keyboard:true,earlySporeSamples:spores,earlyPlantSamples:plants,maxPlantCache,largeSparkCoverage:true,tenIndependentSwitches:true,sceneSwitches:2,masterToggle:true,mixedMasterState:true,nativeDecorationsHidden:true,bloomHidden:true,skyCleared:true,newEffects:['liquid','leaves','caustics','constellations'],simulatedSeconds:180,viewports:viewports.map(v=>v[0]+'x'+v[1]),errors,networkRequests:requests,physicalPhoneTested:false};
+ const report={head,baselineCommit:'95ebb572944ad91eccd1c824568296af8e17814a',originalMainPixelsPreserved:true,independentPixelChanges:true,keyboard:true,earlySporeSamples:spores,earlyPlantSamples:plants,maxPlantCache,largeSparkCoverage:true,tenIndependentSwitches:true,sceneSwitches:2,masterToggle:true,mixedMasterState:true,nativeDecorationsHidden:true,bloomHidden:true,skyCleared:true,sporesAlwaysVisible:true,sporePlumes:6,newEffects:['liquid','leaves','caustics','constellations'],simulatedSeconds:180,viewports:viewports.map(v=>v[0]+'x'+v[1]),errors,networkRequests:requests,physicalPhoneTested:false};
  fs.writeFileSync(path.join(RESULTS,'effects.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report));await browser.close();
 })().catch(e=>{console.error(e);process.exit(1)});
