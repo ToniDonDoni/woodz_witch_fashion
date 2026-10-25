@@ -16,16 +16,16 @@ const pixels=async p=>p.locator('canvas').evaluate(c=>c.toDataURL());
  // tree layers, caustics on the path, leaves behind the walking sprite.
  const template=fs.readFileSync(path.join(ROOT,'src','forest_runway_template.html'),'utf8');
  const frame=template.slice(template.indexOf('function draw(){'),template.indexOf('function tick(now)'));
- const passes=['drawNightSky();','drawPaintedConstellations();','const sparks=drawBigSparks();','drawSkyEvents(plan);','drawForestBackground();','drawLiquidSpirits();','drawMoonlitCaustics();','drawForestGround(woodland);','drawAutumnVortex();','ctx.drawImage(atlas,','drawForestForeground(woodland)'];
+ const passes=['drawNightSky();','drawMagneticCurrents();','drawPaintedConstellations();','const sparks=drawBigSparks();','drawSkyEvents(plan);','drawAncientRuins();','drawForestBackground();','drawSpectralButterflies();','drawGoldenSandfall();','drawLiquidSpirits();','drawMoonlitCaustics();','drawForestGround(woodland);','drawAutumnVortex();','ctx.drawImage(atlas,','drawForestForeground(woodland)'];
  const layers=passes.map(s=>frame.indexOf(s));
  assert(layers.every(n=>n>=0)&&layers.every((n,i)=>i===0||n>layers[i-1]),
   'Distant effects, ground light and leaves must preserve scene depth');
- assert.equal(await page.getByRole('checkbox').count(),13);
+ assert.equal(await page.getByRole('checkbox').count(),17);
  for(const name of ['forest','creatures'])assert(await page.locator(`[data-scene="${name}"]`).isChecked());
  const master=page.locator('#all-effects');
  assert(await master.isChecked(),'Master should start checked');
  assert.equal(await master.evaluate(el=>el.indeterminate),false);
- for(const name of ['Fog','Spore trails','Fractal ferns','Living ink','Glass flowers','Big sparks','Liquid spirits','Leaf vortex','Moonlit caustics','Constellations'])assert(await page.getByRole('checkbox',{name,exact:true}).isChecked());
+ for(const name of ['Fog','Spore trails','Fractal ferns','Living ink','Glass flowers','Big sparks','Liquid spirits','Leaf vortex','Moonlit caustics','Constellations','Magnetic Currents','Spectral Butterfly','Golden Sandfall','Ancient Ruins'])assert(await page.getByRole('checkbox',{name,exact:true}).isChecked());
  await page.evaluate(()=>runway.seek(0));
  for(const cb of await page.locator('[data-effect]').all())await cb.uncheck();
  // Immutable accepted main page: proves the port preserves the sky, acts, color
@@ -181,7 +181,7 @@ const pixels=async p=>p.locator('canvas').evaluate(c=>c.toDataURL());
  // When testing effect pixel restoration, only optional effects are off.
  for(const cb of await page.locator('[data-effect]').all())await cb.uncheck();
 
- for(const name of ['fog','spores','plants','ink','glass','sparks','liquid','leaves','caustics','constellations']){
+ for(const name of ['fog','spores','plants','ink','glass','sparks','liquid','leaves','caustics','constellations','magnetic','spectral','sandfall','ruins']){
   const checkbox=page.locator(`[data-effect="${name}"]`);let changed=false;
   for(const t of [.5,2,5,10,20,30]){
    await page.evaluate(t=>runway.seek(t),t);const before=await pixels(page);await checkbox.check();
@@ -208,6 +208,10 @@ const pixels=async p=>p.locator('canvas').evaluate(c=>c.toDataURL());
  assert.equal(extras.leaves.length,114,'Expected three leaf vortex fields');
  assert.equal(extras.caustics.length,8,'Expected eight moonlit light bands');
  assert.equal(extras.constellations.length,3,'Expected three animated constellations');
+ assert.equal(extras.magnetic.length,9,'Expected nine magnetic current lines');
+ assert.equal(extras.spectral.length,2,'Expected two large spectral butterflies');
+ assert.equal(extras.sandfall.length,5,'Expected five sandfall curtains');
+ assert.equal(extras.ruins.length,3,'Expected three distant ruins');
  // Big sparks must cover the screen, not a tiny patch near the walker.
  // Compare actual pixels at a fixed simulation time with the switch off.
  for(const [width,height] of [[430,932],[1440,900]]){
@@ -250,9 +254,16 @@ const pixels=async p=>p.locator('canvas').evaluate(c=>c.toDataURL());
   await page.locator(`[data-effect="${name}"]`).check();
   await page.screenshot({path:path.join(RESULTS,`preview-${name}.png`)});
  }
+ // The new corner controls have their own discoverable test previews.
+ for(const name of ['magnetic','spectral','sandfall','ruins']){
+  for(const cb of await page.locator('[data-effect]').all())await cb.uncheck();
+  await page.evaluate(()=>runway.seek(4));
+  await page.locator(`[data-effect="${name}"]`).check();
+  await page.screenshot({path:path.join(RESULTS,`corner-${name}.png`)});
+ }
  for(const cb of await page.locator('[data-effect]').all())await cb.check();
  await page.evaluate(()=>runway.seek(4));
- await page.screenshot({path:path.join(RESULTS,'preview-all-ten.png')});
+ await page.screenshot({path:path.join(RESULTS,'preview-all-fourteen.png')});
  const viewports=[[430,932,'phone'],[320,568,'small-phone'],[844,390,'landscape'],[1440,900,'desktop'],[2048,1000,'wide-desktop']];
  for(const [width,height,name] of viewports){
   await page.setViewportSize({width,height});await page.evaluate(()=>runway.seek(2));
@@ -260,10 +271,39 @@ const pixels=async p=>p.locator('canvas').evaluate(c=>c.toDataURL());
   assert(box.fx.y>height*.6,`Effect grid too high at ${name} (${width}x${height}): y=${box.fx.y}`);
   assert(box.fx.bottom<=box.controls.y-5,`Effects overlap playback at ${name}: ${JSON.stringify(box)}`);
   assert(box.card.bottom<box.fx.y,`Effects cover act title at ${name}: ${JSON.stringify(box)}`);
+  // The four new effect checkboxes must occupy actual viewport corners,
+  // remain on screen, and never overlap the existing bottom control grid.
+  const corners=await page.evaluate(()=>{
+    const rect=(selector)=>{
+      const r=document.querySelector(selector).getBoundingClientRect();
+      return {left:r.left,top:r.top,right:r.right,bottom:r.bottom,width:r.width,height:r.height};
+    };
+    return {
+      magnetic:rect('.corner-tl'),spectral:rect('.corner-bl'),
+      sandfall:rect('.corner-tr'),ruins:rect('.corner-br'),
+      effects:rect('.effects'),controls:rect('.controls')
+    };
+  });
+  const intersect=(a,b)=>a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top;
+  for(const name of ['magnetic','spectral','sandfall','ruins']){
+    const p=corners[name];
+    assert(p.left>=0&&p.right<=width&&p.top>=0&&p.bottom<=height,
+      name+' corner clipped at '+width+'x'+height+': '+JSON.stringify(corners));
+    assert(!intersect(p,corners.effects)&&!intersect(p,corners.controls),
+      name+' corner overlaps existing controls at '+width+'x'+height+': '+JSON.stringify(corners));
+  }
+  for(const name of ['magnetic','spectral'])assert(corners[name].left<width*.09,
+   name+' not at left edge on '+name);
+  for(const name of ['sandfall','ruins'])assert(corners[name].right>width*.91,
+   name+' not at right edge');
+  assert(corners.magnetic.top<corners.spectral.top&&corners.sandfall.top<corners.ruins.top,
+    'Corner top/bottom order broken at '+width+'x'+height);
+  for(const [a,b] of [['magnetic','sandfall'],['spectral','ruins'],['magnetic','spectral'],['sandfall','ruins']])
+    assert(!intersect(corners[a],corners[b]),'New corner buttons overlap: '+a+' and '+b);
   assert(box.labels.every(r=>r.x>=0&&r.right<=width));assert(box.commit.x>=0&&box.commit.right<=width,'HEAD clipped at '+width+'x'+height);assert(box.commit.right<box.edition.x||box.commit.bottom<box.edition.y||box.commit.y>box.edition.bottom,'HEAD overlaps edition at '+width+'x'+height);
   await page.mouse.move(width-1,0);await page.screenshot({path:path.join(RESULTS,'effects-'+name+'.png')});
  }
  assert.deepEqual(errors,[]);assert.deepEqual(requests,[]);
- const report={head,baselineCommit:'95ebb572944ad91eccd1c824568296af8e17814a',originalMainPixelsPreserved:true,independentPixelChanges:true,keyboard:true,earlySporeSamples:spores,earlyPlantSamples:plants,maxPlantCache,largeSparkCoverage:true,tenIndependentSwitches:true,sceneSwitches:2,masterToggle:true,mixedMasterState:true,nativeDecorationsHidden:true,bloomHidden:true,skyCleared:true,sporesAlwaysVisible:true,sporePlumes:6,newEffects:['liquid','leaves','caustics','constellations'],simulatedSeconds:180,viewports:viewports.map(v=>v[0]+'x'+v[1]),errors,networkRequests:requests,physicalPhoneTested:false};
+ const report={head,baselineCommit:'95ebb572944ad91eccd1c824568296af8e17814a',originalMainPixelsPreserved:true,independentPixelChanges:true,keyboard:true,earlySporeSamples:spores,earlyPlantSamples:plants,maxPlantCache,largeSparkCoverage:true,fourteenIndependentEffectSwitches:true,cornerSwitches:4,sceneSwitches:2,masterToggle:true,mixedMasterState:true,nativeDecorationsHidden:true,bloomHidden:true,skyCleared:true,sporesAlwaysVisible:true,sporePlumes:6,newEffects:['magnetic','spectral','sandfall','ruins'],simulatedSeconds:180,viewports:viewports.map(v=>v[0]+'x'+v[1]),errors,networkRequests:requests,physicalPhoneTested:false};
  fs.writeFileSync(path.join(RESULTS,'effects.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report));await browser.close();
 })().catch(e=>{console.error(e);process.exit(1)});
