@@ -31,7 +31,8 @@ at upper left. No runtime libraries or network requests are required.
 | `src/forest_runway_template.html` | Page, composition, playback, effect checkboxes and HEAD position. |
 | `src/forest_scene.js` | Trees, moon, stars, ground objects and foreground vegetation. |
 | `src/forest_acts.js` | Act programme, events, weather and colour moods. |
-| `src/forest_enchantments.js` | Three optional procedural effects. |
+| `src/forest_enchantments.js` | Original fog, spore and fern effects plus all six switch states. |
+| `src/forest_extra_effects.js` | Living ink, translucent stained-glass flowers and large spark fields. |
 | `assets/walk/` | The 33 approved transparent walk frames. |
 | `scripts/build_forest_page.py` | The main website builder. |
 | `tests/verify_forest.cjs` | Acts, foreground, walk and world regression checks. |
@@ -48,16 +49,24 @@ claiming to contain their own enclosing commit hash.
 
 ## Effect checkboxes and references
 
-Three bottom checkboxes enable original Canvas adaptations of examples from
+Six bottom checkboxes enable independent original Canvas adaptations of examples from
 [yihui-dev/awesome-opus5-5-videos](https://github.com/yihui-dev/awesome-opus5-5-videos):
 
 - **Fog** — layered rolling mist ([reference](https://skillry.dev/ai-videos/opus-5-5/mondemsuraj-691517)).
 - **Spore trails** — glowing mushroom spores with curved trails ([reference](https://skillry.dev/ai-videos/opus-5-5/ishuagra02-678129)).
 - **Fractal ferns** — unfolding folded-paper plants ([reference](https://skillry.dev/ai-videos/opus-5-5/jrayon-054015)).
+- **Living ink** — drifting wide dry-brush ribbons, pigment edges and fibers inspired by [interactive ink painting](https://github.com/yihui-dev/awesome-opus5-5-videos/blob/main/prompts/youwareai-259061.md) ([original](https://x.com/YouWareAI/status/2105656935622259061)).
+- **Glass flowers** — large translucent hibiscus-inspired petals, colored glass gradients and vein details inspired by [stained-glass hibiscus](https://github.com/yihui-dev/awesome-opus5-5-videos/blob/main/prompts/ivanainai-245918.md) ([original](https://x.com/ivanainai/status/2106481339193245918)).
+- **Big sparks** — **128 luminous particles** with thick comet trails in two oversized orbital fields. They are deliberately drawn in the distant sky **behind all tree layers, staged events and the walker**, so foliage and the silhouette occlude them rather than being obscured by them. The wide particle trajectories remain unchanged. Inspired by [wizard spell particles](https://github.com/yihui-dev/awesome-opus5-5-videos/blob/main/prompts/zacxbt-944604.md) ([live remake](https://skillry.dev/ai-videos/opus-5-5/zacxbt-944604)).
 
 The references are visual inspiration, not runtime dependencies. Each checkbox
-works independently, including while paused. Disabling all three restores the
+works independently, including while paused. Disabling all six restores the
 accepted main forest's canvas pixels, including its acts and foreground.
+The three new effects are implemented in plain Canvas 2D within the existing
+self-contained page; there is no 3D engine, asset download or network access.
+The big-sparks test compares real pixels with the switch off at phone and desktop
+sizes, and requires visible changes spanning over 70% of the viewport width and
+48% of its height.
 
 ## Verification and publication
 

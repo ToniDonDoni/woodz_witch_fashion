@@ -37,7 +37,9 @@ atlas.save(buffer, format='WEBP', quality=90, method=6)
 html = (SOURCE / 'forest_runway_template.html').read_text(encoding='utf-8')
 source = (SOURCE / 'forest_scene.js').read_text(encoding='utf-8') + '\n' + (SOURCE / 'forest_acts.js').read_text(encoding='utf-8')
 html = html.replace('__FOREST_CODE__', source)
-html = html.replace('__ENCHANTMENT_CODE__', (SOURCE / 'forest_enchantments.js').read_text(encoding='utf-8'))
+effects = ((SOURCE / 'forest_enchantments.js').read_text(encoding='utf-8') + '\n' +
+           (SOURCE / 'forest_extra_effects.js').read_text(encoding='utf-8'))
+html = html.replace('__ENCHANTMENT_CODE__', effects)
 html = html.replace('__BUILD_STAMP__', stamp)
 html = html.replace('__ATLAS_DATA__', base64.b64encode(buffer.getvalue()).decode('ascii'))
 outputs = [ROOT / 'index.html', ROOT / 'site' / 'index.html'] if args.snapshot else [ROOT / 'dist' / 'index.html']
