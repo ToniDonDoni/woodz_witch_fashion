@@ -1,0 +1,32 @@
+name: Check Forest Three FX
+on:
+  push:
+    branches: ['codex/port-teknium-fx-to-published-baseline']
+  pull_request:
+    paths:
+      - 'out/forest-teknium-three-fx/**'
+      - 'site/forest-teknium-three-fx/**'
+      - 'out/forest-spectators/**'
+      - 'out/teknium-three-fx/**'
+      - '.github/workflows/check-forest-three-fx.yml'
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save playwright
+      - run: npx playwright install chromium
+      - name: Build stamped self-contained HTML from branch HEAD
+        run: node out/forest-teknium-three-fx/build.cjs
+      - name: Check actual shaders, forest, walker, SHA in offline Chromium
+        run: node out/forest-teknium-three-fx/verify.cjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: forest-three-fx-${{ github.event.pull_request.head.sha || github.sha }}
+          path: site/forest-teknium-three-fx/index.html
+          retention-days: 30
