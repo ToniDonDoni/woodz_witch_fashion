@@ -34,6 +34,7 @@ at upper left. No runtime libraries or network requests are required.
 | `src/forest_enchantments.js` | Original fog, spore and fern effects plus all ten switch states. |
 | `src/forest_extra_effects.js` | Living ink, translucent stained-glass flowers and large spark fields. |
 | `src/forest_next_effects.js` | Liquid spirits, autumn leaves, moonlit path caustics and painted constellations. |
+| `src/forest_corner_effects.js` | Four original Canvas effects drawn behind the walking figure. |
 | `assets/walk/` | The 33 approved transparent walk frames. |
 | `scripts/build_forest_page.py` | The main website builder. |
 | `tests/verify_forest.cjs` | Acts, foreground, walk and world regression checks. |
@@ -50,8 +51,11 @@ claiming to contain their own enclosing commit hash.
 
 ## Scene and effect checkboxes
 
-The bottom panel now has **13 native checkboxes**: two independent original
-scene toggles, ten optional Canvas effects and an **All on/off** master.
+The bottom panel retains its **13 existing checkboxes**: two native scene toggles,
+ten earlier optional Canvas effects and the **All on/off** master.
+**Four more effect checkboxes are deliberately separated from that panel** and
+fixed at the four extreme sides/corners: upper left, lower left, upper right,
+and lower right. All four are checked on initial load.
 
 - **Forest & foliage** hides or restores native environmental drawing:
   trees, mushrooms, stumps, ferns, foreground leaves and path-edge plants,
@@ -63,7 +67,7 @@ scene toggles, ten optional Canvas effects and an **All on/off** master.
 - **Animals** hides or restores original creatures: leshies, butterflies
   and animal acts (stag, moths, owl). *Liquid spirits* is an independently
   checked optional effect, not part of the original creature layer.
-- **All on/off** switches both scene categories **and** all ten optional
+- **All on/off** switches both scene categories **and all fourteen optional**
   Canvas effects together. With all unchecked, **only the background wash,
   walking path and woman remain**: no moon, twinkling stars, drifting
   particles, blooming flowers or staged events. When controls are mixed,
@@ -73,9 +77,29 @@ scene toggles, ten optional Canvas effects and an **All on/off** master.
 All original scenery and creatures are ON by default, so opening the page
 preserves the accepted forest. No artwork or animation assets were removed.
 
+### Four new corner effects
+
+| Corner | Checkbox | Original Canvas adaptation | Source |
+| --- | --- | --- | --- |
+| **Upper left** | **Magnetic Currents** | Nine broad mint, violet and cyan magnetic field ribbons with gently drifting luminous filings behind the trees. | [Magnetic-monument kinetic typography](https://github.com/yihui-dev/awesome-opus5-5-videos/blob/main/prompts/gdgtify-130294.md) |
+| **Lower left** | **Spectral Butterfly** | Two large translucent X-ray-inspired butterflies with animated wingbeats and glowing skeletal veins, behind the walker. | [Deterministic X-ray butterfly](https://github.com/yihui-dev/awesome-opus5-5-videos/blob/main/prompts/0xkarmi-129839.md) |
+| **Upper right** | **Golden Sandfall** | Five falling sand curtains with fine golden strands and animated grains behind midground trees. | [Browser sand, water and particle physics](https://github.com/yihui-dev/awesome-opus5-5-videos/blob/main/prompts/cyrilxbt-149036.md) |
+| **Lower right** | **Ancient Ruins** | Three mysterious pale stone arches with animated luminous markings in the distant woods. | [Surreal browser-world ruins](https://github.com/yihui-dev/awesome-opus5-5-videos/blob/main/prompts/lexnlin-241739.md) |
+
+As with the existing ten, these are **original lightweight Canvas 2D
+reinterpretations** of visual ideas from the linked collection, not copied
+code or external dependencies. Each can be toggled independently while paused,
+is restored deterministically on the same frame, and obeys **All on/off**.
+With all controls off, only the plain background, path and walker remain.
+The latest Git HEAD is still displayed on screen after a local rebuild.
+On small screens the four labels stay in the corners clear of the bottom
+effect grid and playback controls. The automated browser test saves isolated
+`corner-*.png` previews and checks their positions at five viewport sizes.
+
 ### Optional effect references
 
-Ten bottom effect checkboxes enable independent original Canvas adaptations of examples from
+Ten bottom effect checkboxes and four separate corner switches enable independent
+original Canvas adaptations of examples from
 [yihui-dev/awesome-opus5-5-videos](https://github.com/yihui-dev/awesome-opus5-5-videos):
 
 - **Fog** — layered rolling mist ([reference](https://skillry.dev/ai-videos/opus-5-5/mondemsuraj-691517)).
