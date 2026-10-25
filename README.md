@@ -75,20 +75,33 @@ PLAYWRIGHT_MODULE=/tmp/woodz-browser-check/node_modules/playwright node tests/ve
 are saved to `dist/verification/`. The immutable pixel-regression baseline is
 commit `95ebb572944ad91eccd1c824568296af8e17814a`; shallow clones must fetch it.
 CI checks out the exact branch commit, builds, verifies and uploads the stamped
-HTML and reports. The Pages workflow builds from `src/` and publishes `dist/`
-on main updates. The separate public preview repository is not auto-updated.
+HTML and reports. The manual Pages workflow builds the selected branch from `src/` and publishes `dist/`. The separate public preview repository is not auto-updated.
 
-## Automatic GitHub Pages deployment
+## Manual GitHub Pages deployment
 
-Site: **https://tonidondoni.github.io/woodz_witch_fashion/**
+**[Open the published site](https://tonidondoni.github.io/woodz_witch_fashion/)**
 
-Merging a pull request into `main` automatically starts **Publish Forest**
-(`.github/workflows/publish-pages.yml`). It builds the main site from `src/`
-using `scripts/build_forest_page.py`, uploads `dist/`, and deploys it to this
-repository's GitHub Pages. No manual publication step is needed after merging;
-the site updates when the workflow finishes. The HEAD displayed on the page is
-the exact published commit from `main`. Check the workflow in the Actions tab
-for the deployment result. Manual runs are also restricted to `main`.
+Publication is manual. Pushing commits or merging a pull request does not
+publish the site automatically.
+
+1. Open [Actions → Publish Forest](https://github.com/ToniDonDoni/woodz_witch_fashion/actions/workflows/publish-pages.yml).
+2. Click **Run workflow** and select the branch in **Use workflow from**.
+3. Click **Run workflow** to build and publish that selected branch.
+
+The workflow checks out the exact commit selected for the run, builds the site
+from `src/` using `scripts/build_forest_page.py`, uploads `dist/`, and deploys to
+this repository's GitHub Pages. The displayed HEAD identifies the published
+commit. Every run updates the same site URL; branches do not get separate URLs.
+The selected branch must contain this workflow and the site's build sources.
+
+The manual button requires the workflow to exist on the default branch
+([GitHub documentation](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow)).
+In **Settings → Pages**, use **GitHub Actions** as the publishing source.
+To permit any branch, check **Settings → Environments → github-pages →
+Deployment branches and tags** and choose **No restriction**
+([GitHub documentation](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments)).
+This repository setting is separate from the workflow; the connected GitHub
+tool cannot inspect or change environment administration settings.
 
 The original frame 32-to-0 gait discontinuity remains. Desktop checks at phone
 viewport sizes are not physical-phone performance or offline-opening acceptance.
