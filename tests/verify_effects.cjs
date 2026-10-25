@@ -12,16 +12,16 @@ const pixels=async p=>p.locator('canvas').evaluate(c=>c.toDataURL());
  await page.goto('file://'+path.join(ROOT,'dist','index.html'));await page.waitForFunction(()=>runway.ready);
  const head=execFileSync('git',['rev-parse','HEAD'],{cwd:ROOT,encoding:'utf8'}).trim();
  assert.equal(await page.locator('#build-commit').getAttribute('data-head'),head);
- // Protect the intended scene graph order: sky -> sparks -> sky events ->
- // background trees -> ground trees -> walker -> foreground trees.
+ // Protect the scene graph: sky art and sparks behind trees, spirits between
+ // tree layers, caustics on the path, leaves behind the walking sprite.
  const template=fs.readFileSync(path.join(ROOT,'src','forest_runway_template.html'),'utf8');
  const frame=template.slice(template.indexOf('function draw(){'),template.indexOf('function tick(now)'));
- const passes=['drawNightSky();','const sparks=drawBigSparks();','drawSkyEvents(plan);','drawForestBackground();','drawForestGround(woodland);','ctx.drawImage(atlas,','drawForestForeground(woodland)'];
+ const passes=['drawNightSky();','drawPaintedConstellations();','const sparks=drawBigSparks();','drawSkyEvents(plan);','drawForestBackground();','drawLiquidSpirits();','drawMoonlitCaustics();','drawForestGround(woodland);','drawAutumnVortex();','ctx.drawImage(atlas,','drawForestForeground(woodland)'];
  const layers=passes.map(s=>frame.indexOf(s));
  assert(layers.every(n=>n>=0)&&layers.every((n,i)=>i===0||n>layers[i-1]),
-  'Big sparks must render behind all trees, events and the walking sprite');
- assert.equal(await page.getByRole('checkbox').count(),6);
- for(const name of ['Fog','Spore trails','Fractal ferns','Living ink','Glass flowers','Big sparks'])assert(await page.getByRole('checkbox',{name,exact:true}).isChecked());
+  'Distant effects, ground light and leaves must preserve scene depth');
+ assert.equal(await page.getByRole('checkbox').count(),10);
+ for(const name of ['Fog','Spore trails','Fractal ferns','Living ink','Glass flowers','Big sparks','Liquid spirits','Leaf vortex','Moonlit caustics','Constellations'])assert(await page.getByRole('checkbox',{name,exact:true}).isChecked());
  await page.evaluate(()=>runway.seek(0));
  for(const cb of await page.getByRole('checkbox').all())await cb.uncheck();
  // Immutable accepted main page: proves the port preserves the sky, acts, color
@@ -37,7 +37,7 @@ const pixels=async p=>p.locator('canvas').evaluate(c=>c.toDataURL());
   assert.deepEqual(a.events,b.events);assert.deepEqual(a.act,b.act);assert.equal(a.mood,b.mood);
  }
  await baseline.close();fs.rmSync(tmp,{recursive:true});
- for(const name of ['fog','spores','plants','ink','glass','sparks']){
+ for(const name of ['fog','spores','plants','ink','glass','sparks','liquid','leaves','caustics','constellations']){
   const checkbox=page.locator(`[data-effect="${name}"]`);let changed=false;
   for(const t of [.5,2,5,10,20,30]){
    await page.evaluate(t=>runway.seek(t),t);const before=await pixels(page);await checkbox.check();
@@ -60,6 +60,10 @@ const pixels=async p=>p.locator('canvas').evaluate(c=>c.toDataURL());
  assert(extras.ink.length>=4,'No ink currents');
  assert(extras.glass.length>=1,'No glass flowers');
  assert.equal(extras.sparks.count,128,'Big sparks must span two particle fields');
+ assert.equal(extras.spirits.length,5,'Expected five drifting liquid spirits');
+ assert.equal(extras.leaves.length,114,'Expected three leaf vortex fields');
+ assert.equal(extras.caustics.length,8,'Expected eight moonlit light bands');
+ assert.equal(extras.constellations.length,3,'Expected three animated constellations');
  // Big sparks must cover the screen, not a tiny patch near the walker.
  // Compare actual pixels at a fixed simulation time with the switch off.
  for(const [width,height] of [[430,932],[1440,900]]){
@@ -94,6 +98,17 @@ const pixels=async p=>p.locator('canvas').evaluate(c=>c.toDataURL());
  }
  await page.getByRole('button',{name:'NEW DREAM'}).click();await page.evaluate(()=>runway.seek(10));const warm=await pixels(page);
  await page.locator('[data-effect="plants"]').uncheck();await page.locator('[data-effect="plants"]').check();assert.equal(await pixels(page),warm,'Reseed left stale geometry');
+ // Render each of the four new effects in isolation for visual PR review.
+ await page.setViewportSize({width:1440,height:900});
+ for(const name of ['liquid','leaves','caustics','constellations']){
+  for(const cb of await page.getByRole('checkbox').all())await cb.uncheck();
+  await page.evaluate(()=>runway.seek(4));
+  await page.locator(`[data-effect="${name}"]`).check();
+  await page.screenshot({path:path.join(RESULTS,`preview-${name}.png`)});
+ }
+ for(const cb of await page.getByRole('checkbox').all())await cb.check();
+ await page.evaluate(()=>runway.seek(4));
+ await page.screenshot({path:path.join(RESULTS,'preview-all-ten.png')});
  const viewports=[[430,932,'phone'],[320,568,'small-phone'],[844,390,'landscape'],[1440,900,'desktop'],[2048,1000,'wide-desktop']];
  for(const [width,height,name] of viewports){
   await page.setViewportSize({width,height});await page.evaluate(()=>runway.seek(2));
@@ -103,6 +118,6 @@ const pixels=async p=>p.locator('canvas').evaluate(c=>c.toDataURL());
   await page.mouse.move(width-1,0);await page.screenshot({path:path.join(RESULTS,'effects-'+name+'.png')});
  }
  assert.deepEqual(errors,[]);assert.deepEqual(requests,[]);
- const report={head,baselineCommit:'95ebb572944ad91eccd1c824568296af8e17814a',originalMainPixelsPreserved:true,independentPixelChanges:true,keyboard:true,earlySporeSamples:spores,earlyPlantSamples:plants,maxPlantCache,largeSparkCoverage:true,sixIndependentSwitches:true,simulatedSeconds:180,viewports:viewports.map(v=>v[0]+'x'+v[1]),errors,networkRequests:requests,physicalPhoneTested:false};
+ const report={head,baselineCommit:'95ebb572944ad91eccd1c824568296af8e17814a',originalMainPixelsPreserved:true,independentPixelChanges:true,keyboard:true,earlySporeSamples:spores,earlyPlantSamples:plants,maxPlantCache,largeSparkCoverage:true,tenIndependentSwitches:true,newEffects:['liquid','leaves','caustics','constellations'],simulatedSeconds:180,viewports:viewports.map(v=>v[0]+'x'+v[1]),errors,networkRequests:requests,physicalPhoneTested:false};
  fs.writeFileSync(path.join(RESULTS,'effects.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report));await browser.close();
 })().catch(e=>{console.error(e);process.exit(1)});
