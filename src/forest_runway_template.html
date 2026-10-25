@@ -137,6 +137,8 @@ function drawButterflies(){
  return objects;
 }
 function drawDust(){
+ // Native drifting dust is scenery, not an optional particle plugin.
+ if(!sceneLayers.forest)return;
  const spacing=51,offset=time*13;
  for(let i=Math.floor((-offset-50)/spacing);i<Math.ceil((w-offset+50)/spacing);i++){
    const id=i*331+781,x=i*spacing+offset,y=h*(.22+rand(id)*.55)+Math.sin(time*.6+id)*7;
