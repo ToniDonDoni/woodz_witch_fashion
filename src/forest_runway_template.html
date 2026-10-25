@@ -17,6 +17,8 @@
 @media(max-height:550px){.effects{bottom:calc(max(12px,env(safe-area-inset-bottom)) + 54px)}.build-info{top:43px}}
 @media(max-width:700px){.effects{grid-template-columns:repeat(2,max-content);gap:4px}.effects label{min-height:28px;font-size:10px;gap:5px;padding:0 7px}.effects input{width:16px;height:16px}#actcard{bottom:240px}}
 @media(max-width:500px){.edition,.branch-meta{display:none}.effects label{padding:0 6px}}
+/* Five rows on a short phone need a tighter gap, without shrinking tap targets. */
+@media(max-width:500px) and (max-height:700px){.effects{row-gap:2px}}
 
 #actcard{bottom:174px}
 @media(max-width:700px){#actcard{bottom:240px}}
