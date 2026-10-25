@@ -37,7 +37,7 @@ at upper left. No runtime libraries or network requests are required.
 | `assets/walk/` | The 33 approved transparent walk frames. |
 | `scripts/build_forest_page.py` | The main website builder. |
 | `tests/verify_forest.cjs` | Acts, foreground, walk and world regression checks. |
-| `tests/verify_effects.cjs` | Effect pixels, checkboxes, HEAD and layout checks. |
+| `tests/verify_effects.cjs` | Effect pixels, 13 checkboxes, global toggle, native scene restoration, HEAD and layout checks. |
 | `dist/` | Local generated site, screenshots and reports; ignored by Git. |
 | `index.html`, `site/index.html` | Identical version-neutral snapshots made with `--snapshot`. |
 | `tasks/` | Specification and implementation requirements. |
@@ -48,9 +48,30 @@ with a link to the full commit. They never use a remote tip or a synthetic PR
 merge. The committed snapshots explicitly request a rebuild rather than falsely
 claiming to contain their own enclosing commit hash.
 
-## Effect checkboxes and references
+## Scene and effect checkboxes
 
-Ten bottom checkboxes enable independent original Canvas adaptations of examples from
+The bottom panel now has **13 native checkboxes**: two independent original
+scene toggles, ten optional Canvas effects and an **All on/off** master.
+
+- **Forest & foliage** hides or restores the original background trees,
+  mushrooms, stumps, ferns, foreground leaves and small path-edge plants.
+  The walking path and the walking woman remain visible. The independent
+  *Leaf vortex* effect is not implicitly changed by this switch.
+- **Animals** hides or restores the original woodland creatures: leshies,
+  butterflies and animal act performances (stag, moths, owl). Other staged
+  magical performances keep their separate timing; *Liquid spirits*
+  remains independently controlled by its effect checkbox.
+- **All on/off** switches both scene categories **and** all ten effect
+  checkboxes together. When the controls are mixed, the master checkbox
+  displays the native indeterminate state; clicking it restores all.
+  Each individual toggle works while paused, including after New Dream.
+
+All original scenery and creatures are ON by default, so opening the page
+preserves the accepted forest. No artwork or animation assets were removed.
+
+### Optional effect references
+
+Ten bottom effect checkboxes enable independent original Canvas adaptations of examples from
 [yihui-dev/awesome-opus5-5-videos](https://github.com/yihui-dev/awesome-opus5-5-videos):
 
 - **Fog** — layered rolling mist ([reference](https://skillry.dev/ai-videos/opus-5-5/mondemsuraj-691517)).
