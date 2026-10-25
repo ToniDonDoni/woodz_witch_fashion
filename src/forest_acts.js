@@ -497,6 +497,8 @@ function stageEvents(plan, layer) {
   for (const source of sources) for (const beat of source.beats) {
     const stager = eventStagers[beat.type];
     if (!stager || stager.layer !== layer) continue;
+    // Only native animal acts obey the creatures switch; other acts remain independent.
+    if (!sceneLayers.creatures && ['stag','moths','owl'].includes(beat.type)) continue;
     const age = time - source.start - beat.start;
     if (age < 0 || age > beat.visible) continue;
     const {x, y, scale, flip} = beatTransform(beat, age);
