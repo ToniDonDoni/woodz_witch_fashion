@@ -137,10 +137,37 @@ function drawFractalPlants(){
   for(const id of plantGeometry.keys())if(!used.has(id))plantGeometry.delete(id);
   return plants;
 }
+// The master reflects all 12 independent controls: checked, unchecked or mixed.
+function syncAllCheckbox(){
+  const states=[...Object.values(sceneLayers),...Object.values(enchantments)];
+  const master=document.querySelector('#all-effects');
+  master.checked=states.every(Boolean);
+  master.indeterminate=states.some(Boolean)&&!master.checked;
+}
 function bindEnchantmentControls(){
   for(const name of Object.keys(enchantments)){
     const checkbox=document.querySelector(`[data-effect="${name}"]`);
     checkbox.checked=enchantments[name];
-    checkbox.onchange=()=>{enchantments[name]=checkbox.checked;if(ready)draw();};
+    checkbox.onchange=()=>{enchantments[name]=checkbox.checked;syncAllCheckbox();if(ready)draw();};
   }
+  for(const name of Object.keys(sceneLayers)){
+    const checkbox=document.querySelector(`[data-scene="${name}"]`);
+    checkbox.checked=sceneLayers[name];
+    checkbox.onchange=()=>{sceneLayers[name]=checkbox.checked;syncAllCheckbox();if(ready)draw();};
+  }
+  const master=document.querySelector('#all-effects');
+  master.onchange=()=>{
+    const on=master.checked;
+    for(const name of Object.keys(enchantments)){
+      enchantments[name]=on;
+      document.querySelector(`[data-effect="${name}"]`).checked=on;
+    }
+    for(const name of Object.keys(sceneLayers)){
+      sceneLayers[name]=on;
+      document.querySelector(`[data-scene="${name}"]`).checked=on;
+    }
+    syncAllCheckbox();
+    if(ready)draw();
+  };
+  syncAllCheckbox();
 }
