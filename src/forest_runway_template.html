@@ -145,6 +145,9 @@ function draw(){
  const glow=ctx.createRadialGradient(w*.5,h*.50,0,w*.5,h*.50,h*.48);glow.addColorStop(0,'#1a1422');glow.addColorStop(.55,'#0c0a10');glow.addColorStop(1,'#050507');ctx.fillStyle=glow;ctx.fillRect(0,0,w,h);
  const plan=currentAct();
  drawNightSky();
+ // Spark fields belong to the distant sky: all events, trees, ground layers
+ // and the walker must occlude them instead of being covered by them.
+ const sparks=drawBigSparks();
  const skyEvents=drawSkyEvents(plan);
  const woodland=drawForestBackground();
  const ink=drawLivingInk(),plants=drawFractalPlants(),rearFog=drawFog();
@@ -166,7 +169,6 @@ function draw(){
  // Foreground blades are drawn last, so they genuinely pass in front of the walker.
  const foreground=foregroundEnabled?drawForestForeground(woodland):[];
  drawAmbientFront(plan);
- const sparks=drawBigSparks();
  updateActCard(plan);
  pruneForestCache(woodland.used);
  const events=[...skyEvents,...farEvents,...nearEvents,...frontEvents];
