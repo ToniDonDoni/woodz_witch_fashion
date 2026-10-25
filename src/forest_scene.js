@@ -275,6 +275,8 @@ function renderForestRow(layer,objects,used){
     const factor=tree?(layer===0?.67:.87): (layer===2?.62:.86);
     const size=foreground?(h/900)*(.85+rand(id+2)*.35):factor*(.86+rand(id+2)*.29)*unit;
     const kind=tree?'tree':(foreground?(positiveMod(i,2)?'tuft':'frond'):groundKind(i,layer));
+    // Scenery and the original leshy creatures can be restored separately.
+    if(kind==='leshy'?!sceneLayers.creatures:!sceneLayers.forest)continue;
     const y=tree?h*(layer===0?.775:.797):(foreground?h*(1.02+rand(id+3)*.08):pathHeight(x)+(layer===2?-46:47)*Math.min(h/850,1.2));
     const key=seed+':'+layer+':'+i,art=getForestArt(key,id,kind,layer===0);used.add(key);
     ctx.save();ctx.translate(x,y);
@@ -378,6 +380,7 @@ function drawNightSky(){
 function drawForestBackground(){
   const objects=[],used=new Set();
   renderForestRow(0,objects,used);renderForestRow(1,objects,used);
+  if(!sceneLayers.forest)return {objects,used};
   // A transparent dark opening preserves the central subject's silhouette.
   const center=ctx.createRadialGradient(w*.5,h*.54,0,w*.5,h*.54,Math.min(w*.48,h*.47));
   center.addColorStop(0,'#050507aa');center.addColorStop(.6,'#05050765');center.addColorStop(1,'#05050700');
