@@ -74,6 +74,23 @@ const pixels=async p=>p.locator('canvas').evaluate(c=>c.toDataURL());
   await page.locator('[data-scene="creatures"]').check();
   assert.equal(await pixels(page),before,type+' did not restore');
  }
+ // Regression for residual native decorations, including the upward-moving
+ // motes and the bloom stalk photographed after switching everything off.
+ const programme=await page.evaluate(()=>runway.programme(60));
+ for(const type of ['bloom','starfall','lanterns','wisps']){
+  const scheduled=programme.find(p=>p.beats.some(b=>b.type===type));
+  assert(scheduled,'No scheduled '+type+' event');
+  const beat=scheduled.beats.find(b=>b.type===type);
+  const t=scheduled.start+beat.start+Math.min(beat.visible*.5,5);
+  await page.evaluate(t=>runway.seek(t),t);
+  const before=await pixels(page);
+  const forestSwitch=page.locator('[data-scene="forest"]');
+  await forestSwitch.uncheck();
+  assert(!(await page.evaluate(()=>runway.state().events)).some(e=>e.type===type),
+   'Forest OFF must hide native '+type+' act');
+  await forestSwitch.check();
+  assert.equal(await pixels(page),before,type+' act was not restored exactly');
+ }
  // From the mixed state, a click selects all; a second click hides all.
  // Playwright uncheck() alone does not click a half-selected checkbox.
  await page.evaluate(()=>runway.seek(10));
@@ -87,6 +104,18 @@ const pixels=async p=>p.locator('canvas').evaluate(c=>c.toDataURL());
  assert.equal(offState.forest.length,0);
  assert.equal(offState.butterflies.length,0);
  assert(Object.values(offState.effects.enabled).every(v=>v===false));
+ assert.equal(offState.events.length,0,'All OFF left native staged events on screen');
+ // No moon, stars, sky motes, ember showers or ambient dust may remain when
+ // all scene decorations are off. The background in the upper-left must then
+ // be identical at different seek times; the walker stays below this region.
+ const emptySky=async t=>page.evaluate(t=>{
+   runway.seek(t);
+   const canvas=document.querySelector('#scene');
+   return [...canvas.getContext('2d').getImageData(3,8,65,75).data];
+ },t);
+ const skyBefore=await emptySky(2),skyAfter=await emptySky(8);
+ assert.deepEqual(skyBefore,skyAfter,'All OFF left animated stars or dust in the sky');
+
  // One master click restores all; individual changes make it indeterminate.
  await master.check();
  for(const cb of await page.locator('[data-effect],[data-scene]').all())assert(await cb.isChecked());
@@ -186,6 +215,6 @@ const pixels=async p=>p.locator('canvas').evaluate(c=>c.toDataURL());
   await page.mouse.move(width-1,0);await page.screenshot({path:path.join(RESULTS,'effects-'+name+'.png')});
  }
  assert.deepEqual(errors,[]);assert.deepEqual(requests,[]);
- const report={head,baselineCommit:'95ebb572944ad91eccd1c824568296af8e17814a',originalMainPixelsPreserved:true,independentPixelChanges:true,keyboard:true,earlySporeSamples:spores,earlyPlantSamples:plants,maxPlantCache,largeSparkCoverage:true,tenIndependentSwitches:true,sceneSwitches:2,masterToggle:true,mixedMasterState:true,newEffects:['liquid','leaves','caustics','constellations'],simulatedSeconds:180,viewports:viewports.map(v=>v[0]+'x'+v[1]),errors,networkRequests:requests,physicalPhoneTested:false};
+ const report={head,baselineCommit:'95ebb572944ad91eccd1c824568296af8e17814a',originalMainPixelsPreserved:true,independentPixelChanges:true,keyboard:true,earlySporeSamples:spores,earlyPlantSamples:plants,maxPlantCache,largeSparkCoverage:true,tenIndependentSwitches:true,sceneSwitches:2,masterToggle:true,mixedMasterState:true,nativeDecorationsHidden:true,bloomHidden:true,skyCleared:true,newEffects:['liquid','leaves','caustics','constellations'],simulatedSeconds:180,viewports:viewports.map(v=>v[0]+'x'+v[1]),errors,networkRequests:requests,physicalPhoneTested:false};
  fs.writeFileSync(path.join(RESULTS,'effects.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report));await browser.close();
 })().catch(e=>{console.error(e);process.exit(1)});
