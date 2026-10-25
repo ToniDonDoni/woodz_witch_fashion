@@ -95,6 +95,7 @@ const pixels=async p=>p.locator('canvas').evaluate(c=>c.toDataURL());
  // Playwright uncheck() alone does not click a half-selected checkbox.
  await page.evaluate(()=>runway.seek(10));
  await master.check();
+ const beforeMasterOff=await pixels(page);
  await master.uncheck();
  assert(!(await master.isChecked()));
  assert.equal(await master.evaluate(el=>el.indeterminate),false);
@@ -115,9 +116,12 @@ const pixels=async p=>p.locator('canvas').evaluate(c=>c.toDataURL());
  },t);
  const skyBefore=await emptySky(2),skyAfter=await emptySky(8);
  assert.deepEqual(skyBefore,skyAfter,'All OFF left animated stars or dust in the sky');
+ await page.screenshot({path:path.join(RESULTS,'preview-all-off.png')});
 
  // One master click restores all; individual changes make it indeterminate.
  await master.check();
+ await page.evaluate(()=>runway.seek(10));
+ assert.equal(await pixels(page),beforeMasterOff,'All ON did not restore exact original frame');
  for(const cb of await page.locator('[data-effect],[data-scene]').all())assert(await cb.isChecked());
  assert(await master.isChecked());
  await page.locator('[data-effect="leaves"]').uncheck();
