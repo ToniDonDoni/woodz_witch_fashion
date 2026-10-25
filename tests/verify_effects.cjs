@@ -122,6 +122,10 @@ const pixels=async p=>p.locator('canvas').evaluate(c=>c.toDataURL());
  // across the screen even with all native scenery and other effects OFF.
  for(const [width,height,label] of [[430,932,'phone'],[1440,900,'desktop']]){
   await page.setViewportSize({width,height});
+  await page.waitForFunction(({width,height})=>{
+   const scene=runway.state().viewport,canvas=document.querySelector('#scene');
+   return scene.w===width&&scene.h===height&&canvas.width===width&&canvas.height===height;
+  },{width,height});
   await page.evaluate(()=>runway.seek(2));
   const off=await pixels(page);
   const sporesOnly=page.locator('[data-effect="spores"]');
@@ -151,6 +155,8 @@ const pixels=async p=>p.locator('canvas').evaluate(c=>c.toDataURL());
   assert(coverage.hits>=180,'Spore trails too faint at '+label+': '+JSON.stringify(coverage));
   assert(coverage.width>.63,'Spore trails too narrow at '+label+': '+JSON.stringify(coverage));
   assert(coverage.height>.26,'Spore trails too short at '+label+': '+JSON.stringify(coverage));
+  // Re-seek the same paused frame after the screenshot/viewport transition.
+  await page.evaluate(()=>runway.seek(2));
   assert.equal(await pixels(page),off,'Spore toggle did not restore paused image at '+label);
  }
  await page.setViewportSize({width:430,height:932});
