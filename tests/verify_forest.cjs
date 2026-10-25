@@ -3,6 +3,8 @@ const path = require('path');
 const assert = require('assert');
 const crypto = require('crypto');
 const {chromium} = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const ROOT=path.resolve(__dirname,'..'), RESULTS=path.join(ROOT,'dist','verification');
+fs.mkdirSync(RESULTS,{recursive:true});
 const PHONE = {width: 430, height: 932};
 // Wait for the compositor to present the frame a seek just drew, so two captures of
 // the same simulated time are compared as pixels rather than as a paint race.
@@ -28,9 +30,9 @@ const canvasSignature = page => page.evaluate(() => {
   page.on('pageerror', e => errors.push(String(e)));
   page.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
   page.on('request', r => { if (/^https?:/.test(r.url())) requests.push(r.url()); });
-  await page.goto('file://' + path.join(__dirname, 'index.html'));
+  await page.goto('file://' + path.join(ROOT, 'dist', 'index.html'));
   await page.waitForFunction(() => window.runway?.ready);
-  const capture = async (name, opts) => { await settle(page); await page.screenshot({path: path.join(__dirname, name), ...opts}); };
+  const capture = async (name, opts) => { await settle(page); await page.screenshot({path: path.join(RESULTS, name), ...opts}); };
   // 1 — offline, error-free, real-time animation and pause.
   const initial = await page.evaluate(() => runway.state().time);
   await page.waitForTimeout(8000);
@@ -184,8 +186,8 @@ const canvasSignature = page => page.evaluate(() => {
   assert.notEqual(programmeBefore, JSON.stringify(await page.evaluate(() => runway.programme(10))), 'New Dream kept the same act programme');
   // 9 — the embedded walk frames are byte-identical to the approved source build.
   const digest = text => crypto.createHash('sha256').update(text.match(/data:image\/webp;base64,([^']+)/)[1]).digest('hex');
-  const built = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
-  const accepted = fs.readFileSync(path.join(__dirname, '..', '..', 'index.html'), 'utf8');
+  const built = fs.readFileSync(path.join(ROOT, 'dist', 'index.html'), 'utf8');
+  const accepted = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
   assert.equal(digest(built), digest(accepted), 'The embedded walk frames changed');
   // 10 — review captures across viewports, plus the act card and the walk seam.
   await page.evaluate(t => runway.seek(t), (await page.evaluate(() => runway.plan(0))).start + 1.6);
@@ -255,8 +257,8 @@ const canvasSignature = page => page.evaluate(() => {
     median: Number(drawTimes[Math.floor(drawTimes.length / 2)].toFixed(3)), p95: Number(drawTimes[Math.floor(drawTimes.length * .95)].toFixed(3)),
     worst: Number(drawTimes[drawTimes.length - 1].toFixed(3)), samples: drawTimes.length, physicalPhoneTested: false};
   assert(drawMilliseconds.p95 < 60, 'A single draw exceeded the review budget on this machine');
-  fs.mkdirSync(path.join(__dirname, 'motion'), {recursive: true});
-  for (let i = 0; i < 48; i++) { await page.evaluate(t => runway.seek(t), i / 12); await settle(page); await page.locator('canvas').screenshot({path: path.join(__dirname, 'motion', `${String(i).padStart(3, '0')}.png`)}); }
+  fs.mkdirSync(path.join(RESULTS, 'motion'), {recursive: true});
+  for (let i = 0; i < 48; i++) { await page.evaluate(t => runway.seek(t), i / 12); await settle(page); await page.locator('canvas').screenshot({path: path.join(RESULTS, 'motion', `${String(i).padStart(3, '0')}.png`)}); }
   assert.deepEqual(errors, []);
   assert.deepEqual(requests, []);
   const report = {
@@ -273,7 +275,7 @@ const canvasSignature = page => page.evaluate(() => {
     walkFramesDigest: digest(built), errors, networkRequests: requests, physicalPhoneTested: false
   };
   function topology(list) { const out = {}; for (const act of list) out[act.event] = (out[act.event] || 0) + 1; return out; }
-  fs.writeFileSync(path.join(__dirname, 'verification.json'), JSON.stringify(report, null, 2) + '\n');
+  fs.writeFileSync(path.join(RESULTS, 'verification.json'), JSON.stringify(report, null, 2) + '\n');
   console.log(JSON.stringify(report));
   await browser.close();
 })().catch(e => { console.error(e); process.exit(1); });
