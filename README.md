@@ -37,7 +37,7 @@ at upper left. No runtime libraries or network requests are required.
 | `assets/walk/` | The 33 approved transparent walk frames. |
 | `scripts/build_forest_page.py` | The main website builder. |
 | `tests/verify_forest.cjs` | Acts, foreground, walk and world regression checks. |
-| `tests/verify_effects.cjs` | Effect pixels, checkboxes, HEAD and layout checks. |
+| `tests/verify_effects.cjs` | Effect pixels, 13 checkboxes, global toggle, native scene restoration, HEAD and layout checks. |
 | `dist/` | Local generated site, screenshots and reports; ignored by Git. |
 | `index.html`, `site/index.html` | Identical version-neutral snapshots made with `--snapshot`. |
 | `tasks/` | Specification and implementation requirements. |
@@ -48,9 +48,34 @@ with a link to the full commit. They never use a remote tip or a synthetic PR
 merge. The committed snapshots explicitly request a rebuild rather than falsely
 claiming to contain their own enclosing commit hash.
 
-## Effect checkboxes and references
+## Scene and effect checkboxes
 
-Ten bottom checkboxes enable independent original Canvas adaptations of examples from
+The bottom panel now has **13 native checkboxes**: two independent original
+scene toggles, ten optional Canvas effects and an **All on/off** master.
+
+- **Forest & foliage** hides or restores native environmental drawing:
+  trees, mushrooms, stumps, ferns, foreground leaves and path-edge plants,
+  **plus the moon, stars, clouds, floating dust, ambient rising motes, mist,
+  petals, embers and non-animal staged acts** (including the giant animated
+  *bloom* flower, lanterns, wisps, choir, fairy ring and starfall).
+  The plain night gradient, walking path and walking woman remain visible.
+  Independently checked optional Canvas effects can still draw above them.
+- **Animals** hides or restores original creatures: leshies, butterflies
+  and animal acts (stag, moths, owl). *Liquid spirits* is an independently
+  checked optional effect, not part of the original creature layer.
+- **All on/off** switches both scene categories **and** all ten optional
+  Canvas effects together. With all unchecked, **only the background wash,
+  walking path and woman remain**: no moon, twinkling stars, drifting
+  particles, blooming flowers or staged events. When controls are mixed,
+  the master checkbox displays a native indeterminate state.
+  All elements restore at the same paused timestamp.
+
+All original scenery and creatures are ON by default, so opening the page
+preserves the accepted forest. No artwork or animation assets were removed.
+
+### Optional effect references
+
+Ten bottom effect checkboxes enable independent original Canvas adaptations of examples from
 [yihui-dev/awesome-opus5-5-videos](https://github.com/yihui-dev/awesome-opus5-5-videos):
 
 - **Fog** — layered rolling mist ([reference](https://skillry.dev/ai-videos/opus-5-5/mondemsuraj-691517)).

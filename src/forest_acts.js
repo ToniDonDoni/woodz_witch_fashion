@@ -249,6 +249,7 @@ function ambientPetals(plan, front) {
   }
 }
 function drawAmbientBack(plan) {
+  if (!sceneLayers.forest) return;
   if (plan.ambient === 'spores') ambientMoteField(plan, 'rgba(176,236,196,', 13, 24, 1.5);
   else if (plan.ambient === 'motes') ambientMoteField(plan, 'rgba(226,222,200,', 7, 34, 1.1);
   else if (plan.ambient === 'embers') ambientMoteField(plan, 'rgba(255,176,96,', 30, 30, 1.3);
@@ -257,6 +258,7 @@ function drawAmbientBack(plan) {
   if (plan.ambient === 'embers') ambientFog(plan, false);
 }
 function drawAmbientFront(plan) {
+  if (!sceneLayers.forest) return;
   if (plan.ambient === 'petals') ambientPetals(plan, true);
   else if (plan.ambient === 'fog') ambientFog(plan, true);
   else if (plan.ambient === 'spores') ambientMoteField(plan, 'rgba(196,255,214,', 22, 40, 2.2);
@@ -497,6 +499,10 @@ function stageEvents(plan, layer) {
   for (const source of sources) for (const beat of source.beats) {
     const stager = eventStagers[beat.type];
     if (!stager || stager.layer !== layer) continue;
+    // Divide every original staged act between animals and forest scenery;
+    // no blooms, lanterns or magical events should survive the global OFF.
+    const animalAct = ['stag','moths','owl'].includes(beat.type);
+    if (animalAct ? !sceneLayers.creatures : !sceneLayers.forest) continue;
     const age = time - source.start - beat.start;
     if (age < 0 || age > beat.visible) continue;
     const {x, y, scale, flip} = beatTransform(beat, age);
