@@ -4,6 +4,16 @@ An endless fashion runway through an illustrated enchanted forest. A woman walks
 
 [Open the live forest preview](https://tonidondoni.github.io/woodz-witch-fashion-preview/).
 
+## Forest effects preview
+
+The separate [forest enchantments study](out/forest-enchantments/README.md) adds three bottom checkboxes inspired by examples from [yihui-dev/awesome-opus5-5-videos](https://github.com/yihui-dev/awesome-opus5-5-videos):
+
+- **Fog** — layered rolling mist ([reference](https://skillry.dev/ai-videos/opus-5-5/mondemsuraj-691517)).
+- **Spore trails** — glowing mushroom spores with curved trails ([reference](https://skillry.dev/ai-videos/opus-5-5/ishuagra02-678129)).
+- **Fractal ferns** — unfolding plants with folded-paper detail ([reference](https://skillry.dev/ai-videos/opus-5-5/jrayon-054015)).
+
+These are original Canvas adaptations; the reference collection is not a runtime dependency.
+
 ## Current runway: scenes in the wood
 
 Two layers of hand-drawn trees pass behind the walker. Moss, ferns, mushrooms, stumps and small woodland spirits line the runway, and a fourth, faster row of dark blades and fronds passes in front of her, so foreground vegetation genuinely occludes her sneakers. Seeded identities preserve each object's shape and details throughout its journey. Smooth parallax and secondary movements run independently of the 12 Hz boiling pencil contours. Butterflies and drifting dust remain as accents.

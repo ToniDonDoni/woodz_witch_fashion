@@ -3,10 +3,10 @@
 The forest audience runway from commit
 `0e6cf29d4059e305a975a77fade10cb3f7a1ecb2`, with three live Canvas effects:
 
-- **MIST:** slow translucent banks at two depths, drawn behind the walker.
-- **SPORES:** warm gold and mint-green swarms with curved trails. Each mushroom
+- **Fog:** slow translucent banks at two depths, drawn behind the walker.
+- **Spore trails:** warm gold and mint-green swarms with curved trails. Each mushroom
   releases a swarm when it crosses the walker's position.
-- **FERNS:** recursively detailed folded-paper plants that unfold, sway and curl
+- **Fractal ferns:** recursively detailed folded-paper plants that unfold, sway and curl
   closed as they travel through the rear forest layer.
 
 Each effect has a labeled native checkbox at the bottom, above playback controls. The original 33 footage-derived walk frames,
