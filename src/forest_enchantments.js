@@ -1,6 +1,6 @@
 // Original Canvas adaptations of the linked references; no external runtime assets.
 // Every effect is a pure function of world seed, viewport and simulation time.
-const enchantments = {fog:true, spores:true, plants:true};
+const enchantments = {fog:true, spores:true, plants:true, ink:true, glass:true, sparks:true};
 const plantGeometry = new Map();
 const fogArt = (() => {
   const art = document.createElement('canvas'); art.width=384; art.height=128;
