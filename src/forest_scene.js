@@ -303,6 +303,8 @@ function drawNightSky(){
   const sky=ctx.createLinearGradient(0,0,0,horizon);
   sky.addColorStop(0,'#070711');sky.addColorStop(.55,'#0a0a16');sky.addColorStop(1,'#0d0d19');
   ctx.fillStyle=sky;ctx.fillRect(0,0,w,horizon);
+  // Keep the night gradient, but hide native stars, moon and clouds with scenery.
+  if(!sceneLayers.forest)return;
   // Stars: seeded per world index, twinkling on the boil clock, clearly visible.
   const spacing=34*forestUnit(),speed=6*forestUnit(),offset=time*speed;
   const start=Math.floor((-offset-40)/spacing),end=Math.ceil((w-offset+40)/spacing);
