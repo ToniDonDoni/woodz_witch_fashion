@@ -31,8 +31,9 @@ at upper left. No runtime libraries or network requests are required.
 | `src/forest_runway_template.html` | Page, composition, playback, effect checkboxes and HEAD position. |
 | `src/forest_scene.js` | Trees, moon, stars, ground objects and foreground vegetation. |
 | `src/forest_acts.js` | Act programme, events, weather and colour moods. |
-| `src/forest_enchantments.js` | Original fog, spore and fern effects plus all six switch states. |
+| `src/forest_enchantments.js` | Original fog, spore and fern effects plus all ten switch states. |
 | `src/forest_extra_effects.js` | Living ink, translucent stained-glass flowers and large spark fields. |
+| `src/forest_next_effects.js` | Liquid spirits, autumn leaves, moonlit path caustics and painted constellations. |
 | `assets/walk/` | The 33 approved transparent walk frames. |
 | `scripts/build_forest_page.py` | The main website builder. |
 | `tests/verify_forest.cjs` | Acts, foreground, walk and world regression checks. |
@@ -49,7 +50,7 @@ claiming to contain their own enclosing commit hash.
 
 ## Effect checkboxes and references
 
-Six bottom checkboxes enable independent original Canvas adaptations of examples from
+Ten bottom checkboxes enable independent original Canvas adaptations of examples from
 [yihui-dev/awesome-opus5-5-videos](https://github.com/yihui-dev/awesome-opus5-5-videos):
 
 - **Fog** — layered rolling mist ([reference](https://skillry.dev/ai-videos/opus-5-5/mondemsuraj-691517)).
@@ -59,11 +60,19 @@ Six bottom checkboxes enable independent original Canvas adaptations of examples
 - **Glass flowers** — large translucent hibiscus-inspired petals, colored glass gradients and vein details inspired by [stained-glass hibiscus](https://github.com/yihui-dev/awesome-opus5-5-videos/blob/main/prompts/ivanainai-245918.md) ([original](https://x.com/ivanainai/status/2106481339193245918)).
 - **Big sparks** — **128 luminous particles** with thick comet trails in two oversized orbital fields. They are deliberately drawn in the distant sky **behind all tree layers, staged events and the walker**, so foliage and the silhouette occlude them rather than being obscured by them. The wide particle trajectories remain unchanged. Inspired by [wizard spell particles](https://github.com/yihui-dev/awesome-opus5-5-videos/blob/main/prompts/zacxbt-944604.md) ([live remake](https://skillry.dev/ai-videos/opus-5-5/zacxbt-944604)).
 
+- **Liquid spirits** — five gently morphing and drifting luminous creatures, with orbiting droplets, **drawn between forest tree layers** so the walker is never obscured. Adapted from the [realistic lava lamp WebGL animation](https://github.com/yihui-dev/awesome-opus5-5-videos/blob/main/prompts/juancarlos17626-382690.md) ([original](https://x.com/juancarlos17626/status/2108301453907382690)).
+- **Leaf vortex** — 114 distinct autumn leaves in three large orbiting currents, drawn behind the walking sprite. Inspired by the maple-tree foliage in [Interactive Zen Garden HTML Animation](https://github.com/yihui-dev/awesome-opus5-5-videos/blob/main/prompts/arixxbt-292438.md) ([original](https://x.com/arixxbt/status/2108541814718292438)).
+- **Moonlit caustics** — eight moving bands of pale blue moonlight, clipped to the runway and drawn before trees and the walker. Inspired by [fishbowl reflection, refraction and water caustics](https://github.com/yihui-dev/awesome-opus5-5-videos/blob/main/prompts/nicolamanzini-156628.md) ([remake](https://skillry.dev/ai-videos/opus-5-5/nicolamanzini-156628)).
+- **Constellations** — three hand-drawn star figures with glowing connected lines, twinkling points and traveling highlights **in the distant night sky**. Inspired by [Painting the Night](https://github.com/yihui-dev/awesome-opus5-5-videos/blob/main/prompts/obydulme-052905.md) ([original](https://x.com/obydulme/status/2104802322518052905)).
+
 The references are visual inspiration, not runtime dependencies. Each checkbox
-works independently, including while paused. Disabling all six restores the
+works independently, including while paused. Disabling all ten restores the
 accepted main forest's canvas pixels, including its acts and foreground.
-The three new effects are implemented in plain Canvas 2D within the existing
-self-contained page; there is no 3D engine, asset download or network access.
+All effects, including the four added here, are original Canvas 2D
+reinterpretations in the existing self-contained page: no WebGL dependency,
+3D engine, image download or network requests. On desktop the ten checkboxes
+form two rows; on narrow screens they form five compact rows. The build stamp
+still shows the exact checked-out Git HEAD after rebuilding.
 The big-sparks test compares real pixels with the switch off at phone and desktop
 sizes, and requires visible changes spanning over 70% of the viewport width and
 48% of its height.
@@ -81,7 +90,9 @@ PLAYWRIGHT_MODULE=/tmp/woodz-browser-check/node_modules/playwright node tests/ve
 ```
 
 `BROWSER_EXECUTABLE` can select an existing Chromium. Reports and screenshots
-are saved to `dist/verification/`. The immutable pixel-regression baseline is
+are saved to `dist/verification/`, including separate `preview-liquid.png`,
+`preview-leaves.png`, `preview-caustics.png`, `preview-constellations.png`,
+and `preview-all-ten.png` screenshots to inspect the new effects. The immutable pixel-regression baseline is
 commit `95ebb572944ad91eccd1c824568296af8e17814a`; shallow clones must fetch it.
 CI checks out the exact branch commit, builds, verifies and uploads the stamped
 HTML and reports. The manual Pages workflow builds the selected branch from `src/` and publishes `dist/`. The separate public preview repository is not auto-updated.
