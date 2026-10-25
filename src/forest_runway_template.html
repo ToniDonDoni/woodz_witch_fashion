@@ -23,6 +23,31 @@
 
 #actcard{bottom:174px}
 @media(max-width:700px){#actcard{bottom:245px}}
+/* The four new effects have isolated, visible corner switches, separate from
+   the thirteen established toggles along the bottom. */
+.corner-switches{position:fixed;inset:0;pointer-events:none;z-index:4}
+.corner-switches label{position:fixed;display:flex;align-items:center;gap:7px;max-width:calc(50vw - 17px);min-height:36px;padding:0 10px;border:1px solid #cab0e487;border-radius:15px;background:#181020f2;color:#f5e9fb;font:12px Arial,sans-serif;box-shadow:0 0 12px #bca3e22b;white-space:nowrap;cursor:pointer;pointer-events:auto}
+.corner-switches input{width:18px;height:18px;flex-shrink:0;margin:0;accent-color:#dfb0ff;cursor:pointer}
+.corner-switches label span{overflow:hidden;text-overflow:ellipsis}
+.corner-tl{top:155px;left:max(15px,env(safe-area-inset-left))}
+.corner-tr{top:155px;right:max(15px,env(safe-area-inset-right))}
+.corner-bl{bottom:205px;left:max(15px,env(safe-area-inset-left))}
+.corner-br{bottom:205px;right:max(15px,env(safe-area-inset-right))}
+@media(max-width:700px){
+ .corner-switches label{min-height:31px;padding:0 7px;gap:5px;font-size:10px}
+ .corner-switches input{width:15px;height:15px}
+ .corner-tl,.corner-tr{top:144px}
+ .corner-bl,.corner-br{bottom:245px}
+}
+@media(max-height:700px){
+ .corner-tl,.corner-tr{top:122px}
+ .corner-bl,.corner-br{bottom:225px}
+}
+@media(max-height:550px){
+ .corner-tl,.corner-tr{top:113px}
+ .corner-bl,.corner-br{bottom:168px}
+}
+
 </style>
 </head>
 <body>
@@ -44,6 +69,12 @@
 <label><input type="checkbox" data-effect="leaves" checked>Leaf vortex</label>
 <label><input type="checkbox" data-effect="caustics" checked>Moonlit caustics</label>
 <label><input type="checkbox" data-effect="constellations" checked>Constellations</label>
+</div>
+<div class="corner-switches" role="group" aria-label="Four new corner effects">
+<label class="corner-tl"><input type="checkbox" data-effect="magnetic" checked><span>Magnetic Currents</span></label>
+<label class="corner-bl"><input type="checkbox" data-effect="spectral" checked><span>Spectral Butterfly</span></label>
+<label class="corner-tr"><input type="checkbox" data-effect="sandfall" checked><span>Golden Sandfall</span></label>
+<label class="corner-br"><input type="checkbox" data-effect="ruins" checked><span>Ancient Ruins</span></label>
 </div>
 <div id="loading" role="status">Entering the night…</div>
 <div id="actcard" role="status" aria-live="polite"></div>
@@ -161,12 +192,15 @@ function draw(){
  const glow=ctx.createRadialGradient(w*.5,h*.50,0,w*.5,h*.50,h*.48);glow.addColorStop(0,'#1a1422');glow.addColorStop(.55,'#0c0a10');glow.addColorStop(1,'#050507');ctx.fillStyle=glow;ctx.fillRect(0,0,w,h);
  const plan=currentAct();
  drawNightSky();
+ const magnetic=drawMagneticCurrents();
  const constellations=drawPaintedConstellations();
  // Spark fields belong to the distant sky: all events, trees, ground layers
  // and the walker must occlude them instead of being covered by them.
  const sparks=drawBigSparks();
  const skyEvents=drawSkyEvents(plan);
+ const ruins=drawAncientRuins();
  const woodland=drawForestBackground();
+ const spectral=drawSpectralButterflies(),sandfall=drawGoldenSandfall();
  const spirits=drawLiquidSpirits();
  const ink=drawLivingInk(),plants=drawFractalPlants(),rearFog=drawFog();
  drawAmbientBack(plan);
@@ -191,7 +225,7 @@ function draw(){
  pruneForestCache(woodland.used);
  const events=[...skyEvents,...farEvents,...nearEvents,...frontEvents];
  const rendered=forest.filter(o=>o.layer<4);
- debug={time,frame,boil,seed,scene:{...sceneLayers},effects:{enabled:{...enchantments},plants,spores,ink,glass,sparks,spirits,leaves,caustics,constellations,fogCount:rearFog+frontFog,plantCacheSize:plantGeometry.size},viewport:{w,h},figure:{x,y,width:figureWidth,height:figureHeight},butterflies,path,forest:rendered,foreground,
+ debug={time,frame,boil,seed,scene:{...sceneLayers},effects:{enabled:{...enchantments},plants,spores,ink,glass,sparks,spirits,leaves,caustics,constellations,magnetic,spectral,sandfall,ruins,fogCount:rearFog+frontFog,plantCacheSize:plantGeometry.size},viewport:{w,h},figure:{x,y,width:figureWidth,height:figureHeight},butterflies,path,forest:rendered,foreground,
    events:events.map(e=>({id:e.id,type:e.type,layer:e.layer,kind:e.kind,entry:e.entry,x:e.x,y:e.y,age:e.age,size:e.size})),
    act:{index:plan.index,name:plan.name,ambient:plan.ambient,event:plan.event,cameo:plan.cameo,rare:plan.rare,length:plan.length,progress:plan.progress,start:plan.start,
      beats:plan.beats.map(b=>({type:b.type,kind:b.kind,entry:b.entry,start:b.start,visible:b.visible,size:b.size}))},
