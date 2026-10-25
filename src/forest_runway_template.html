@@ -8,14 +8,15 @@
 <style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#050507;color:#eee8df}body{font:12px Arial,sans-serif}canvas{display:block;width:100%;height:100%;touch-action:manipulation}.masthead{position:fixed;top:max(25px,env(safe-area-inset-top));left:28px;right:28px;display:flex;align-items:start;justify-content:space-between;pointer-events:none}.brand{font-size:19px;letter-spacing:.24em;font-weight:600}.edition{font-size:9px;letter-spacing:.19em;color:#a49ba9;line-height:1.7;text-align:right}.caption{position:fixed;left:28px;top:83px;pointer-events:none}.caption h1{font:italic 30px Georgia,serif;margin:0 0 7px}.caption p{font-size:9px;letter-spacing:.17em;text-transform:uppercase;color:#aaa0ad;margin:0}.controls{position:fixed;bottom:max(22px,env(safe-area-inset-bottom));left:25px;right:25px;display:flex;align-items:center;justify-content:space-between;gap:14px}button{color:#dcd2df;background:#131017cc;border:1px solid #d9bfe62a;border-radius:100px;min-height:44px;padding:0 17px;font:10px Arial,sans-serif;letter-spacing:.1em;cursor:pointer}button:hover{border-color:#b693c9}button:focus-visible,input:focus-visible{outline:2px solid #d2b2ec;outline-offset:5px}.tempo{display:flex;align-items:center;gap:9px;color:#9c92a4;font-size:9px;letter-spacing:.08em}.tempo input{width:75px;accent-color:#c3a2dc}.hint{position:fixed;bottom:87px;left:0;right:0;text-align:center;color:#665a70;font-size:8px;letter-spacing:.23em;pointer-events:none}#actcard{position:fixed;bottom:118px;left:0;right:0;text-align:center;color:#ead9fb;font-size:11px;letter-spacing:.34em;text-shadow:0 0 18px #000000cc;opacity:0;pointer-events:none}#loading{position:fixed;top:50%;left:0;right:0;text-align:center;color:#cbb0e0;letter-spacing:.15em}@media(max-height:550px){.caption{top:65px}.caption h1{font-size:23px}.hint{display:none}.controls{bottom:12px}.masthead{top:18px}}
 @media(max-width:500px) and (max-height:700px){.caption{top:65px}.caption h1{font-size:23px}.caption p,.hint{display:none}.controls{left:16px;right:16px;gap:9px}button{padding:0 12px;white-space:nowrap;font-size:9px}.tempo{gap:6px}.tempo input{width:50px}}
-/* Six native effect checkboxes sit in two compact rows above playback. */
-.effects{position:fixed;left:16px;right:16px;bottom:calc(max(22px,env(safe-area-inset-bottom)) + 54px);display:grid;grid-template-columns:repeat(3,max-content);justify-content:center;gap:8px;z-index:2}
-.effects label{display:flex;align-items:center;gap:7px;min-height:36px;padding:0 10px;border:1px solid #b5a3c84a;border-radius:12px;background:#131017ed;color:#e5d7ed;font-size:12px;cursor:pointer;white-space:nowrap}
+/* Ten independent effect checkboxes: two rows on desktop, five on phones. */
+.effects{position:fixed;left:16px;right:16px;bottom:calc(max(22px,env(safe-area-inset-bottom)) + 54px);display:grid;grid-template-columns:repeat(5,max-content);justify-content:center;gap:6px;z-index:2}
+.effects label{display:flex;align-items:center;gap:7px;min-height:34px;padding:0 9px;border:1px solid #b5a3c84a;border-radius:12px;background:#131017ed;color:#e5d7ed;font-size:12px;cursor:pointer;white-space:nowrap}
 .effects input{width:18px;height:18px;margin:0;accent-color:#cf9bec;cursor:pointer}
 .build-info{position:fixed;left:28px;top:calc(max(25px,env(safe-area-inset-top)) + 28px);max-width:calc(100% - 56px);font:10px/1.4 monospace;color:#b4a6c0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .build-info a{color:#d9b5f1;text-decoration:none}.build-info a:hover{text-decoration:underline}
 @media(max-height:550px){.effects{bottom:calc(max(12px,env(safe-area-inset-bottom)) + 54px)}.build-info{top:43px}}
-@media(max-width:500px){.edition,.branch-meta{display:none}.effects{gap:6px}.effects label{font-size:10px;gap:6px;padding:0 6px}}
+@media(max-width:700px){.effects{grid-template-columns:repeat(2,max-content);gap:4px}.effects label{min-height:28px;font-size:10px;gap:5px;padding:0 7px}.effects input{width:16px;height:16px}#actcard{bottom:240px}}
+@media(max-width:500px){.edition,.branch-meta{display:none}.effects label{padding:0 6px}}
 
 #actcard{bottom:174px}
 </style>
@@ -32,6 +33,10 @@
 <label><input type="checkbox" data-effect="ink" checked>Living ink</label>
 <label><input type="checkbox" data-effect="glass" checked>Glass flowers</label>
 <label><input type="checkbox" data-effect="sparks" checked>Big sparks</label>
+<label><input type="checkbox" data-effect="liquid" checked>Liquid spirits</label>
+<label><input type="checkbox" data-effect="leaves" checked>Leaf vortex</label>
+<label><input type="checkbox" data-effect="caustics" checked>Moonlit caustics</label>
+<label><input type="checkbox" data-effect="constellations" checked>Constellations</label>
 </div>
 <div id="loading" role="status">Entering the night…</div>
 <div id="actcard" role="status" aria-live="polite"></div>
@@ -145,18 +150,20 @@ function draw(){
  const glow=ctx.createRadialGradient(w*.5,h*.50,0,w*.5,h*.50,h*.48);glow.addColorStop(0,'#1a1422');glow.addColorStop(.55,'#0c0a10');glow.addColorStop(1,'#050507');ctx.fillStyle=glow;ctx.fillRect(0,0,w,h);
  const plan=currentAct();
  drawNightSky();
+ const constellations=drawPaintedConstellations();
  // Spark fields belong to the distant sky: all events, trees, ground layers
  // and the walker must occlude them instead of being covered by them.
  const sparks=drawBigSparks();
  const skyEvents=drawSkyEvents(plan);
  const woodland=drawForestBackground();
+ const spirits=drawLiquidSpirits();
  const ink=drawLivingInk(),plants=drawFractalPlants(),rearFog=drawFog();
  drawAmbientBack(plan);
- drawDust();const butterflies=drawButterflies(),path=drawPath();
+ drawDust();const butterflies=drawButterflies(),path=drawPath(),caustics=drawMoonlitCaustics();
  const farEvents=stageEvents(plan,'far');
  const forest=drawForestGround(woodland);
  const nearEvents=stageEvents(plan,'near');
- const spores=drawSpores(forest),frontFog=drawFog(true),glass=drawGlassFlowers();
+ const spores=drawSpores(forest),frontFog=drawFog(true),glass=drawGlassFlowers(),leaves=drawAutumnVortex();
  // The per-dream colour grade wraps the whole world; the walker is drawn after it
  // so her silhouette, skin and sneakers keep their own colours and stay readable.
  drawDreamGrade();
@@ -173,7 +180,7 @@ function draw(){
  pruneForestCache(woodland.used);
  const events=[...skyEvents,...farEvents,...nearEvents,...frontEvents];
  const rendered=forest.filter(o=>o.layer<4);
- debug={time,frame,boil,seed,effects:{enabled:{...enchantments},plants,spores,ink,glass,sparks,fogCount:rearFog+frontFog,plantCacheSize:plantGeometry.size},viewport:{w,h},figure:{x,y,width:figureWidth,height:figureHeight},butterflies,path,forest:rendered,foreground,
+ debug={time,frame,boil,seed,effects:{enabled:{...enchantments},plants,spores,ink,glass,sparks,spirits,leaves,caustics,constellations,fogCount:rearFog+frontFog,plantCacheSize:plantGeometry.size},viewport:{w,h},figure:{x,y,width:figureWidth,height:figureHeight},butterflies,path,forest:rendered,foreground,
    events:events.map(e=>({id:e.id,type:e.type,layer:e.layer,kind:e.kind,entry:e.entry,x:e.x,y:e.y,age:e.age,size:e.size})),
    act:{index:plan.index,name:plan.name,ambient:plan.ambient,event:plan.event,cameo:plan.cameo,rare:plan.rare,length:plan.length,progress:plan.progress,start:plan.start,
      beats:plan.beats.map(b=>({type:b.type,kind:b.kind,entry:b.entry,start:b.start,visible:b.visible,size:b.size}))},
