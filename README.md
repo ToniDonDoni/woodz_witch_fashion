@@ -53,18 +53,22 @@ claiming to contain their own enclosing commit hash.
 The bottom panel now has **13 native checkboxes**: two independent original
 scene toggles, ten optional Canvas effects and an **All on/off** master.
 
-- **Forest & foliage** hides or restores the original background trees,
-  mushrooms, stumps, ferns, foreground leaves and small path-edge plants.
-  The walking path and the walking woman remain visible. The independent
-  *Leaf vortex* effect is not implicitly changed by this switch.
-- **Animals** hides or restores the original woodland creatures: leshies,
-  butterflies and animal act performances (stag, moths, owl). Other staged
-  magical performances keep their separate timing; *Liquid spirits*
-  remains independently controlled by its effect checkbox.
-- **All on/off** switches both scene categories **and** all ten effect
-  checkboxes together. When the controls are mixed, the master checkbox
-  displays the native indeterminate state; clicking it restores all.
-  Each individual toggle works while paused, including after New Dream.
+- **Forest & foliage** hides or restores native environmental drawing:
+  trees, mushrooms, stumps, ferns, foreground leaves and path-edge plants,
+  **plus the moon, stars, clouds, floating dust, ambient rising motes, mist,
+  petals, embers and non-animal staged acts** (including the giant animated
+  *bloom* flower, lanterns, wisps, choir, fairy ring and starfall).
+  The plain night gradient, walking path and walking woman remain visible.
+  Independently checked optional Canvas effects can still draw above them.
+- **Animals** hides or restores original creatures: leshies, butterflies
+  and animal acts (stag, moths, owl). *Liquid spirits* is an independently
+  checked optional effect, not part of the original creature layer.
+- **All on/off** switches both scene categories **and** all ten optional
+  Canvas effects together. With all unchecked, **only the background wash,
+  walking path and woman remain**: no moon, twinkling stars, drifting
+  particles, blooming flowers or staged events. When controls are mixed,
+  the master checkbox displays a native indeterminate state.
+  All elements restore at the same paused timestamp.
 
 All original scenery and creatures are ON by default, so opening the page
 preserves the accepted forest. No artwork or animation assets were removed.
