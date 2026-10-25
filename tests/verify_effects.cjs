@@ -74,8 +74,10 @@ const pixels=async p=>p.locator('canvas').evaluate(c=>c.toDataURL());
   await page.locator('[data-scene="creatures"]').check();
   assert.equal(await pixels(page),before,type+' did not restore');
  }
- // Master off removes every optional effect and both native scene groups.
+ // From the mixed state, a click selects all; a second click hides all.
+ // Playwright uncheck() alone does not click a half-selected checkbox.
  await page.evaluate(()=>runway.seek(10));
+ await master.check();
  await master.uncheck();
  assert(!(await master.isChecked()));
  assert.equal(await master.evaluate(el=>el.indeterminate),false);
