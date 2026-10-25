@@ -76,6 +76,18 @@ CI checks out the exact branch commit, builds, verifies and uploads the stamped
 HTML and reports. The Pages workflow builds from `src/` and publishes `dist/`
 on main updates. The separate public preview repository is not auto-updated.
 
+## Automatic GitHub Pages deployment
+
+Site: **https://tonidondoni.github.io/woodz_witch_fashion/**
+
+Merging a pull request into `main` automatically starts **Publish Forest**
+(`.github/workflows/publish-pages.yml`). It builds the main site from `src/`
+using `scripts/build_forest_page.py`, uploads `dist/`, and deploys it to this
+repository's GitHub Pages. No manual publication step is needed after merging;
+the site updates when the workflow finishes. The HEAD displayed on the page is
+the exact published commit from `main`. Check the workflow in the Actions tab
+for the deployment result. Manual runs are also restricted to `main`.
+
 The original frame 32-to-0 gait discontinuity remains. Desktop checks at phone
 viewport sizes are not physical-phone performance or offline-opening acceptance.
 See `tasks/procedural_runway_spec.md` for the full experience specification.

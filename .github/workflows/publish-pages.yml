@@ -16,6 +16,9 @@ concurrency:
 
 jobs:
   build:
+    # Merge/push to main publishes automatically; manual feature-branch runs do not.
+    if: github.ref == 'refs/heads/main'
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
