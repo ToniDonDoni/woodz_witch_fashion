@@ -1,54 +1,81 @@
 # Woodz Witch Fashion
 
-An endless fashion runway through an illustrated enchanted forest. A woman walks in place using the 33 existing footage-derived cutouts while a continuously generated world travels from left to right, staging one seeded act after another.
+An endless procedural forest runway. The original 33 walk frames play in front
+of hand-drawn trees, a moonlit sky and a changing programme of woodland acts.
+Foreground plants pass in front of the walker. New Dream reshuffles the acts,
+world layout and colour mood.
 
-[Open the live forest preview](https://tonidondoni.github.io/woodz-witch-fashion-preview/).
+## Build and run
 
-## Forest effects preview
+From the repository root, with Python 3 and Pillow:
 
-The separate [forest enchantments study](out/forest-enchantments/README.md) adds three bottom checkboxes inspired by examples from [yihui-dev/awesome-opus5-5-videos](https://github.com/yihui-dev/awesome-opus5-5-videos):
+```sh
+python3 -m venv /tmp/woodz-build-venv
+. /tmp/woodz-build-venv/bin/activate
+python -m pip install Pillow
+python scripts/build_forest_page.py
+python -m http.server 18789 --bind 0.0.0.0 --directory dist
+```
 
-- **Fog** — layered rolling mist ([reference](https://skillry.dev/ai-videos/opus-5-5/mondemsuraj-691517)).
-- **Spore trails** — glowing mushroom spores with curved trails ([reference](https://skillry.dev/ai-videos/opus-5-5/ishuagra02-678129)).
-- **Fractal ferns** — unfolding plants with folded-paper detail ([reference](https://skillry.dev/ai-videos/opus-5-5/jrayon-054015)).
+Open http://localhost:18789/ . In Docker, publish port `18789:18789`.
+The result is **`dist/index.html`**, one offline-capable HTML with all sprites
+and code embedded. Rebuild after updating the branch to show its exact Git HEAD
+at upper left. No runtime libraries or network requests are required.
 
-These are original Canvas adaptations; the reference collection is not a runtime dependency.
-
-## Current runway: scenes in the wood
-
-Two layers of hand-drawn trees pass behind the walker. Moss, ferns, mushrooms, stumps and small woodland spirits line the runway, and a fourth, faster row of dark blades and fronds passes in front of her, so foreground vegetation genuinely occludes her sneakers. Seeded identities preserve each object's shape and details throughout its journey. Smooth parallax and secondary movements run independently of the 12 Hz boiling pencil contours. Butterflies and drifting dust remain as accents.
-
-On top of that the forest is staged as a sequence of seeded acts. An act lasts 30–62 seconds, a different length each time, announces itself with a title card that stays up for the whole act, and changes the weather of the whole woodland. Each act is a small scene built from three overlapping beats that tile its length, so the stage is busy for essentially the entire act: one headline set piece — a constellation-antlered stag, a lantern procession, a moth wake, a fairy ring rising from the path, a leshy choir on a fallen log, a wisp fountain, or a moonflower opening in the foreground — and two quieter support pieces drawn from the same cast. A beat can enter from the left, enter from the right and face the way it travels, arrive and hold beside her, or rise out of the ground and drift; the owl's overhead swoop is a fifth mode. A piece that is still moving when its act ends finishes its trajectory instead of being cut off. Rare unannounced cameos interrupt the programme: a star fall in the sky and an owl sweeping overhead. A per-dream colour grade re-hues the whole world, while the walker is composited afterwards so her own colours stay true. Night sky, moon, stars and the chalk runway from the previous study are unchanged.
-
-The deliverable is one self-contained `index.html`: its sprite atlas, styles and drawing code are embedded. It opens offline without adjacent assets or external dependencies. Pause, walking pace and New Dream controls are included. `NEW DREAM` reshuffles the act programme, the woodland layout and the colour mood instead of redrawing the same world.
-
-The source repository is private. The public preview repository contains only the standalone page and hosting files, and publishes its `main` branch through GitHub Pages. Changes to this private repository do not automatically update that public preview.
-
-## Source and reproduction
-
-The requirements are in [`tasks/procedural_runway_spec.md`](tasks/procedural_runway_spec.md). Follow [`AGENTS.md`](AGENTS.md), and keep each exploratory attempt in its own `out/<attempt-name>/` directory.
+## Source layout
 
 | Path | Purpose |
 | --- | --- |
-| `assets/walk/` | The 33 approved transparent PNG walk frames. |
-| `src/forest_scene.js` | Procedural trees, ground vegetation, mushrooms, stumps, woodland spirits and the foreground row. |
-| `src/forest_acts.js` | The act director, the per-act weather, the dream colour mood and every staged set piece. |
-| `src/forest_runway_template.html` | Inline animation, composition, act card and controls. |
-| `scripts/build_forest_page.py` | Builds the standalone forest page from the existing sprites and drawing source. |
-| `index.html` | Current standalone forest preview. |
-| `site/index.html` | Identical copy of the standalone preview for static hosting. |
-| `tasks/procedural_runway_spec.md` | Full experience brief and acceptance criteria. |
-| `out/runway-scenes/` | This iteration's draft sources, captures, verification and independent review. |
-| `out/runway-acts/` | Previous living-acts study, preserved separately. |
-| `out/forest-spectators/` | Previous neon-audience study, preserved separately. |
-| `out/enchanted-forest/` | Previous procedural forest study, preserved separately. |
-| `out/butterfly-runway/` | First path-and-butterfly study, preserved separately. |
-| `src/walk_page_template.html` | Original sprite-only technical preview source. |
+| `src/forest_runway_template.html` | Page, composition, playback, effect checkboxes and HEAD position. |
+| `src/forest_scene.js` | Trees, moon, stars, ground objects and foreground vegetation. |
+| `src/forest_acts.js` | Act programme, events, weather and colour moods. |
+| `src/forest_enchantments.js` | Three optional procedural effects. |
+| `assets/walk/` | The 33 approved transparent walk frames. |
+| `scripts/build_forest_page.py` | The main website builder. |
+| `tests/verify_forest.cjs` | Acts, foreground, walk and world regression checks. |
+| `tests/verify_effects.cjs` | Effect pixels, checkboxes, HEAD and layout checks. |
+| `dist/` | Local generated site, screenshots and reports; ignored by Git. |
+| `index.html`, `site/index.html` | Identical version-neutral snapshots made with `--snapshot`. |
+| `tasks/` | Specification and implementation requirements. |
 
-With Python and Pillow available, run `python scripts/build_forest_page.py` from the project root. This regenerates `index.html` and `site/index.html` from frames 0–32.
+All active website source is in `src/`. The experimental directory has been
+removed. Normal builds read `git rev-parse HEAD` and embed that SHA in the page,
+with a link to the full commit. They never use a remote tip or a synthetic PR
+merge. The committed snapshots explicitly request a rebuild rather than falsely
+claiming to contain their own enclosing commit hash.
 
-## Verification and limits
+## Effect checkboxes and references
 
-The scene iteration passes offline Chromium checks with no external requests or runtime errors. Desktop, landscape and two phone-sized viewports were reviewed. Every act theme and every signature event appears and reaches the stage; act lengths vary and tile the timeline exactly; the act order never repeats a theme inside three acts; staged objects keep their identity while they travel; identical simulated times render identically; and the active object count stays bounded over ten sampled minutes and a one-hour seek. The properties of this iteration are measured as well as asserted: the three beat windows tile at least 99% of every act over 40 programmed acts (an act can no longer be announced and then left empty), at least four arrival modes appear with both horizontal directions used (over 40 acts: 40 rises, 30 holds, 25 left entries, 25 right entries), and rendering six acts second by second puts a piece on screen for 90–96% of each act — a mean of 93%, with the longest blank stretch 3 seconds — against 16% for the single-fly-past version. (The first version of that occupancy measurement counted beats whose anchor was still off screen and reported 98%; it now counts only pieces inside the viewport.) Two further measurements back the claims that are easy to fake: differencing two renders of the same time with the foreground row on and off changes the pixels over her legs by 34.6 grey levels and changes nothing above them, and 120 timed draws at phone size report a 12.9 ms median (16.3 ms p95) on this machine's headless CPU. See `out/runway-scenes/verification.json` and `out/runway-scenes/review.md`.
+Three bottom checkboxes enable original Canvas adaptations of examples from
+[yihui-dev/awesome-opus5-5-videos](https://github.com/yihui-dev/awesome-opus5-5-videos):
 
-The existing frame 32-to-0 pose discontinuity remains visible. This iteration approves the procedural act staging; it does not claim seamless gait acceptance or physical-phone performance and offline file-opening acceptance.
+- **Fog** — layered rolling mist ([reference](https://skillry.dev/ai-videos/opus-5-5/mondemsuraj-691517)).
+- **Spore trails** — glowing mushroom spores with curved trails ([reference](https://skillry.dev/ai-videos/opus-5-5/ishuagra02-678129)).
+- **Fractal ferns** — unfolding folded-paper plants ([reference](https://skillry.dev/ai-videos/opus-5-5/jrayon-054015)).
+
+The references are visual inspiration, not runtime dependencies. Each checkbox
+works independently, including while paused. Disabling all three restores the
+accepted main forest's canvas pixels, including its acts and foreground.
+
+## Verification and publication
+
+Optional browser checks require Node.js, Playwright and Chromium:
+
+```sh
+npm install --prefix /tmp/woodz-browser-check playwright
+node /tmp/woodz-browser-check/node_modules/playwright/cli.js install chromium
+python scripts/build_forest_page.py
+PLAYWRIGHT_MODULE=/tmp/woodz-browser-check/node_modules/playwright node tests/verify_forest.cjs
+PLAYWRIGHT_MODULE=/tmp/woodz-browser-check/node_modules/playwright node tests/verify_effects.cjs
+```
+
+`BROWSER_EXECUTABLE` can select an existing Chromium. Reports and screenshots
+are saved to `dist/verification/`. The immutable pixel-regression baseline is
+commit `95ebb572944ad91eccd1c824568296af8e17814a`; shallow clones must fetch it.
+CI checks out the exact branch commit, builds, verifies and uploads the stamped
+HTML and reports. The Pages workflow builds from `src/` and publishes `dist/`
+on main updates. The separate public preview repository is not auto-updated.
+
+The original frame 32-to-0 gait discontinuity remains. Desktop checks at phone
+viewport sizes are not physical-phone performance or offline-opening acceptance.
+See `tasks/procedural_runway_spec.md` for the full experience specification.

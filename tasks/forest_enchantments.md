@@ -1,49 +1,22 @@
-# Forest enchantments
+# Main forest effects integration
 
-Base: `0e6cf29d4059e305a975a77fade10cb3f7a1ecb2`, specifically
-`out/forest-spectators/index.html`.
+Integrate Fog, Spore trails and Fractal ferns, their bottom checkboxes and an
+upper-left exact build HEAD stamp into the main source implementation.
 
-Add three complementary procedural effects to the original illustrated forest:
+- Preserve the accepted main forest at commit
+  `95ebb572944ad91eccd1c824568296af8e17814a`: sky, moon, stars, acts, colour
+  moods, foreground occlusion, world movement and the 33 original walk frames.
+- Keep the effects in `src/forest_enchantments.js`; use the existing
+  `src/forest_runway_template.html` for composition and controls.
+- Use `scripts/build_forest_page.py` as the main builder. Generate one standalone
+  `dist/index.html` with the checked-out Git HEAD, never a synthetic PR merge.
+- Keep checkboxes independent and keyboard-accessible; redraw paused frames.
+- Remove the experimental directory and all code, docs and CI dependencies on it.
+- Keep source in `src/`, utilities in `scripts/`, checks in `tests/`, and generated
+  captures/reports in Git-ignored `dist/`.
+- Compare all-effects-off pixels with the immutable accepted main page. Verify
+  acts and foreground, each effect's actual pixel change, bounded caches,
+  pause/reseed/seek behaviour, offline playback and five layouts.
+- Keep the reference repository and individual examples in the root README.
 
-1. Layered rolling mist behind the walker and around the audience's feet.
-2. Small luminous spore swarms with curved trails, emitted when a mushroom
-   passes the anchored walker. Keep emission deterministic across seek history.
-3. Slowly unfolding, folded-paper fractal ferns in the rear scenery.
-
-Keep the original 33 walk frames, cadence, forest, audience and travel direction.
-Use a separate exploratory attempt at `out/forest-enchantments/`. Build one
-self-contained HTML file with no runtime dependencies. Include independent
-controls for the three effects and documented build/run commands.
-
-## Verification
-
-- Observe all three effects within the first 30 seconds.
-- Preserve original drawing pixel-for-pixel when all effects are disabled.
-- Check stable world identities, bounded caches, pause, reseed and seeking.
-- Exercise two simulated minutes and four viewport sizes offline in Chromium.
-- Inspect the rendered phone and desktop layouts and the 32-to-0 gait seam.
-- Report physical-phone testing separately; desktop emulation is not acceptance
-  on a physical device. Do not claim the pre-existing gait seam is fixed.
-
-## Visual references
-
-These are visual inspirations; the Canvas implementations are original
-adaptations, not copied demo source or downloaded videos.
-
-- Rolling fog: https://skillry.dev/ai-videos/opus-5-5/mondemsuraj-691517
-- Glowing particles and ribbon strokes:
-  https://skillry.dev/ai-videos/opus-5-5/ishuagra02-678129
-- Paper/cardboard fractal styling:
-  https://skillry.dev/ai-videos/opus-5-5/jrayon-054015
-- Reference collection: https://github.com/yihui-dev/awesome-opus5-5-videos
-
-## Follow-up: explicit controls and build identity
-
-- Replace the top toggle pills with three native bottom checkboxes: Fog,
-  Spore trails and Fractal ferns. Verify mouse and keyboard operation.
-- Put the actual build HEAD and branch at upper left. Read the checked-out Git
-  HEAD during the build; do not stamp a PR merge or query a remote branch at runtime.
-- Prove each effect independently changes canvas pixels on a paused frame and
-  unchecking it restores the pixels. Check control layout at all five sizes.
-- Document how to serve this attempt directly at `/`, since the screenshot shows
-  the separate older root "Into the woods" scene.
+Visual references: https://github.com/yihui-dev/awesome-opus5-5-videos

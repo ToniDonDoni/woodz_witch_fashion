@@ -1,0 +1,47 @@
+name: Check Forest
+
+on:
+  pull_request:
+    paths: ['src/**', 'scripts/**', 'tests/**', 'assets/walk/**', '.github/workflows/check-forest.yml']
+  push:
+    branches: ['main', 'codex/forest-enchantments-preview']
+    paths: ['src/**', 'scripts/**', 'tests/**', 'assets/walk/**', '.github/workflows/check-forest.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install build and verification dependencies
+        run: |
+          python -m pip install Pillow
+          npm install --prefix "$RUNNER_TEMP/forest-check" playwright
+          node "$RUNNER_TEMP/forest-check/node_modules/playwright/cli.js" install --with-deps chromium
+      - name: Build the main site from src with the exact HEAD
+        run: python scripts/build_forest_page.py
+      - name: Verify acts, foreground, walk, effects and controls offline
+        env:
+          PLAYWRIGHT_MODULE: ${{ runner.temp }}/forest-check/node_modules/playwright
+        run: |
+          node tests/verify_forest.cjs
+          node tests/verify_effects.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: forest-${{ github.event.pull_request.head.sha || github.sha }}
+          path: dist/
+          if-no-files-found: ignore

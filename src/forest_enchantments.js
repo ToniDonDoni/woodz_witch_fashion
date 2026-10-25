@@ -40,7 +40,7 @@ function drawSpores(forest){
   const unit=forestUnit();ctx.save();ctx.globalCompositeOperation='screen';
   for(const mushroom of forest){
     if(mushroom.kind!=='mushroom')continue;
-    const speed=[9,22,53,82][mushroom.layer]*unit;
+    const speed=forestRows.speed[mushroom.layer]*unit;
     // A mushroom releases spores as it passes the anchored walker. Derive the
     // crossing time analytically, so seeking, pausing and frame drops agree.
     const age=(mushroom.x-w*.5)/speed;
