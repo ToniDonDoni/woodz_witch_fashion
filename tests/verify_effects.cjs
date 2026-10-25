@@ -12,8 +12,8 @@ const pixels=async p=>p.locator('canvas').evaluate(c=>c.toDataURL());
  await page.goto('file://'+path.join(ROOT,'dist','index.html'));await page.waitForFunction(()=>runway.ready);
  const head=execFileSync('git',['rev-parse','HEAD'],{cwd:ROOT,encoding:'utf8'}).trim();
  assert.equal(await page.locator('#build-commit').getAttribute('data-head'),head);
- assert.equal(await page.getByRole('checkbox').count(),3);
- for(const name of ['Fog','Spore trails','Fractal ferns'])assert(await page.getByRole('checkbox',{name,exact:true}).isChecked());
+ assert.equal(await page.getByRole('checkbox').count(),6);
+ for(const name of ['Fog','Spore trails','Fractal ferns','Living ink','Glass flowers','Big sparks'])assert(await page.getByRole('checkbox',{name,exact:true}).isChecked());
  await page.evaluate(()=>runway.seek(0));
  for(const cb of await page.getByRole('checkbox').all())await cb.uncheck();
  // Immutable accepted main page: proves the port preserves the sky, acts, color
@@ -29,7 +29,7 @@ const pixels=async p=>p.locator('canvas').evaluate(c=>c.toDataURL());
   assert.deepEqual(a.events,b.events);assert.deepEqual(a.act,b.act);assert.equal(a.mood,b.mood);
  }
  await baseline.close();fs.rmSync(tmp,{recursive:true});
- for(const name of ['fog','spores','plants']){
+ for(const name of ['fog','spores','plants','ink','glass','sparks']){
   const checkbox=page.locator(`[data-effect="${name}"]`);let changed=false;
   for(const t of [.5,2,5,10,20,30]){
    await page.evaluate(t=>runway.seek(t),t);const before=await pixels(page);await checkbox.check();
@@ -48,6 +48,39 @@ const pixels=async p=>p.locator('canvas').evaluate(c=>c.toDataURL());
   if(t<=30){spores+=fx.spores.length;plants+=fx.plants.length;}
  }
  assert(spores>0&&plants>0);
+ const extras=await page.evaluate(()=>runway.state().effects);
+ assert(extras.ink.length>=4,'No ink currents');
+ assert(extras.glass.length>=1,'No glass flowers');
+ assert.equal(extras.sparks.count,128,'Big sparks must span two particle fields');
+ // Big sparks must cover the screen, not a tiny patch near the walker.
+ // Compare actual pixels at a fixed simulation time with the switch off.
+ for(const [width,height] of [[430,932],[1440,900]]){
+  await page.setViewportSize({width,height});
+  for(const cb of await page.getByRole('checkbox').all())await cb.uncheck();
+  await page.evaluate(()=>runway.seek(2));
+  await page.evaluate(()=>{
+   const c=document.querySelector('#scene');
+   window.__sparkOff=c.getContext('2d').getImageData(0,0,c.width,c.height).data.slice();
+  });
+  await page.locator('[data-effect="sparks"]').check();
+  const coverage=await page.evaluate(()=>{
+   const c=document.querySelector('#scene'),now=c.getContext('2d').getImageData(0,0,c.width,c.height).data;
+   const prior=window.__sparkOff;let minX=c.width,maxX=-1,minY=c.height,maxY=-1,hits=0;
+   for(let y=0;y<c.height;y+=3)for(let x=0;x<c.width;x+=3){
+    const p=(y*c.width+x)*4;
+    if(Math.abs(now[p]-prior[p])+Math.abs(now[p+1]-prior[p+1])+Math.abs(now[p+2]-prior[p+2])>52){
+     minX=Math.min(minX,x);maxX=Math.max(maxX,x);minY=Math.min(minY,y);maxY=Math.max(maxY,y);hits++;
+    }
+   }
+   delete window.__sparkOff;
+   return {width:(maxX-minX)/c.width,height:(maxY-minY)/c.height,hits};
+  });
+  assert(coverage.hits>200,'Big sparks had too few visible pixels');
+  assert(coverage.width>.70,'Big sparks do not span 70% of viewport width: '+JSON.stringify(coverage));
+  assert(coverage.height>.48,'Big sparks do not span half of viewport height: '+JSON.stringify(coverage));
+  await page.locator('[data-effect="sparks"]').uncheck();
+ }
+ for(const cb of await page.getByRole('checkbox').all())await cb.check();
  for(const t of [7.125,70.25]){
   await page.evaluate(t=>runway.seek(t),t);const a=await pixels(page);await page.evaluate(()=>runway.seek(0));await page.evaluate(t=>runway.seek(t),t);assert.equal(await pixels(page),a,'Seek history changed effects');
  }
@@ -62,6 +95,6 @@ const pixels=async p=>p.locator('canvas').evaluate(c=>c.toDataURL());
   await page.mouse.move(width-1,0);await page.screenshot({path:path.join(RESULTS,'effects-'+name+'.png')});
  }
  assert.deepEqual(errors,[]);assert.deepEqual(requests,[]);
- const report={head,baselineCommit:'95ebb572944ad91eccd1c824568296af8e17814a',originalMainPixelsPreserved:true,independentPixelChanges:true,keyboard:true,earlySporeSamples:spores,earlyPlantSamples:plants,maxPlantCache,simulatedSeconds:180,viewports:viewports.map(v=>v[0]+'x'+v[1]),errors,networkRequests:requests,physicalPhoneTested:false};
+ const report={head,baselineCommit:'95ebb572944ad91eccd1c824568296af8e17814a',originalMainPixelsPreserved:true,independentPixelChanges:true,keyboard:true,earlySporeSamples:spores,earlyPlantSamples:plants,maxPlantCache,largeSparkCoverage:true,sixIndependentSwitches:true,simulatedSeconds:180,viewports:viewports.map(v=>v[0]+'x'+v[1]),errors,networkRequests:requests,physicalPhoneTested:false};
  fs.writeFileSync(path.join(RESULTS,'effects.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report));await browser.close();
 })().catch(e=>{console.error(e);process.exit(1)});
