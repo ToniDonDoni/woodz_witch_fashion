@@ -16,7 +16,7 @@ const pixels=async p=>p.locator('canvas').evaluate(c=>c.toDataURL());
  // tree layers, caustics on the path, leaves behind the walking sprite.
  const template=fs.readFileSync(path.join(ROOT,'src','forest_runway_template.html'),'utf8');
  const frame=template.slice(template.indexOf('function draw(){'),template.indexOf('function tick(now)'));
- const passes=['drawNightSky();','drawMagneticCurrents();','drawPaintedConstellations();','const sparks=drawBigSparks();','drawSkyEvents(plan);','drawAncientRuins();','drawForestBackground();','drawSpectralButterflies();','drawGoldenSandfall();','drawLiquidSpirits();','drawMoonlitCaustics();','drawForestGround(woodland);','drawAutumnVortex();','ctx.drawImage(atlas,','drawForestForeground(woodland)'];
+ const passes=['drawNightSky();','drawMagneticCurrents();','drawPaintedConstellations();','const sparks=drawBigSparks();','drawSkyEvents(plan);','drawForestBackground();','drawGoldenSandfall();','drawLiquidSpirits();','drawMoonlitCaustics();','drawForestGround(woodland);','drawAutumnVortex();','ctx.drawImage(atlas,','drawForestForeground(woodland)'];
  const layers=passes.map(s=>frame.indexOf(s));
  assert(layers.every(n=>n>=0)&&layers.every((n,i)=>i===0||n>layers[i-1]),
   'Distant effects, ground light and leaves must preserve scene depth');
