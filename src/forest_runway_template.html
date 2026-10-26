@@ -23,31 +23,18 @@
 
 #actcard{bottom:174px}
 @media(max-width:700px){#actcard{bottom:245px}}
-/* The four new effects have isolated, visible corner switches, separate from
-   the thirteen established toggles along the bottom. */
-.corner-switches{position:fixed;inset:0;pointer-events:none;z-index:4}
-.corner-switches label{position:fixed;display:flex;align-items:center;gap:7px;max-width:calc(50vw - 17px);min-height:36px;padding:0 10px;border:1px solid #cab0e487;border-radius:15px;background:#181020f2;color:#f5e9fb;font:12px Arial,sans-serif;box-shadow:0 0 12px #bca3e22b;white-space:nowrap;cursor:pointer;pointer-events:auto}
-.corner-switches input{width:18px;height:18px;flex-shrink:0;margin:0;accent-color:#dfb0ff;cursor:pointer}
-.corner-switches label span{overflow:hidden;text-overflow:ellipsis}
-.corner-tl{top:155px;left:max(15px,env(safe-area-inset-left))}
-.corner-tr{top:155px;right:max(15px,env(safe-area-inset-right))}
-.corner-bl{bottom:205px;left:max(15px,env(safe-area-inset-left))}
-.corner-br{bottom:205px;right:max(15px,env(safe-area-inset-right))}
+/* Retained new effects stay at the opposite edges of the existing bottom grid. */
+.effects{grid-template-columns:repeat(8,max-content)}
+.effects .new-effect-left,.effects .new-effect-right{border-color:#dfbbefaf;background:#261830f0;box-shadow:0 0 10px #bca3e223}
+.effects .new-effect-right{grid-column:8;grid-row:1}
+@media(max-width:1100px) and (min-width:701px){
+ .effects label{font-size:9px;padding:0 4px;gap:3px}
+ .effects input{width:14px;height:14px}
+}
 @media(max-width:700px){
- .corner-switches label{min-height:31px;padding:0 7px;gap:5px;font-size:10px}
- .corner-switches input{width:15px;height:15px}
- .corner-tl,.corner-tr{top:144px}
- .corner-bl,.corner-br{bottom:245px}
+ .effects{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .effects .new-effect-right{grid-column:3;grid-row:5}
 }
-@media(max-height:700px){
- .corner-tl,.corner-tr{top:122px}
- .corner-bl,.corner-br{bottom:225px}
-}
-@media(max-height:550px){
- .corner-tl,.corner-tr{top:113px}
- .corner-bl,.corner-br{bottom:168px}
-}
-
 </style>
 </head>
 <body>
@@ -56,6 +43,7 @@
 <div class="caption"><h1>Into the woods.</h1><p>An endless woodland procession</p></div>
 <div class="build-info" id="build-info">__BUILD_STAMP__</div>
 <div class="effects" role="group" aria-label="Forest scene and effects">
+<label class="new-effect-left"><input type="checkbox" data-effect="magnetic" checked><span>Magnetic Currents</span></label>
 <label><input type="checkbox" data-scene="forest" checked><span>Forest &amp; foliage</span></label>
 <label><input type="checkbox" data-scene="creatures" checked><span>Animals</span></label>
 <label class="master-toggle"><input type="checkbox" id="all-effects" checked><span>All on/off</span></label>
@@ -69,12 +57,7 @@
 <label><input type="checkbox" data-effect="leaves" checked>Leaf vortex</label>
 <label><input type="checkbox" data-effect="caustics" checked>Moonlit caustics</label>
 <label><input type="checkbox" data-effect="constellations" checked>Constellations</label>
-</div>
-<div class="corner-switches" role="group" aria-label="Four new corner effects">
-<label class="corner-tl"><input type="checkbox" data-effect="magnetic" checked><span>Magnetic Currents</span></label>
-<label class="corner-bl"><input type="checkbox" data-effect="spectral" checked><span>Spectral Butterfly</span></label>
-<label class="corner-tr"><input type="checkbox" data-effect="sandfall" checked><span>Golden Sandfall</span></label>
-<label class="corner-br"><input type="checkbox" data-effect="ruins" checked><span>Ancient Ruins</span></label>
+<label class="new-effect-right"><input type="checkbox" data-effect="sandfall" checked><span>Golden Sandfall</span></label>
 </div>
 <div id="loading" role="status">Entering the night…</div>
 <div id="actcard" role="status" aria-live="polite"></div>
@@ -198,9 +181,7 @@ function draw(){
  // and the walker must occlude them instead of being covered by them.
  const sparks=drawBigSparks();
  const skyEvents=drawSkyEvents(plan);
- const ruins=drawAncientRuins();
  const woodland=drawForestBackground();
- const spectral=drawSpectralButterflies();
  const sandfall=drawGoldenSandfall();
  const spirits=drawLiquidSpirits();
  const ink=drawLivingInk(),plants=drawFractalPlants(),rearFog=drawFog();
@@ -226,7 +207,7 @@ function draw(){
  pruneForestCache(woodland.used);
  const events=[...skyEvents,...farEvents,...nearEvents,...frontEvents];
  const rendered=forest.filter(o=>o.layer<4);
- debug={time,frame,boil,seed,scene:{...sceneLayers},effects:{enabled:{...enchantments},plants,spores,ink,glass,sparks,spirits,leaves,caustics,constellations,magnetic,spectral,sandfall,ruins,fogCount:rearFog+frontFog,plantCacheSize:plantGeometry.size},viewport:{w,h},figure:{x,y,width:figureWidth,height:figureHeight},butterflies,path,forest:rendered,foreground,
+ debug={time,frame,boil,seed,scene:{...sceneLayers},effects:{enabled:{...enchantments},plants,spores,ink,glass,sparks,spirits,leaves,caustics,constellations,magnetic,sandfall,fogCount:rearFog+frontFog,plantCacheSize:plantGeometry.size},viewport:{w,h},figure:{x,y,width:figureWidth,height:figureHeight},butterflies,path,forest:rendered,foreground,
    events:events.map(e=>({id:e.id,type:e.type,layer:e.layer,kind:e.kind,entry:e.entry,x:e.x,y:e.y,age:e.age,size:e.size})),
    act:{index:plan.index,name:plan.name,ambient:plan.ambient,event:plan.event,cameo:plan.cameo,rare:plan.rare,length:plan.length,progress:plan.progress,start:plan.start,
      beats:plan.beats.map(b=>({type:b.type,kind:b.kind,entry:b.entry,start:b.start,visible:b.visible,size:b.size}))},
