@@ -34,6 +34,7 @@ at upper left. No runtime libraries or network requests are required.
 | `src/forest_enchantments.js` | Original fog, spore and fern effects plus all ten switch states. |
 | `src/forest_extra_effects.js` | Living ink, translucent stained-glass flowers and large spark fields. |
 | `src/forest_next_effects.js` | Liquid spirits, autumn leaves, moonlit path caustics and painted constellations. |
+| `src/forest_edge_effects.js` | Magnetic currents and golden sandfall, both behind the walking figure. |
 | `assets/walk/` | The 33 approved transparent walk frames. |
 | `scripts/build_forest_page.py` | The main website builder. |
 | `tests/verify_forest.cjs` | Acts, foreground, walk and world regression checks. |
@@ -50,8 +51,13 @@ claiming to contain their own enclosing commit hash.
 
 ## Scene and effect checkboxes
 
-The bottom panel now has **13 native checkboxes**: two independent original
-scene toggles, ten optional Canvas effects and an **All on/off** master.
+The existing bottom checkbox group now contains **15 controls**: two native scene toggles,
+ten earlier optional Canvas effects, two new effects and the **All on/off** master.
+**Magnetic Currents is the far-left control; Golden Sandfall sits at the far-right**
+edge of the same bottom grid. Neither is a floating screen-corner control.
+Both start checked. On narrow screens they remain the first and last controls
+in the compact group. Future effects should also be added at the ends of this
+bottom group, not placed separately around the screen.
 
 - **Forest & foliage** hides or restores native environmental drawing:
   trees, mushrooms, stumps, ferns, foreground leaves and path-edge plants,
@@ -63,7 +69,7 @@ scene toggles, ten optional Canvas effects and an **All on/off** master.
 - **Animals** hides or restores original creatures: leshies, butterflies
   and animal acts (stag, moths, owl). *Liquid spirits* is an independently
   checked optional effect, not part of the original creature layer.
-- **All on/off** switches both scene categories **and** all ten optional
+- **All on/off** switches both scene categories **and all twelve optional**
   Canvas effects together. With all unchecked, **only the background wash,
   walking path and woman remain**: no moon, twinkling stars, drifting
   particles, blooming flowers or staged events. When controls are mixed,
@@ -73,9 +79,28 @@ scene toggles, ten optional Canvas effects and an **All on/off** master.
 All original scenery and creatures are ON by default, so opening the page
 preserves the accepted forest. No artwork or animation assets were removed.
 
+### Two retained effects at the edges of the bottom controls
+
+| Bottom-grid position | Checkbox | Original Canvas adaptation | Source |
+| --- | --- | --- | --- |
+| **Leftmost** | **Magnetic Currents** | Nine broad mint, violet and cyan magnetic field ribbons with gently drifting luminous filings behind the trees. | [Magnetic-monument kinetic typography](https://github.com/yihui-dev/awesome-opus5-5-videos/blob/main/prompts/gdgtify-130294.md) |
+| **Rightmost** | **Golden Sandfall** | Five falling sand curtains with fine golden strands and animated grains behind midground trees. | [Browser sand, water and particle physics](https://github.com/yihui-dev/awesome-opus5-5-videos/blob/main/prompts/cyrilxbt-149036.md) |
+
+These are original, lightweight Canvas 2D reinterpretations of references from
+the video collection. Both have independent checkboxes and obey **All on/off**;
+turning them off restores exactly the same frame. **Spectral Butterfly and
+Ancient Ruins have been completely removed**, including their animation code
+and control states. The original ten effects remain untouched.
+
+The HEAD commit is displayed on screen after local rebuilding. Automated
+browser checks capture isolated `edge-magnetic.png` and `edge-sandfall.png`
+previews and confirm the new switches are leftmost and rightmost inside the
+bottom group on five viewport sizes.
+
 ### Optional effect references
 
-Ten bottom effect checkboxes enable independent original Canvas adaptations of examples from
+Twelve effect checkboxes, all inside the existing bottom group, enable independent
+original Canvas adaptations of examples from
 [yihui-dev/awesome-opus5-5-videos](https://github.com/yihui-dev/awesome-opus5-5-videos):
 
 - **Fog** — layered rolling mist ([reference](https://skillry.dev/ai-videos/opus-5-5/mondemsuraj-691517)).

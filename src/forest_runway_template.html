@@ -23,6 +23,18 @@
 
 #actcard{bottom:174px}
 @media(max-width:700px){#actcard{bottom:245px}}
+/* Retained new effects stay at the opposite edges of the existing bottom grid. */
+.effects{grid-template-columns:repeat(8,max-content)}
+.effects .new-effect-left,.effects .new-effect-right{border-color:#dfbbefaf;background:#261830f0;box-shadow:0 0 10px #bca3e223}
+.effects .new-effect-right{grid-column:8;grid-row:1}
+@media(max-width:1100px) and (min-width:701px){
+ .effects label{font-size:9px;padding:0 4px;gap:3px}
+ .effects input{width:14px;height:14px}
+}
+@media(max-width:700px){
+ .effects{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .effects .new-effect-right{grid-column:3;grid-row:5}
+}
 </style>
 </head>
 <body>
@@ -31,6 +43,7 @@
 <div class="caption"><h1>Into the woods.</h1><p>An endless woodland procession</p></div>
 <div class="build-info" id="build-info">__BUILD_STAMP__</div>
 <div class="effects" role="group" aria-label="Forest scene and effects">
+<label class="new-effect-left"><input type="checkbox" data-effect="magnetic" checked><span>Magnetic Currents</span></label>
 <label><input type="checkbox" data-scene="forest" checked><span>Forest &amp; foliage</span></label>
 <label><input type="checkbox" data-scene="creatures" checked><span>Animals</span></label>
 <label class="master-toggle"><input type="checkbox" id="all-effects" checked><span>All on/off</span></label>
@@ -44,6 +57,7 @@
 <label><input type="checkbox" data-effect="leaves" checked>Leaf vortex</label>
 <label><input type="checkbox" data-effect="caustics" checked>Moonlit caustics</label>
 <label><input type="checkbox" data-effect="constellations" checked>Constellations</label>
+<label class="new-effect-right"><input type="checkbox" data-effect="sandfall" checked><span>Golden Sandfall</span></label>
 </div>
 <div id="loading" role="status">Entering the night…</div>
 <div id="actcard" role="status" aria-live="polite"></div>
@@ -161,12 +175,14 @@ function draw(){
  const glow=ctx.createRadialGradient(w*.5,h*.50,0,w*.5,h*.50,h*.48);glow.addColorStop(0,'#1a1422');glow.addColorStop(.55,'#0c0a10');glow.addColorStop(1,'#050507');ctx.fillStyle=glow;ctx.fillRect(0,0,w,h);
  const plan=currentAct();
  drawNightSky();
+ const magnetic=drawMagneticCurrents();
  const constellations=drawPaintedConstellations();
  // Spark fields belong to the distant sky: all events, trees, ground layers
  // and the walker must occlude them instead of being covered by them.
  const sparks=drawBigSparks();
  const skyEvents=drawSkyEvents(plan);
  const woodland=drawForestBackground();
+ const sandfall=drawGoldenSandfall();
  const spirits=drawLiquidSpirits();
  const ink=drawLivingInk(),plants=drawFractalPlants(),rearFog=drawFog();
  drawAmbientBack(plan);
@@ -191,7 +207,7 @@ function draw(){
  pruneForestCache(woodland.used);
  const events=[...skyEvents,...farEvents,...nearEvents,...frontEvents];
  const rendered=forest.filter(o=>o.layer<4);
- debug={time,frame,boil,seed,scene:{...sceneLayers},effects:{enabled:{...enchantments},plants,spores,ink,glass,sparks,spirits,leaves,caustics,constellations,fogCount:rearFog+frontFog,plantCacheSize:plantGeometry.size},viewport:{w,h},figure:{x,y,width:figureWidth,height:figureHeight},butterflies,path,forest:rendered,foreground,
+ debug={time,frame,boil,seed,scene:{...sceneLayers},effects:{enabled:{...enchantments},plants,spores,ink,glass,sparks,spirits,leaves,caustics,constellations,magnetic,sandfall,fogCount:rearFog+frontFog,plantCacheSize:plantGeometry.size},viewport:{w,h},figure:{x,y,width:figureWidth,height:figureHeight},butterflies,path,forest:rendered,foreground,
    events:events.map(e=>({id:e.id,type:e.type,layer:e.layer,kind:e.kind,entry:e.entry,x:e.x,y:e.y,age:e.age,size:e.size})),
    act:{index:plan.index,name:plan.name,ambient:plan.ambient,event:plan.event,cameo:plan.cameo,rare:plan.rare,length:plan.length,progress:plan.progress,start:plan.start,
      beats:plan.beats.map(b=>({type:b.type,kind:b.kind,entry:b.entry,start:b.start,visible:b.visible,size:b.size}))},
