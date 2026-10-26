@@ -40,7 +40,7 @@ html = html.replace('__FOREST_CODE__', source)
 effects = ((SOURCE / 'forest_enchantments.js').read_text(encoding='utf-8') + '\n' +
            (SOURCE / 'forest_extra_effects.js').read_text(encoding='utf-8') + '\n' +
            (SOURCE / 'forest_next_effects.js').read_text(encoding='utf-8') + '\n' +
-           (SOURCE / 'forest_corner_effects.js').read_text(encoding='utf-8'))
+           (SOURCE / 'forest_edge_effects.js').read_text(encoding='utf-8'))
 html = html.replace('__ENCHANTMENT_CODE__', effects)
 html = html.replace('__BUILD_STAMP__', stamp)
 html = html.replace('__ATLAS_DATA__', base64.b64encode(buffer.getvalue()).decode('ascii'))
