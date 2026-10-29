@@ -252,7 +252,7 @@ function hungryScene(){
  if(actCardText!==label){actCardText=label;actCard.textContent=label;}
  actCard.style.opacity='.72';
  debug={time,frame,boil,seed,viewport:{w,h},figure:{x,y,width:figureWidth,height:figureHeight},
-  house:{enabled:true,sound:hungry.sound&&!!hungry.audio,rooms,phase:focal.phase,chapter:focal.kind,stingers:hungry.stingers,warnings:hungry.warnings,lastSound:hungry.lastSound},
+  house:{enabled:true,sound:hungry.sound&&!!hungry.audio,rooms,phase:focal.phase,chapter:focal.kind,stingers:hungry.stingers,warnings:hungry.warnings,lastSound:hungry.lastSound,liveVoices:hungry.sources.size,audioProfiles:Object.keys(hungrySoundProfiles)},
   forest:[],foreground:[],events:[],cacheSize:0,activeCount:rooms.length};
 }
 // Cinema horror cues: a quiet foreshadowing texture followed by a layered,
