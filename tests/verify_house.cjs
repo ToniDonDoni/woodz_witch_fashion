@@ -4,7 +4,7 @@ const ROOT=path.resolve(__dirname,'..'),OUT=path.join(ROOT,'dist','verification'
 (async()=>{
  fs.mkdirSync(OUT,{recursive:true});
  const browser=await chromium.launch({headless:true,...(process.env.BROWSER_EXECUTABLE?{executablePath:process.env.BROWSER_EXECUTABLE}:{})});
- const context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:1,offline:true});
+ const context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:1,offline:true,hasTouch:true,isMobile:true});
  const page=await context.newPage(),errors=[],requests=[];
  page.on('pageerror',e=>errors.push(String(e)));
  page.on('request',r=>{if(/^https?:/.test(r.url()))requests.push(r.url());});
@@ -13,9 +13,28 @@ const ROOT=path.resolve(__dirname,'..'),OUT=path.join(ROOT,'dist','verification'
  assert.equal((await page.evaluate(()=>runway.state())).house,undefined,'Forest must remain the default');
  const entering=page.locator('#house-mode');
  assert.equal(await entering.textContent(),'ENTER HOUSE');
- await entering.click();
+ await entering.tap();
  assert.equal(await entering.getAttribute('aria-pressed'),'true');
  assert(await page.locator('#house-sound').isVisible(),'Sound control is missing');
+ for(const viewport of [{width:320,height:568},{width:390,height:844},{width:430,height:932},{width:844,height:390}]){
+  await page.setViewportSize(viewport);
+  const geometry=await page.evaluate(()=>{
+   const rect=id=>{const r=document.querySelector(id).getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,height:r.height};};
+   return {house:rect('#house-mode'),sound:rect('#house-sound'),walker:runway.state().figure,
+    effectsHidden:getComputedStyle(document.querySelector('.effects')).display==='none'};
+  });
+  for(const key of ['house','sound']){
+   const r=geometry[key];
+   assert(r.height>=44,'Touch target too short: '+key+' at '+viewport.width+'x'+viewport.height);
+   assert(r.left>=0&&r.right<=viewport.width,'Touch target outside viewport: '+key);
+  }
+  assert(geometry.effectsHidden,'Forest checkboxes should be hidden in house mode on phone');
+  if(viewport.width<=700&&viewport.height>650){
+   assert(geometry.house.bottom<geometry.walker.y,'House control overlaps walker head');
+   assert(geometry.sound.bottom<geometry.walker.y,'Sound control overlaps walker head');
+  }
+ }
+ await page.setViewportSize({width:390,height:844});
  const house=await page.evaluate(()=>runway.state());
  assert(house.house.enabled,'The new world was not activated');
  assert.equal(house.figure.x>=0&&house.figure.x+house.figure.width<=390,true,'Walker cropped on phone');
@@ -60,7 +79,7 @@ const ROOT=path.resolve(__dirname,'..'),OUT=path.join(ROOT,'dist','verification'
  // Headless browsers without Web Audio may legitimately remain silent.
  const soundAvailable=await page.evaluate(()=>Boolean(window.AudioContext||window.webkitAudioContext));
  if(soundAvailable)assert.equal(count,scares+1,'Live scare did not trigger exactly one sound');
- await page.locator('#house-sound').click();
+ await page.locator('#house-sound').tap();
  assert.equal(await page.locator('#house-sound').getAttribute('aria-pressed'),'false');
  await page.evaluate(()=>runway.seek(24));
  await page.locator('#scene').screenshot({path:path.join(OUT,'hungry-house-phone.png')});
