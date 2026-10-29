@@ -20,11 +20,20 @@ walls, **Liquid Spirits** in the mirrors and rooms, and **Moonlit Caustics**
 across the windows and floor. Wardrobe, dining, mirror, nursery, wall and
 stomach events contain delayed reveals and foreground surprises.
 
-Clicking ENTER HOUSE enables synthesized, short jump-scare sounds using
-Web Audio after that user gesture, where supported. **SOUND ON** can be
-clicked to mute immediately; it becomes **SOUND OFF**, which can be
-clicked to re-enable sound. No sound files, libraries or network fetches
-are required. The previous forest mode and all 13 original effect
+Clicking ENTER HOUSE enables synthesized horror audio using Web Audio
+after that user gesture, where supported. Each room now has its own sound:
+timber settling, wardrobe slam and hinges, table clatter, glass and ghost
+voices, detuned music-box tones, tearing plaster, or organic throat/bone
+rumble. A quiet warning texture precedes the sudden reveal; its impact
+layers a transient, dissonant voices, filtered noise, bass and a short echo.
+Dynamic compression and a soft clipper limit peaks before output.
+
+**SOUND ON** can be clicked to mute immediately; it becomes **SOUND OFF**,
+which can be clicked to re-enable sound. Muting, leaving the house or
+pausing stops all active horror audio, and seeking never generates a sound.
+No sound files, libraries or network fetches are required. The original
+forest mode is unaffected. See the researched sound criteria and sources
+in `specs/spec_001.md`. The previous forest mode and all 13 original effect
 checkboxes are unchanged. Use **LEAVE HOUSE** to return to the forest.
 
 **Phone controls:** Tap ENTER HOUSE at the top, then SOUND ON/OFF to
