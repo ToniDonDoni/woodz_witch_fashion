@@ -37,6 +37,9 @@ Sound requires an explicit user gesture, with a visible mute/unmute control. No 
 - [ ] Forest-only effect checkboxes are hidden in house mode, so a phone screen is not crowded with irrelevant options.
 - [ ] With the same seed, simulation time and viewport, the scene is visually deterministic; repeating elements do not accumulate.
 - [ ] The built page remains a single offline-capable HTML with no network requests or runtime dependencies.
+- [ ] Each normal build stamps `dist/index.html` with the exact 40-character `git rev-parse HEAD` of the checked-out commit, displays its 12-character prefix and links to that commit. No manually entered version hashes.
+- [ ] GitHub Actions produces a standalone, downloadable HTML artifact for the PR head commit, named with the exact full SHA; the artifact is built after checkout and is never published automatically.
+- [ ] Committed source snapshots are not represented as latest-HEAD deliverables, because their own enclosing commit hash cannot be embedded without changing that hash.
 - [ ] A browser test verifies toggling, movement, story diversity, deterministic rendering, pause/seek-safe audio, and a phone-sized viewport.
 - [ ] Physical-device playback, readable contrast and comfortable jump-scare loudness are reviewed before calling mobile experience accepted.
 
@@ -53,6 +56,8 @@ Research references:
 - Sbravatti, *Acoustic Startles in Horror Films* (2019): https://doi.org/10.3167/proj.2019.130104
 
 Test replay controls without sound side effects. Prefer a restrained scare cadence rather than every room firing immediately. Avoid unbounded offscreen canvases, particle lists, or persistent audio oscillators. A graphical button must expose the sound state and not claim sound is enabled if initialization fails.
+
+Build provenance follows Git's checkout identity: `git rev-parse HEAD` is the only source of the version. A GitHub Actions build checks out the precise PR head, then produces `dist/index.html`, whose full SHA identifies that version. The CI artifact is authoritative; a tracked HTML snapshot cannot contain its own Git commit hash, because committing the stamped bytes creates a new hash. The output should not imply otherwise.
 
 The original woodland regression baseline is important. Make the new house an opt-in alternate world, not a silent rewrite of the forest, and preserve the existing output builder's self-contained contract.
 
