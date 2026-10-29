@@ -141,13 +141,7 @@ function hungrySpirit(cx,cy,r,age,id,drawingContext=ctx){
  c.restore();c.restore();
 }
 function hungryHand(x,y,reach,alpha,id){
- ctx.save();ctx.globalAlpha=alpha;
- hungryStroke([[x,y],[x-18*reach,y-23*reach],[x-84*reach,y-18*reach]],'#bcaca1',12,id+1);
- const fx=x-84*reach,fy=y-18*reach;
- for(let p=0;p<4;p++){
-  hungryStroke([[fx,fy],[fx-(19+p*5)*reach,fy-(6+p*7)*reach],[fx-(24+p*5)*reach,fy+(3-p*3)*reach]],'#beb4a8',3,id+p+2);
- }
- ctx.restore();
+ inkThiefHand.draw(ctx,x,y,reach,alpha,time,id);
 }
 function hungryFurniture(kind,progress,i){
  const active=Math.max(0,Math.min(1,(progress+.2)*4));
@@ -176,7 +170,13 @@ function hungryFurniture(kind,progress,i){
   hungryRect(181,-238,365,32,'#665044');hungryRect(206,-205,25,193,'#362b2b');hungryRect(501,-205,25,193,'#362b2b');
   ctx.fillStyle='#b3a38b';ctx.beginPath();ctx.moveTo(178,-209);ctx.lineTo(547,-209);ctx.lineTo(532,-167);ctx.lineTo(200,-167);ctx.fill();
   for(let j=0;j<6;j++)hungryRect(236+j*47,-110,7+strength*3,5,'#d5c07a');
-  if(strength>0)hungryHand(360,-132,.2+strength*1.2,strength,id+50);
+  if(strength>0){
+   ctx.save();ctx.beginPath();ctx.rect(140,-164,415,164);ctx.clip();
+   hungryHand(515,-78,.2+strength*1.2,strength,id+50);
+   ctx.restore();
+   // The near table leg hides the arm's root, so the hand emerges from below.
+   hungryRect(501,-167,25,155,'#362b2b');
+  }
  }else if(kind==='mirror'){
   hungryRect(363,-520,189,382,'#554739');
   hungryRect(376,-503,162,351,'#111924');

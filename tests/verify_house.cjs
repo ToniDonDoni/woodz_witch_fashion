@@ -68,6 +68,35 @@ const ROOT=path.resolve(__dirname,'..'),OUT=path.join(ROOT,'dist','verification'
  assert(spirit.blue>spirit.visible*.9,'Undertow lost its blue palette');
  assert(spirit.moving>1000&&spirit.stable,'Undertow motion is missing or nondeterministic');
  assert(spirit.statePreserved,'Ghost drawing leaked canvas state into the house');
+ // The selected hand keeps five articulated digits and respects its host context.
+ const handSource=fs.readFileSync(path.join(ROOT,'src','ink_thief_hand.js'),'utf8');
+ const hand=await page.evaluate(source=>{
+  const renderer=new Function(source+';return inkThiefHand;')();
+  const surface=document.createElement('canvas');surface.width=480;surface.height=320;
+  const c=surface.getContext('2d');
+  c.translate(1,2);c.globalAlpha=.7;c.strokeStyle='#123456';
+  const state=()=>JSON.stringify({matrix:['a','b','c','d','e','f'].map(k=>c.getTransform()[k]),alpha:c.globalAlpha,stroke:c.strokeStyle,filter:c.filter,composite:c.globalCompositeOperation});
+  const before=state();
+  const sample=(t,alpha=1)=>{c.clearRect(-1,-2,480,320);renderer.draw(c,410,220,2,alpha,t,7);return c.getImageData(0,0,480,320).data};
+  const a=sample(2.6),b=sample(4.2),again=sample(2.6),transparent=sample(2.6,0);
+  let visible=0,moving=0,stable=true,empty=true;
+  for(let i=0;i<a.length;i++){
+   if(a[i]!==again[i])stable=false;
+   if(a[i]!==b[i])moving++;
+   if(i%4===3&&a[i]>10)visible++;
+   if(transparent[i]!==0)empty=false;
+  }
+  const poses=[0,2.6,4.2,30,130].map(t=>renderer.pose(t));
+  const digits=poses.every(f=>f.length===5&&f.every(d=>d.points.length===4));
+  const finite=poses.every(f=>f.every(d=>d.mesh.samples.every(p=>Number.isFinite(p.x)&&Number.isFinite(p.y)&&p.r>0)));
+  const thumbOpposed=poses.every(f=>f[4].points.at(-1).y>f[4].points[0].y);
+  return {visible,moving,stable,empty,digits,finite,thumbOpposed,statePreserved:before===state()};
+ },handSource);
+ assert(hand.visible>3000,'Ink Thief has no readable hand silhouette');
+ assert(hand.moving>1000&&hand.stable,'Hand motion is missing or nondeterministic');
+ assert(hand.digits&&hand.finite&&hand.thumbOpposed,'Hand lost its five-digit anatomy');
+ assert(hand.empty&&hand.statePreserved,'Hand ignored alpha or leaked Canvas state');
+
 
  assert.equal(house.figure.x>=0&&house.figure.x+house.figure.width<=390,true,'Walker cropped on phone');
  const seen=new Set(),snapshots=[];
@@ -158,7 +187,7 @@ const ROOT=path.resolve(__dirname,'..'),OUT=path.join(ROOT,'dist','verification'
  assert(back.forest.length>0,'Forest objects disappeared');
  assert.deepEqual(errors,[]);
  assert.deepEqual(requests,[]);
- fs.writeFileSync(path.join(OUT,'haunted-house.json'),JSON.stringify({rooms:[...seen],samples:snapshots.length,stingers:count,soundAvailable,spirit,errors,requests},null,2)+'\n');
+ fs.writeFileSync(path.join(OUT,'haunted-house.json'),JSON.stringify({rooms:[...seen],samples:snapshots.length,stingers:count,soundAvailable,spirit,hand,errors,requests},null,2)+'\n');
  console.log('Hungry House verification passed');
  await browser.close();
 })().catch(err=>{console.error(err);process.exit(1);});

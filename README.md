@@ -42,6 +42,12 @@ hollow face, flowing internal highlights and curling vapour tails. The
 wardrobe appearance retains its existing reveal timing, lunge and audio.
 The ghost is drawn at runtime with Canvas 2D; no image or library is loaded.
 
+**The Ink Thief hand:** the selected living-ink design replaces the angular
+hand beneath the dining table and the existing foreground/wall reaches. It has
+a connected palm and wrist, five articulated digits, dark nails and dry-brush
+fibres. The dining reach stays below the cloth, with its root behind the table
+leg. Existing room reveal and sound timing are preserved.
+
 **Phone controls:** Tap ENTER HOUSE at the top, then SOUND ON/OFF to
 mute or restore the sting. The bottom PLAY/PAUSE button still controls
 walking. House controls have 44px or taller touch targets. Forest-only
@@ -76,6 +82,7 @@ at upper left. No runtime libraries or network requests are required.
 | --- | --- |
 | `src/forest_runway_template.html` | Page, composition, playback, effect checkboxes and HEAD position. |
 | `src/forest_scene.js` | Trees, moon, stars, ground objects and foreground vegetation. |
+| `src/ink_thief_hand.js` | Selected procedural living-ink hand, articulated fingers and brush texture. |
 | `src/haunted_house.js` | Procedural haunted mansion, seven story rooms, scares and Web Audio stingers. |
 | `src/forest_acts.js` | Act programme, events, weather and colour moods. |
 | `src/forest_enchantments.js` | Original fog, spore and fern effects plus all ten switch states. |
