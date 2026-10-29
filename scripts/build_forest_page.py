@@ -2,6 +2,7 @@
 import argparse
 import base64
 import html as html_tools
+import os
 import subprocess
 from io import BytesIO
 from pathlib import Path
@@ -11,16 +12,23 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / 'src'
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--snapshot', action='store_true',
-                    help='Write committed preview with its source commit SHA; normal builds stamp exact HEAD.')
+                    help='Write a source-revision snapshot; for an exact current commit, distribute the normal dist/index.html build.')
 args = parser.parse_args()
+# Always derive the SHA from the checked-out Git revision, never a manually
+# supplied hash or environment variable. CI builds this after checking out the
+# exact PR head SHA; dist/index.html is the authoritative versioned artifact.
 # The selected source commit is always identifiable. A committed snapshot cannot
 # contain its own future enclosing Git SHA: that SHA would change when stamped.
 # Therefore snapshots name the checked-out *source* revision, while normal
 # dist builds name the exact checked-out revision used for deployment.
 revision = subprocess.check_output(['git', 'rev-parse', '--verify', 'HEAD'],
                                    cwd=ROOT, text=True).strip()
+# In Actions, checking out a precise SHA leaves Git in detached HEAD mode.
+# Prefer the PR's source branch as display metadata, never as the SHA source.
 branch = subprocess.check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
                                  cwd=ROOT, text=True).strip()
+if branch == 'HEAD':
+    branch = os.environ.get('GITHUB_HEAD_REF') or os.environ.get('GITHUB_REF_NAME') or 'detached'
 escaped_branch = html_tools.escape(branch)
 label = 'SOURCE' if args.snapshot else 'HEAD'
 commit_kind = 'source' if args.snapshot else 'build'
