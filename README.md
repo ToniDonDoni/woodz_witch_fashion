@@ -87,8 +87,15 @@ at upper left. No runtime libraries or network requests are required.
 All active website source is in `src/`. The experimental directory has been
 removed. Normal builds read `git rev-parse HEAD` and embed that SHA in the page,
 with a link to the full commit. They never use a remote tip or a synthetic PR
-merge. The committed snapshots explicitly request a rebuild rather than falsely
-claiming to contain their own enclosing commit hash.
+merge. The committed `index.html` and `site/index.html` show a clickable **SOURCE**
+SHA instead of an anonymous HEAD placeholder. It identifies the Git commit
+whose code and approved walk atlas produced the standalone page; checking out
+that SHA reproduces the application's sources. A committed snapshot cannot
+embed the hash of its *own* enclosing commit because writing that hash would
+change the commit. A normal `dist/index.html` build shows the exact **HEAD**
+of the checked-out commit used for the build, with a direct GitHub link.
+Both display the 12-character abbreviation and store the full 40-character
+hash in the link and `data-head` attribute.
 
 ## Scene and effect checkboxes
 
