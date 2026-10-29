@@ -47,9 +47,9 @@ Visual story beats: introduction in the foyer -> wardrobe assault -> dining-tabl
 ## 6. ToDo
 
 - [x] Record The Hungry House story, requested effects and measurable acceptance criteria.
-- [ ] Implement procedural horizontal house architecture, seven room types, scripted surprises and layer ordering.
-- [ ] Implement user-gesture-gated synthesized jump-scare audio and mute control.
-- [ ] Wire the house into the self-contained builder without changing forest baseline behavior.
-- [ ] Add browser-level regression and scene-specific tests.
+- [x] Implement procedural horizontal house architecture, seven room types, scripted surprises and layer ordering.
+- [x] Implement user-gesture-gated synthesized jump-scare audio and mute control.
+- [x] Wire the house into the self-contained builder without changing forest baseline behavior.
+- [x] Add browser-level regression and scene-specific tests.
 - [ ] Run CI and visually inspect phone/desktop captures, revising as needed.
 - [ ] Review on a physical phone, including audio loudness and performance.
