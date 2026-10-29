@@ -40,17 +40,6 @@ jobs:
           node tests/verify_forest.cjs
           node tests/verify_effects.cjs
           node tests/verify_house.cjs
-      # This is the deployable HTML stamped with the exact checked-out SHA.
-      # Do not commit a generated page with an aspirational "latest" hash:
-      # committing it would create a different Git revision.
-      - name: Upload versioned standalone HTML
-        uses: actions/upload-artifact@v4
-        if: success()
-        with:
-          name: standalone-html-${{ github.event.pull_request.head.sha || github.sha }}
-          path: dist/index.html
-          if-no-files-found: error
-          retention-days: 90
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -3,20 +3,20 @@ const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
 const ROOT=path.resolve(__dirname,'..'),OUT=path.join(ROOT,'dist','verification');
 (async()=>{
  fs.mkdirSync(OUT,{recursive:true});
- // The distributable must identify the exact checked-out Git commit.
- // Stored source snapshots cannot identify their own enclosing commit.
- const {execFileSync}=require('child_process');
- const head=execFileSync('git',['rev-parse','--verify','HEAD'],{cwd:ROOT,encoding:'utf8'}).trim();
- const built=fs.readFileSync(path.join(ROOT,'dist','index.html'),'utf8');
- const builtStamp=built.match(/<a id="build-commit" data-head="([0-9a-f]{40})" data-commit-kind="build"/);
- assert(builtStamp,'Distributable has no build commit SHA');
- assert.equal(builtStamp[1],head,'HTML is stamped with a stale or hardcoded SHA');
- assert(built.includes('href="https://github.com/ToniDonDoni/woodz_witch_fashion/commit/'+head+'"'),'Build SHA must link to the exact commit');
- assert(built.includes('HEAD '+head.slice(0,12)),'Build should display an abbreviated SHA');
- assert(!built.includes('rebuild to identify'),'Build contains the old placeholder');
+ // A committed offline snapshot must identify the real source revision.
  const original=fs.readFileSync(path.join(ROOT,'index.html'),'utf8');
  const copy=fs.readFileSync(path.join(ROOT,'site','index.html'),'utf8');
- assert.equal(original,copy,'The two committed source snapshots differ');
+ assert.equal(original,copy,'The two committed standalone snapshots differ');
+ const stamp=original.match(/<a id="build-commit" data-head="([0-9a-f]{40})" data-commit-kind="source"/);
+ assert(stamp,'Snapshot has no source commit SHA (the HEAD placeholder is forbidden)');
+ const sourceSha=stamp[1];
+ assert(original.includes('href="https://github.com/ToniDonDoni/woodz_witch_fashion/commit/'+sourceSha+'"'),'Snapshot SHA is not a working GitHub commit link');
+ assert(original.includes('SOURCE '+sourceSha.slice(0,12)),'Snapshot lacks a readable source SHA');
+ const {execFileSync}=require('child_process');
+ const sourceExists=execFileSync('git',['cat-file','-t',sourceSha],{cwd:ROOT,encoding:'utf8'}).trim();
+ assert.equal(sourceExists,'commit','Snapshot source hash is not a Git commit');
+ const unchanged=execFileSync('git',['diff','--name-only',sourceSha,'HEAD','--','src','assets/walk','scripts/build_forest_page.py'],{cwd:ROOT,encoding:'utf8'}).trim();
+ assert.equal(unchanged,'','Committed standalone page no longer matches its labeled source commit');
  const browser=await chromium.launch({headless:true,...(process.env.BROWSER_EXECUTABLE?{executablePath:process.env.BROWSER_EXECUTABLE}:{})});
  const context=await browser.newContext({viewport:{width:390,height:844},deviceScaleFactor:1,offline:true,hasTouch:true,isMobile:true});
  const page=await context.newPage(),errors=[],requests=[];

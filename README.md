@@ -61,30 +61,8 @@ python -m http.server 18789 --bind 0.0.0.0 --directory dist
 
 Open http://localhost:18789/ . In Docker, publish port `18789:18789`.
 The result is **`dist/index.html`**, one offline-capable HTML with all sprites
-and code embedded. It is the authoritative deliverable: the build script
-reads `git rev-parse HEAD` from the *actual checked-out commit* and embeds
-the full 40-character SHA in `data-head` and the GitHub commit link, and the
-short SHA in the UI. **No version is manually hardcoded in source code.**
-To build the latest branch tip, update the branch before building:
-
-```sh
-git fetch origin
-git switch codex/haunted-house-stomach
-git pull --ff-only
-python scripts/build_forest_page.py
-```
-
-For each pull request revision, GitHub Actions runs this build on the exact
-PR head commit and uploads **standalone-html-<full-sha>**. Download
-`index.html` from that GitHub Actions artifact to get a versioned page that
-identifies precisely the checked-out commit. No GitHub Pages publication,
-external viewing service or merging is involved.
-
-A committed `index.html` source snapshot cannot be labeled with its own
-enclosing commit hash. Updating that file changes the commit hash itself.
-The checked-in root and `site/index.html` are *snapshots*, not the newest
-versioned distributables; use the generated `dist/index.html` or CI artifact.
-No runtime libraries or network requests are required.
+and code embedded. Rebuild after updating the branch to show its exact Git HEAD
+at upper left. No runtime libraries or network requests are required.
 
 ## Source layout
 
@@ -103,16 +81,21 @@ No runtime libraries or network requests are required.
 | `tests/verify_effects.cjs` | Effect pixels, 13 checkboxes, global toggle, native scene restoration, HEAD and layout checks. |
 | `tests/verify_house.cjs` | Offline house mode, horizontal movement, story, rendering and sound trigger checks. |
 | `dist/` | Local generated site, screenshots and reports; ignored by Git. |
-| `index.html`, `site/index.html` | Tracked offline source snapshots (not authoritative current-HEAD builds). |
+| `index.html`, `site/index.html` | Identical version-neutral snapshots made with `--snapshot`. |
 | `tasks/` | Specification and implementation requirements. |
 
 All active website source is in `src/`. The experimental directory has been
-removed. Versioned builds always derive their SHA from `git rev-parse HEAD` on
-the checked-out commit, including the Actions PR head. The HTML includes a
-clickable commit link and the full SHA in `data-head`. For repeatable debugging
-or deployment, prefer the CI artifact over the checked-in source snapshots.
-A snapshot's **SOURCE** revision denotes what it was built from, not the newer
-commit that subsequently recorded the file in Git.
+removed. Normal builds read `git rev-parse HEAD` and embed that SHA in the page,
+with a link to the full commit. They never use a remote tip or a synthetic PR
+merge. The committed `index.html` and `site/index.html` show a clickable **SOURCE**
+SHA instead of an anonymous HEAD placeholder. It identifies the Git commit
+whose code and approved walk atlas produced the standalone page; checking out
+that SHA reproduces the application's sources. A committed snapshot cannot
+embed the hash of its *own* enclosing commit because writing that hash would
+change the commit. A normal `dist/index.html` build shows the exact **HEAD**
+of the checked-out commit used for the build, with a direct GitHub link.
+Both display the 12-character abbreviation and store the full 40-character
+hash in the link and `data-head` attribute.
 
 ## Scene and effect checkboxes
 
