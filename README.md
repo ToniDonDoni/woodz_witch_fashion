@@ -7,6 +7,31 @@ of hand-drawn trees, a moonlit sky and a changing programme of woodland acts.
 Foreground plants pass in front of the walker. New Dream reshuffles the acts,
 world layout and colour mood.
 
+## The Hungry House: optional horror world
+
+Click **ENTER HOUSE** to switch from the original forest to a horizontal
+cutaway haunted mansion. The original walking character stays screen-anchored
+while seven procedural rooms enter from the left and travel to the right.
+The story reveals that the building is a creature digesting visitors, ending
+with animated ribs and a toothed throat before the endless room sequence repeats.
+
+The house includes three hand-coded Canvas effects: **Living Ink** in the
+walls, **Liquid Spirits** in the mirrors and rooms, and **Moonlit Caustics**
+across the windows and floor. Wardrobe, dining, mirror, nursery, wall and
+stomach events contain delayed reveals and foreground surprises.
+
+Clicking ENTER HOUSE enables synthesized, short jump-scare sounds using
+Web Audio after that user gesture, where supported. **SOUND ON** can be
+clicked to mute immediately; it becomes **SOUND OFF**, which can be
+clicked to re-enable sound. No sound files, libraries or network fetches
+are required. The previous forest mode and all 13 original effect
+checkboxes are unchanged. Use **LEAVE HOUSE** to return to the forest.
+
+The specification and acceptance criteria are in
+[`specs/spec_001.md`](specs/spec_001.md). Offline browser checks:
+`node tests/verify_house.cjs` after the normal build and Playwright setup.
+No physical-phone audio loudness or performance check is yet claimed.
+
 ## Build and run
 
 From the repository root, with Python 3 and Pillow:
@@ -30,6 +55,7 @@ at upper left. No runtime libraries or network requests are required.
 | --- | --- |
 | `src/forest_runway_template.html` | Page, composition, playback, effect checkboxes and HEAD position. |
 | `src/forest_scene.js` | Trees, moon, stars, ground objects and foreground vegetation. |
+| `src/haunted_house.js` | Procedural haunted mansion, seven story rooms, scares and Web Audio stingers. |
 | `src/forest_acts.js` | Act programme, events, weather and colour moods. |
 | `src/forest_enchantments.js` | Original fog, spore and fern effects plus all ten switch states. |
 | `src/forest_extra_effects.js` | Living ink, translucent stained-glass flowers and large spark fields. |
@@ -38,6 +64,7 @@ at upper left. No runtime libraries or network requests are required.
 | `scripts/build_forest_page.py` | The main website builder. |
 | `tests/verify_forest.cjs` | Acts, foreground, walk and world regression checks. |
 | `tests/verify_effects.cjs` | Effect pixels, 13 checkboxes, global toggle, native scene restoration, HEAD and layout checks. |
+| `tests/verify_house.cjs` | Offline house mode, horizontal movement, story, rendering and sound trigger checks. |
 | `dist/` | Local generated site, screenshots and reports; ignored by Git. |
 | `index.html`, `site/index.html` | Identical version-neutral snapshots made with `--snapshot`. |
 | `tasks/` | Specification and implementation requirements. |
