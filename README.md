@@ -27,6 +27,12 @@ clicked to re-enable sound. No sound files, libraries or network fetches
 are required. The previous forest mode and all 13 original effect
 checkboxes are unchanged. Use **LEAVE HOUSE** to return to the forest.
 
+**Phone controls:** Tap ENTER HOUSE at the top, then SOUND ON/OFF to
+mute or restore the sting. The bottom PLAY/PAUSE button still controls
+walking. House controls have 44px or taller touch targets. Forest-only
+checkboxes disappear while the house is selected, then reappear in the
+forest. The controls require no keyboard, hover or gamepad.
+
 The specification and acceptance criteria are in
 [`specs/spec_001.md`](specs/spec_001.md). Offline browser checks:
 `node tests/verify_house.cjs` after the normal build and Playwright setup.
