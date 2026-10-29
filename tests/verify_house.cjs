@@ -18,6 +18,7 @@ const ROOT=path.resolve(__dirname,'..'),OUT=path.join(ROOT,'dist','verification'
  assert(await page.locator('#house-sound').isVisible(),'Sound control is missing');
  for(const viewport of [{width:320,height:568},{width:390,height:844},{width:430,height:932},{width:844,height:390}]){
   await page.setViewportSize(viewport);
+  await page.waitForFunction(({width,height})=>runway.state().viewport.w===width&&runway.state().viewport.h===height,viewport);
   const geometry=await page.evaluate(()=>{
    const rect=id=>{const r=document.querySelector(id).getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,height:r.height};};
    return {house:rect('#house-mode'),sound:rect('#house-sound'),walker:runway.state().figure,
@@ -35,6 +36,7 @@ const ROOT=path.resolve(__dirname,'..'),OUT=path.join(ROOT,'dist','verification'
   }
  }
  await page.setViewportSize({width:390,height:844});
+ await page.waitForFunction(()=>runway.state().viewport.w===390&&runway.state().viewport.h===844);
  const house=await page.evaluate(()=>runway.state());
  assert(house.house.enabled,'The new world was not activated');
  assert.equal(house.figure.x>=0&&house.figure.x+house.figure.width<=390,true,'Walker cropped on phone');
