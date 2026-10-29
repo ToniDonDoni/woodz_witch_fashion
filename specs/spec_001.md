@@ -25,6 +25,9 @@ A sudden reveal should have a sharp, short, synthesized horror sting. Sound requ
 - [ ] Living Ink visibly animates wall cracks/shadows, Liquid Spirits visibly morphs a ghost, and Moonlit Caustics animates moonlit highlights in the house.
 - [ ] At each major reveal, a scary audio sting is requested exactly once during continuous forward playback; pausing, repainting or seeking cannot retrigger it.
 - [ ] The audio is synthesized offline using Web Audio, starts only after a user gesture, can be muted immediately and fails gracefully when audio is unavailable.
+- [ ] All house controls work by touch on a phone without a keyboard or hover; ENTER HOUSE, LEAVE HOUSE, SOUND ON/OFF, and PLAY/PAUSE have touch targets at least 44 CSS pixels tall.
+- [ ] At 320x568, 390x844, 430x932, and 844x390, house buttons stay inside the viewport; the house UI does not cover the central walker's head on common portrait phone sizes.
+- [ ] Forest-only effect checkboxes are hidden in house mode, so a phone screen is not crowded with irrelevant options.
 - [ ] With the same seed, simulation time and viewport, the scene is visually deterministic; repeating elements do not accumulate.
 - [ ] The built page remains a single offline-capable HTML with no network requests or runtime dependencies.
 - [ ] A browser test verifies toggling, movement, story diversity, deterministic rendering, pause/seek-safe audio, and a phone-sized viewport.
