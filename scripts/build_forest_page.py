@@ -23,8 +23,9 @@ branch = subprocess.check_output(['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
                                  cwd=ROOT, text=True).strip()
 escaped_branch = html_tools.escape(branch)
 label = 'SOURCE' if args.snapshot else 'HEAD'
+commit_kind = 'source' if args.snapshot else 'build'
 stamp = (f'<a id="build-commit" data-head="{revision}" '
-         f'data-commit-kind="{"source" if args.snapshot else "build"}" '
+         f'data-commit-kind="{commit_kind}" '
          f'href="https://github.com/ToniDonDoni/woodz_witch_fashion/commit/{revision}" '
          f'target="_blank" rel="noopener" title="{revision}">{label} {revision[:12]}</a>'
          f'<span class="branch-meta"> · <span id="build-branch" '
