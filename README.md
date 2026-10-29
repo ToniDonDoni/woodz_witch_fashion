@@ -7,6 +7,64 @@ of hand-drawn trees, a moonlit sky and a changing programme of woodland acts.
 Foreground plants pass in front of the walker. New Dream reshuffles the acts,
 world layout and colour mood.
 
+## The Hungry House: optional horror world
+
+Click **ENTER HOUSE** to switch from the original forest to a horizontal
+cutaway haunted mansion. The original walking character stays screen-anchored
+while seven procedural rooms enter from the left and travel to the right.
+The story reveals that the building is a creature digesting visitors, ending
+with animated ribs and a toothed throat before the endless room sequence repeats.
+
+The house includes three hand-coded Canvas effects: **Living Ink** in the
+walls, **Liquid Spirits** in the mirrors and rooms, and **Moonlit Caustics**
+across the windows and floor. Wardrobe, dining, mirror, nursery, wall and
+stomach events contain delayed reveals and foreground surprises.
+
+Clicking ENTER HOUSE enables synthesized horror audio using Web Audio
+after that user gesture, where supported. Each room now has its own sound:
+timber settling, wardrobe slam and hinges, table clatter, glass and ghost
+voices, detuned music-box tones, tearing plaster, or organic throat/bone
+rumble. A quiet warning texture precedes the sudden reveal; its impact
+layers a transient, dissonant voices, filtered noise, bass and a short echo.
+Dynamic compression and a soft clipper limit peaks before output.
+
+**SOUND ON** can be clicked to mute immediately; it becomes **SOUND OFF**,
+which can be clicked to re-enable sound. Muting, leaving the house or
+pausing stops all active horror audio, and seeking never generates a sound.
+No sound files, libraries or network fetches are required. The original
+forest mode is unaffected. See the researched sound criteria and sources
+in `specs/spec_001.md`. The previous forest mode and all 13 original effect
+checkboxes are unchanged. Use **LEAVE HOUSE** to return to the forest.
+
+**Undertow apparition:** the wardrobe reveal, stolen mirror reflection and
+stomach spirit share the selected blue ectoplasm design: a translucent body,
+hollow face, flowing internal highlights and curling vapour tails. The
+wardrobe appearance retains its existing reveal timing, lunge and audio.
+The ghost is drawn at runtime with Canvas 2D; no image or library is loaded.
+
+**The Ink Thief hand:** the selected living-ink design replaces the angular
+hand beneath the dining table and the existing foreground/wall reaches. It has
+a connected palm and wrist, five articulated digits, dark nails and dry-brush
+fibres. The dining reach stays below the cloth, with its root behind the table
+leg. Existing room reveal and sound timing are preserved.
+
+**The Little Usher doll:** the selected wooden marionette replaces the
+schematic nursery doll. It wears a dark coat and hangs from five taut strings,
+with articulated arms and legs, carved eyes and a hinged jaw. It waits through
+the early warning, performs one gesture during the encounter and settles in
+recovery. The toy chest sits beside the cot so the face remains readable.
+
+**Phone controls:** Tap ENTER HOUSE at the top, then SOUND ON/OFF to
+mute or restore the sting. The bottom PLAY/PAUSE button still controls
+walking. House controls have 44px or taller touch targets. Forest-only
+checkboxes disappear while the house is selected, then reappear in the
+forest. The controls require no keyboard, hover or gamepad.
+
+The specification and acceptance criteria are in
+[`specs/spec_001.md`](specs/spec_001.md). Offline browser checks:
+`node tests/verify_house.cjs` after the normal build and Playwright setup.
+No physical-phone audio loudness or performance check is yet claimed.
+
 ## Build and run
 
 From the repository root, with Python 3 and Pillow:
@@ -30,6 +88,9 @@ at upper left. No runtime libraries or network requests are required.
 | --- | --- |
 | `src/forest_runway_template.html` | Page, composition, playback, effect checkboxes and HEAD position. |
 | `src/forest_scene.js` | Trees, moon, stars, ground objects and foreground vegetation. |
+| `src/ink_thief_hand.js` | Selected procedural living-ink hand, articulated fingers and brush texture. |
+| `src/little_usher_doll.js` | Selected carved marionette, jointed limbs and attached strings. |
+| `src/haunted_house.js` | Procedural haunted mansion, seven story rooms, scares and Web Audio stingers. |
 | `src/forest_acts.js` | Act programme, events, weather and colour moods. |
 | `src/forest_enchantments.js` | Original fog, spore and fern effects plus all ten switch states. |
 | `src/forest_extra_effects.js` | Living ink, translucent stained-glass flowers and large spark fields. |
@@ -38,6 +99,7 @@ at upper left. No runtime libraries or network requests are required.
 | `scripts/build_forest_page.py` | The main website builder. |
 | `tests/verify_forest.cjs` | Acts, foreground, walk and world regression checks. |
 | `tests/verify_effects.cjs` | Effect pixels, 13 checkboxes, global toggle, native scene restoration, HEAD and layout checks. |
+| `tests/verify_house.cjs` | Offline house mode, horizontal movement, story, rendering and sound trigger checks. |
 | `dist/` | Local generated site, screenshots and reports; ignored by Git. |
 | `index.html`, `site/index.html` | Identical version-neutral snapshots made with `--snapshot`. |
 | `tasks/` | Specification and implementation requirements. |

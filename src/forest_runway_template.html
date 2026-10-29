@@ -18,6 +18,23 @@
 @media(max-width:1100px) and (min-width:701px){.effects label{font-size:10px;padding:0 5px;gap:4px}.effects input{width:15px;height:15px}}
 @media(max-width:700px){.effects{grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;max-width:520px;margin:0 auto}.effects label{min-width:0;min-height:27px;font-size:9px;gap:3px;padding:0 4px;overflow:hidden}.effects input{width:14px;height:14px;flex-shrink:0}.effects label span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#actcard{bottom:245px}}
 @media(max-width:500px){.edition,.branch-meta{display:none}.effects label{padding:0 4px}}
+/* The house is an alternate world, not a replacement for the woodland toggles. */
+.house-toolbar{position:fixed;top:118px;right:22px;z-index:4;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.house-toolbar button{background:#21171cdd;border-color:#97747a88;min-height:44px;color:#e6c3b9;touch-action:manipulation;user-select:none}
+.house-toolbar #house-sound{background:#1c2429e8}
+body.house-active .effects{display:none}
+body.house-active .hint{display:none}
+body.house-active #actcard{bottom:112px}
+@media(max-width:700px){
+ .house-toolbar{top:max(9px,env(safe-area-inset-top));right:max(10px,env(safe-area-inset-right));flex-direction:row;gap:6px}
+ .house-toolbar button{font-size:10px;padding:0 11px;min-height:46px}
+ body.house-active .masthead{display:none}
+ body.house-active .build-info{top:calc(max(9px,env(safe-area-inset-top)) + 51px)}
+ body.house-active .caption{top:90px}
+ body.house-active #actcard{bottom:108px}
+}
+@media(max-width:700px) and (max-height:650px){body.house-active .caption{display:none}}
+@media(max-width:350px){.house-toolbar button{font-size:9px;padding:0 9px}}
 /* Five compact rows fit a small phone without overlapping playback. */
 @media(max-width:500px) and (max-height:700px){.effects{row-gap:2px}}
 
@@ -30,6 +47,10 @@
 <header class="masthead"><div class="brand">WOODZ</div><div class="edition">INFINITE RUNWAY<br>STUDY 05 / SCENES IN THE WOOD</div></header>
 <div class="caption"><h1>Into the woods.</h1><p>An endless woodland procession</p></div>
 <div class="build-info" id="build-info">__BUILD_STAMP__</div>
+<div class="house-toolbar" role="group" aria-label="Haunted house mode">
+<button id="house-mode" aria-pressed="false">ENTER HOUSE</button>
+<button id="house-sound" aria-pressed="false" hidden>SOUND OFF</button>
+</div>
 <div class="effects" role="group" aria-label="Forest scene and effects">
 <label><input type="checkbox" data-scene="forest" checked><span>Forest &amp; foliage</span></label>
 <label><input type="checkbox" data-scene="creatures" checked><span>Animals</span></label>
@@ -67,6 +88,7 @@ function line(points,color,width=1,id=0){ctx.beginPath();points.forEach((p,i)=>{
 function ellipse(x,y,rx,ry,color){ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,TAU);ctx.fillStyle=color;ctx.fill();}
 __FOREST_CODE__
 __ENCHANTMENT_CODE__
+__HAUNTED_CODE__
 function pathHeight(x){return h*.84+Math.sin(x/w*2.7+.5)*h*.012;}
 function drawPath(){
  const top=h*.785,bottom=h*.936;
@@ -159,6 +181,7 @@ function draw(){
  boil=Math.floor(time*12);ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#050507';ctx.fillRect(0,0,w,h);ctx.lineJoin='round';ctx.lineCap='round';
  // A faint light pool separates the dark clothes from the black stage.
  const glow=ctx.createRadialGradient(w*.5,h*.50,0,w*.5,h*.50,h*.48);glow.addColorStop(0,'#1a1422');glow.addColorStop(.55,'#0c0a10');glow.addColorStop(1,'#050507');ctx.fillStyle=glow;ctx.fillRect(0,0,w,h);
+ if(hungry.active){hungryScene();return;}
  const plan=currentAct();
  drawNightSky();
  const constellations=drawPaintedConstellations();
@@ -199,9 +222,9 @@ function draw(){
 }
 // The clock follows wall time even on slower devices with ten active effects.
 // Clamp only large tab/scheduling stalls, rather than throttling low FPS playback.
-function tick(now){if(last!==null&&playing&&!document.hidden)time+=Math.min((now-last)/1000,.25)*pace;last=now;if(ready&&playing)draw();requestAnimationFrame(tick);}
+function tick(now){if(last!==null&&playing&&!document.hidden){const before=time;time+=Math.min((now-last)/1000,.25)*pace;hungryAudioBetween(before,time);}last=now;if(ready&&playing)draw();requestAnimationFrame(tick);}
 const play=document.querySelector('#play');
-function setPlaying(value){playing=value;last=null;play.textContent=playing?'Ⅱ PAUSE':'▶ PLAY';play.setAttribute('aria-label',playing?'Pause animation':'Play animation');}
+function setPlaying(value){playing=value;last=null;if(!playing&&hungry.active&&hungry.audio)hungryStopSounds();play.textContent=playing?'Ⅱ PAUSE':'▶ PLAY';play.setAttribute('aria-label',playing?'Pause animation':'Play animation');}
 play.onclick=()=>setPlaying(!playing);
 document.querySelector('#pace').oninput=e=>{pace=Number(e.target.value)};
 document.querySelector('#dream').onclick=()=>{seed=(seed+7919)|0;resetWorld();if(ready)draw()};
@@ -209,7 +232,9 @@ document.addEventListener('visibilitychange',()=>{last=null});window.addEventLis
 // Deterministic review controls; they do not load assets or alter the selected walk cycle.
 window.runway={seek(t){setPlaying(false);time=Math.max(0,t);if(ready)draw();return debug},play(){setPlaying(true)},state(){return debug},
  programme(count=12){return actProgramme(count)},act(){return {...currentAct()}},plan(index){return actPlan(index)},
- setForeground(on){foregroundEnabled=!!on;if(ready)draw();return debug},get ready(){return ready}};
+ setForeground(on){foregroundEnabled=!!on;if(ready)draw();return debug},
+ setHouse(on){hungry.active=!!on;hungry.lastScare=null;if(!hungry.active&&hungry.audio)hungry.audio.suspend().catch(()=>{});hungryUpdateControls();if(ready)draw();return debug},
+ get ready(){return ready}};
 atlas.onload=()=>{ready=true;document.querySelector('#loading').remove();draw()};atlas.onerror=()=>{document.querySelector('#loading').textContent='The embedded walk frames could not be loaded.'};
 bindEnchantmentControls();resize();atlas.src='data:image/webp;base64,__ATLAS_DATA__';requestAnimationFrame(tick);
 })();
