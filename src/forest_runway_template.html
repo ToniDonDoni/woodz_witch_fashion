@@ -224,7 +224,7 @@ function draw(){
 // Clamp only large tab/scheduling stalls, rather than throttling low FPS playback.
 function tick(now){if(last!==null&&playing&&!document.hidden){const before=time;time+=Math.min((now-last)/1000,.25)*pace;hungryAudioBetween(before,time);}last=now;if(ready&&playing)draw();requestAnimationFrame(tick);}
 const play=document.querySelector('#play');
-function setPlaying(value){playing=value;last=null;play.textContent=playing?'Ⅱ PAUSE':'▶ PLAY';play.setAttribute('aria-label',playing?'Pause animation':'Play animation');}
+function setPlaying(value){playing=value;last=null;if(!playing&&hungry.active&&hungry.audio)hungryStopSounds();play.textContent=playing?'Ⅱ PAUSE':'▶ PLAY';play.setAttribute('aria-label',playing?'Pause animation':'Play animation');}
 play.onclick=()=>setPlaying(!playing);
 document.querySelector('#pace').oninput=e=>{pace=Number(e.target.value)};
 document.querySelector('#dream').onclick=()=>{seed=(seed+7919)|0;resetWorld();if(ready)draw()};
