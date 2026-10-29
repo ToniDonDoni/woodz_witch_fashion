@@ -96,6 +96,33 @@ const ROOT=path.resolve(__dirname,'..'),OUT=path.join(ROOT,'dist','verification'
  assert(hand.moving>1000&&hand.stable,'Hand motion is missing or nondeterministic');
  assert(hand.digits&&hand.finite&&hand.thumbOpposed,'Hand lost its five-digit anatomy');
  assert(hand.empty&&hand.statePreserved,'Hand ignored alpha or leaked Canvas state');
+ // The selected marionette has attached strings, finite joints and a one-shot pose.
+ const dollSource=fs.readFileSync(path.join(ROOT,'src','little_usher_doll.js'),'utf8');
+ const doll=await page.evaluate(source=>{
+  const renderer=new Function(source+';return littleUsherDoll;')();
+  const surface=document.createElement('canvas');surface.width=480;surface.height=650;
+  const c=surface.getContext('2d');c.translate(2,3);c.globalAlpha=.75;c.strokeStyle='#123456';
+  const state=()=>JSON.stringify({matrix:['a','b','c','d','e','f'].map(k=>c.getTransform()[k]),alpha:c.globalAlpha,stroke:c.strokeStyle,filter:c.filter,composite:c.globalCompositeOperation});
+  const before=state();
+  const sample=(age,size=1)=>{c.clearRect(-2,-3,480,650);renderer.draw(c,240,540,size,age);return c.getImageData(0,0,480,650).data};
+  const a=sample(.4),b=sample(1.8),again=sample(.4),settled=sample(6),later=sample(9),empty=sample(1,0);
+  let visible=0,moving=0,stable=true,recovery=true,blank=true;
+  for(let i=0;i<a.length;i++){
+   if(a[i]!==again[i])stable=false;if(a[i]!==b[i])moving++;
+   if(settled[i]!==later[i])recovery=false;if(empty[i]!==0)blank=false;
+   if(i%4===3&&a[i]>10)visible++;
+  }
+  const poses=[0,1,3,5,8].map(t=>renderer.pose(t));
+  const strings=poses.every(p=>p.strings.length===5&&p.strings.every(s=>s.every(pt=>pt.length===2&&pt.every(Number.isFinite))));
+  const joints=poses.every(p=>['shoulders','elbows','hands'].every(k=>p[k].length===2&&p[k].every(pt=>pt.every(Number.isFinite))));
+  const attached=poses.every(p=>p.strings[0][1].every((v,i)=>v===p.hands[0][i])&&p.strings[1][1].every((v,i)=>v===p.hands[1][i]));
+  return {visible,moving,stable,recovery,blank,strings,joints,attached,statePreserved:state()===before};
+ },dollSource);
+ assert(doll.visible>10000,'Little Usher is not visibly drawn');
+ assert(doll.moving>1000&&doll.stable&&doll.recovery,'Doll motion is missing, nondeterministic or repeats in recovery');
+ assert(doll.strings&&doll.joints&&doll.attached,'Marionette strings or joints are detached or invalid');
+ assert(doll.blank&&doll.statePreserved,'Doll ignored zero size or leaked Canvas state');
+
 
 
  assert.equal(house.figure.x>=0&&house.figure.x+house.figure.width<=390,true,'Walker cropped on phone');
@@ -187,7 +214,7 @@ const ROOT=path.resolve(__dirname,'..'),OUT=path.join(ROOT,'dist','verification'
  assert(back.forest.length>0,'Forest objects disappeared');
  assert.deepEqual(errors,[]);
  assert.deepEqual(requests,[]);
- fs.writeFileSync(path.join(OUT,'haunted-house.json'),JSON.stringify({rooms:[...seen],samples:snapshots.length,stingers:count,soundAvailable,spirit,hand,errors,requests},null,2)+'\n');
+ fs.writeFileSync(path.join(OUT,'haunted-house.json'),JSON.stringify({rooms:[...seen],samples:snapshots.length,stingers:count,soundAvailable,spirit,hand,doll,errors,requests},null,2)+'\n');
  console.log('Hungry House verification passed');
  await browser.close();
 })().catch(err=>{console.error(err);process.exit(1);});

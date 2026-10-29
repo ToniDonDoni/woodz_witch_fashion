@@ -42,6 +42,7 @@ effects = ((SOURCE / 'forest_enchantments.js').read_text(encoding='utf-8') + '\n
            (SOURCE / 'forest_next_effects.js').read_text(encoding='utf-8'))
 html = html.replace('__ENCHANTMENT_CODE__', effects)
 house = ((SOURCE / 'ink_thief_hand.js').read_text(encoding='utf-8') + '\n' +
+         (SOURCE / 'little_usher_doll.js').read_text(encoding='utf-8') + '\n' +
          (SOURCE / 'haunted_house.js').read_text(encoding='utf-8'))
 html = html.replace('__HAUNTED_CODE__', house)
 html = html.replace('__BUILD_STAMP__', stamp)

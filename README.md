@@ -48,6 +48,12 @@ a connected palm and wrist, five articulated digits, dark nails and dry-brush
 fibres. The dining reach stays below the cloth, with its root behind the table
 leg. Existing room reveal and sound timing are preserved.
 
+**The Little Usher doll:** the selected wooden marionette replaces the
+schematic nursery doll. It wears a dark coat and hangs from five taut strings,
+with articulated arms and legs, carved eyes and a hinged jaw. It waits through
+the early warning, performs one gesture during the encounter and settles in
+recovery. The toy chest sits beside the cot so the face remains readable.
+
 **Phone controls:** Tap ENTER HOUSE at the top, then SOUND ON/OFF to
 mute or restore the sting. The bottom PLAY/PAUSE button still controls
 walking. House controls have 44px or taller touch targets. Forest-only
@@ -83,6 +89,7 @@ at upper left. No runtime libraries or network requests are required.
 | `src/forest_runway_template.html` | Page, composition, playback, effect checkboxes and HEAD position. |
 | `src/forest_scene.js` | Trees, moon, stars, ground objects and foreground vegetation. |
 | `src/ink_thief_hand.js` | Selected procedural living-ink hand, articulated fingers and brush texture. |
+| `src/little_usher_doll.js` | Selected carved marionette, jointed limbs and attached strings. |
 | `src/haunted_house.js` | Procedural haunted mansion, seven story rooms, scares and Web Audio stingers. |
 | `src/forest_acts.js` | Act programme, events, weather and colour moods. |
 | `src/forest_enchantments.js` | Original fog, spore and fern effects plus all ten switch states. |

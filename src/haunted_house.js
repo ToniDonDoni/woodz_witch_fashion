@@ -188,11 +188,8 @@ function hungryFurniture(kind,progress,i){
   hungryRect(388,-320,147,295,'#242024');
   hungryRect(398,-311,127,42,'#665047');
   for(let j=0;j<5;j++)hungryStroke([[406+j*27,-310],[406+j*27,-29]],'#a2917a',4,id+j);
-  hungryRect(244,-150,100,117,'#413635');
-  ctx.fillStyle='#baab9c';ctx.beginPath();ctx.ellipse(294,-201,24,31,0,0,TAU);ctx.fill();
-  hungryStroke([[293,-170],[294,-112]],'#8e8c87',9,id+20);
-  const twist=progress>-1.1?Math.min(1,(progress+1.1)*2):0;
-  hungryRect(286+twist*3,-205,4+twist*5,4,'#050608');
+  hungryRect(324,-150,100,117,'#413635');
+  littleUsherDoll.draw(ctx,374,-150,.65,progress);
   if(strength>0)hungrySpirit(454,-238,52,time,id+29);
  }else if(kind==='inkwall'){
   hungryDoor(425,-440,145,433,0,id);
