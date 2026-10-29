@@ -12,6 +12,16 @@ const pixels=async p=>p.locator('canvas').evaluate(c=>c.toDataURL());
  await page.goto('file://'+path.join(ROOT,'dist','index.html'));await page.waitForFunction(()=>runway.ready);
  const head=execFileSync('git',['rev-parse','HEAD'],{cwd:ROOT,encoding:'utf8'}).trim();
  assert.equal(await page.locator('#build-commit').getAttribute('data-head'),head);
+ // One build must update both tracked pages and the distributable from HEAD.
+ const outputs=['index.html','site/index.html','dist/index.html'].map(file=>
+  fs.readFileSync(path.join(ROOT,file),'utf8'));
+ assert.equal(outputs[0],outputs[1],'Tracked standalone pages must match');
+ assert.equal(outputs[0],outputs[2],'Tracked page differs from the distributable');
+ for(const html of outputs){
+  assert(html.includes('data-head="'+head+'"'),'Generated HTML contains a stale Git SHA');
+  assert(html.includes('/commit/'+head+'"'),'Generated HTML must link to its source commit');
+  assert(!html.includes('rebuild to identify'),'A snapshot placeholder survived the build');
+ }
  // Protect the scene graph: sky art and sparks behind trees, spirits between
  // tree layers, caustics on the path, leaves behind the walking sprite.
  const template=fs.readFileSync(path.join(ROOT,'src','forest_runway_template.html'),'utf8');
