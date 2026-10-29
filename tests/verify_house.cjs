@@ -39,6 +39,12 @@ const ROOT=path.resolve(__dirname,'..'),OUT=path.join(ROOT,'dist','verification'
  await page.waitForFunction(()=>runway.state().viewport.w===390&&runway.state().viewport.h===844);
  const house=await page.evaluate(()=>runway.state());
  assert(house.house.enabled,'The new world was not activated');
+ assert.deepEqual([...house.house.audioProfiles].sort(),['foyer','wardrobe','dining','mirror','nursery','inkwall','stomach'].sort(),'Missing room-specific audio profiles');
+ const audioSource=fs.readFileSync(path.join(ROOT,'src','haunted_house.js'),'utf8');
+ for(const feature of ['createDynamicsCompressor','createWaveShaper','createBiquadFilter','createDelay','hungryNoise','hungryTone','hungryStopSounds']){
+  assert(audioSource.includes(feature),'Cinematic audio synthesizer missing '+feature);
+ }
+ assert(audioSource.includes("['warning',-1.84]"),'No timed anticipation before the reveal');
  assert.equal(house.figure.x>=0&&house.figure.x+house.figure.width<=390,true,'Walker cropped on phone');
  const seen=new Set(),snapshots=[];
  for(let t=0;t<=130;t+=2.5){
@@ -67,12 +73,20 @@ const ROOT=path.resolve(__dirname,'..'),OUT=path.join(ROOT,'dist','verification'
  for(const t of [11,44,95])await page.evaluate(x=>runway.seek(x),t);
  assert.equal(await page.evaluate(()=>runway.state().house.stingers),scares,'Seeking fired scare audio');
  // Crossing a trigger during live playback produces one and only one sting.
- const near=await page.evaluate(()=>{
+ const firstTrigger=await page.evaluate(()=>{
   const s=runway.seek(1),r=s.house.rooms.find(room=>room.id===-1);
-  if(!r)return null;
-  const trigger=s.time-r.progress;
-  return runway.seek(trigger-.08);
+  return r?s.time-r.progress:null;
  });
+ assert(firstTrigger!==null,'First scare could not be reached');
+ const warningBefore=await page.evaluate(()=>runway.state().house.warnings);
+ await page.evaluate(t=>runway.seek(t),firstTrigger-1.92);
+ await page.evaluate(()=>runway.play());
+ await page.waitForTimeout(320);
+ await page.evaluate(t=>runway.seek(t),firstTrigger-.08);
+ const warningAfter=await page.evaluate(()=>runway.state().house.warnings);
+ if(await page.evaluate(()=>runway.state().house.sound))assert.equal(warningAfter,warningBefore+1,'Warning cue did not trigger once');
+ assert.equal(await page.evaluate(()=>runway.state().house.liveVoices),0,'Pausing did not stop the active warning');
+ const near=await page.evaluate(t=>runway.seek(t),firstTrigger-.08);
  assert(near,'First scare could not be reached');
  await page.evaluate(()=>runway.play());
  await page.waitForTimeout(550);
@@ -80,9 +94,35 @@ const ROOT=path.resolve(__dirname,'..'),OUT=path.join(ROOT,'dist','verification'
  const count=await page.evaluate(()=>runway.state().house.stingers);
  // Headless browsers without Web Audio may legitimately remain silent.
  const soundAvailable=await page.evaluate(()=>Boolean(window.AudioContext||window.webkitAudioContext));
- if(soundAvailable)assert.equal(count,scares+1,'Live scare did not trigger exactly one sound');
+ if(soundAvailable){
+  assert.equal(count,scares+1,'Live scare did not trigger exactly one sound');
+  const firstProfile=await page.evaluate(()=>runway.state().house.lastSound);
+  assert.equal(firstProfile.kind,'wardrobe','The wrong room sound played');
+  assert.equal(firstProfile.stage,'impact','Warning sound replaced the impact');
+  const secondTrigger=await page.evaluate(()=>{
+   const s=runway.seek(1),r=s.house.rooms.find(room=>room.id===-2);
+   return r?s.time-r.progress:null;
+  });
+  // The second room might not be visible at t=1; compute it via the room repeat interval.
+  const next=secondTrigger===null?firstTrigger+620*Math.min(844/900,1.2)/(49*Math.min(844/900,1.2)):secondTrigger;
+  await page.evaluate(t=>runway.seek(t),next-.08);
+  await page.evaluate(()=>runway.play());
+  await page.waitForTimeout(450);
+  const second=await page.evaluate(()=>runway.state().house);
+  assert.equal(second.lastSound.kind,'dining','Room-specific scare did not change sound');
+  assert.equal(second.lastSound.stage,'impact');
+  assert.equal(second.stingers,count+1,'Second room impact was not exactly once');
+  await page.evaluate(t=>runway.seek(t),next+.6);
+  assert.equal(await page.evaluate(()=>runway.state().house.liveVoices),0,'Pause did not stop sounding oscillators');
+ }
  await page.locator('#house-sound').tap();
  assert.equal(await page.locator('#house-sound').getAttribute('aria-pressed'),'false');
+ assert.equal(await page.evaluate(()=>runway.state().house.liveVoices),0,'Muting left active sources');
+ const mutedCount=await page.evaluate(()=>runway.state().house.stingers);
+ await page.evaluate(t=>runway.seek(t),firstTrigger+620/49*2-.07);
+ await page.evaluate(()=>runway.play());
+ await page.waitForTimeout(320);
+ assert.equal(await page.evaluate(()=>runway.state().house.stingers),mutedCount,'Muted audio still fired');
  await page.evaluate(()=>runway.seek(24));
  await page.locator('#scene').screenshot({path:path.join(OUT,'hungry-house-phone.png')});
  await page.setViewportSize({width:1440,height:900});
