@@ -45,6 +45,30 @@ const ROOT=path.resolve(__dirname,'..'),OUT=path.join(ROOT,'dist','verification'
   assert(audioSource.includes(feature),'Cinematic audio synthesizer missing '+feature);
  }
  assert(audioSource.includes("['warning',-1.84]"),'No timed anticipation before the reveal');
+ // Test real alpha pixels and state isolation of the selected spectral renderer.
+ const spiritSource=audioSource.slice(audioSource.indexOf('function hungrySpirit('),audioSource.indexOf('function hungryHand('));
+ const spirit=await page.evaluate(source=>{
+  const surface=document.createElement('canvas');surface.width=480;surface.height=650;
+  const c=surface.getContext('2d'),render=new Function(source+';return hungrySpirit;')();
+  c.translate(2,3);c.globalAlpha=1;c.strokeStyle='#123456';
+  const before={transform:[...['a','b','c','d','e','f'].map(k=>c.getTransform()[k])],alpha:c.globalAlpha,stroke:c.strokeStyle};
+  const sample=t=>{c.clearRect(-2,-3,480,650);render(240,315,150,t,11,c);return c.getImageData(0,0,480,650).data};
+  const a=sample(3),b=sample(5),again=sample(3);
+  let maxAlpha=0,visible=0,moving=0,stable=true,blue=0;
+  for(let i=0;i<a.length;i++){
+   if(a[i]!==again[i])stable=false;
+   if(a[i]!==b[i])moving++;
+   if(i%4===3){maxAlpha=Math.max(maxAlpha,a[i]);if(a[i]>5){visible++;if(a[i-1]>a[i-3])blue++;}}
+  }
+  const after={transform:[...['a','b','c','d','e','f'].map(k=>c.getTransform()[k])],alpha:c.globalAlpha,stroke:c.strokeStyle};
+  return {maxAlpha,visible,moving,stable,blue,statePreserved:JSON.stringify(before)===JSON.stringify(after)};
+ },spiritSource);
+ assert(spirit.visible>10000,'Undertow has no readable spectral body');
+ assert(spirit.maxAlpha<250,'Undertow became opaque');
+ assert(spirit.blue>spirit.visible*.9,'Undertow lost its blue palette');
+ assert(spirit.moving>1000&&spirit.stable,'Undertow motion is missing or nondeterministic');
+ assert(spirit.statePreserved,'Ghost drawing leaked canvas state into the house');
+
  assert.equal(house.figure.x>=0&&house.figure.x+house.figure.width<=390,true,'Walker cropped on phone');
  const seen=new Set(),snapshots=[];
  for(let t=0;t<=130;t+=2.5){
@@ -134,7 +158,7 @@ const ROOT=path.resolve(__dirname,'..'),OUT=path.join(ROOT,'dist','verification'
  assert(back.forest.length>0,'Forest objects disappeared');
  assert.deepEqual(errors,[]);
  assert.deepEqual(requests,[]);
- fs.writeFileSync(path.join(OUT,'haunted-house.json'),JSON.stringify({rooms:[...seen],samples:snapshots.length,stingers:count,soundAvailable,errors,requests},null,2)+'\n');
+ fs.writeFileSync(path.join(OUT,'haunted-house.json'),JSON.stringify({rooms:[...seen],samples:snapshots.length,stingers:count,soundAvailable,spirit,errors,requests},null,2)+'\n');
  console.log('Hungry House verification passed');
  await browser.close();
 })().catch(err=>{console.error(err);process.exit(1);});

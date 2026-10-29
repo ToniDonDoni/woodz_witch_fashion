@@ -46,7 +46,7 @@ body.house-active #actcard{bottom:112px}
 <canvas id="scene" aria-label="A woman walking on an infinite illustrated forest runway while the woodland stages a new enchanted act around her"></canvas>
 <header class="masthead"><div class="brand">WOODZ</div><div class="edition">INFINITE RUNWAY<br>STUDY 05 / SCENES IN THE WOOD</div></header>
 <div class="caption"><h1>Into the woods.</h1><p>An endless woodland procession</p></div>
-<div class="build-info" id="build-info"><a id="build-commit" data-head="56b02e14152779aab0f015eaaf32e3777cdde778" href="https://github.com/ToniDonDoni/woodz_witch_fashion/commit/56b02e14152779aab0f015eaaf32e3777cdde778" target="_blank" rel="noopener" title="56b02e14152779aab0f015eaaf32e3777cdde778">HEAD 56b02e141527</a><span class="branch-meta"> · <span id="build-branch" title="codex/haunted-house-stomach">codex/haunted-house-stomach</span></span></div>
+<div class="build-info" id="build-info"><span id="build-commit" data-head="">HEAD · rebuild to identify</span></div>
 <div class="house-toolbar" role="group" aria-label="Haunted house mode">
 <button id="house-mode" aria-pressed="false">ENTER HOUSE</button>
 <button id="house-sound" aria-pressed="false" hidden>SOUND OFF</button>
@@ -1745,31 +1745,48 @@ function hungryDoor(x,y,width,height,open,id){
  }
  hungryRect(x+width*.55,y+height*.53,5,5,'#c3a581');
 }
-function hungrySpirit(cx,cy,r,age,id){
- // Liquid Spirits: a morphing ectoplasm silhouette, not a static ghost sprite.
- ctx.save();ctx.globalCompositeOperation='screen';
- const pulse=.88+.12*Math.sin(time*4+id);
- const size=r*pulse;
- const outer=ctx.createRadialGradient(cx,cy,5,cx,cy,size*1.6);
- outer.addColorStop(0,'#cfebea9e');outer.addColorStop(.45,'#659dba60');outer.addColorStop(1,'#498da400');
- ctx.fillStyle=outer;ctx.beginPath();ctx.ellipse(cx,cy,size*.9,size*1.7,0,0,TAU);ctx.fill();
- ctx.beginPath();ctx.moveTo(cx,cy-size);
- ctx.bezierCurveTo(cx-size*.72,cy-size*1.4,cx-size,cy-size*.15,cx-size*.58,cy+size*.48);
- for(let p=0;p<5;p++){
-  const xx=cx-size*.6+p*size*.3;
-  ctx.quadraticCurveTo(xx+Math.sin(time*2+p+id)*size*.22,cy+size*(1.15+Math.sin(time*2+p)*.22),xx+size*.2,cy+size*.54);
+// Undertow: the selected translucent ectoplasm study, shared by house apparitions.
+function hungrySpirit(cx,cy,r,age,id,drawingContext=ctx){
+ const c=drawingContext,t=age+(id%17)*.23,TAU=Math.PI*2;
+ const color=(rgb,alpha)=>`rgba(${rgb},${Math.max(0,Math.min(1,alpha))})`;
+ function path(c,s,fill,stroke,width=1){const p=new Path2D(s);if(fill){c.fillStyle=fill;c.fill(p)}if(stroke){c.strokeStyle=stroke;c.lineWidth=width;c.stroke(p)}return p}
+ function ellipse(c,x,y,rx,ry,fill,rot=0){c.fillStyle=fill;c.beginPath();c.ellipse(x,y,rx,ry,rot,0,TAU);c.fill()}
+ function gradient(c,x,y,x2,y2,stops){const g=c.createLinearGradient(x,y,x2,y2);for(const [p,v]of stops)g.addColorStop(p,v);return g}
+ function glow(c,x,y,r,rgb,alpha,stretch=1){c.save();c.translate(x,y);c.scale(1,stretch);const g=c.createRadialGradient(0,0,0,0,0,r);g.addColorStop(0,color(rgb,alpha));g.addColorStop(.36,color(rgb,alpha*.47));g.addColorStop(1,color(rgb,0));c.fillStyle=g;c.fillRect(-r,-r,r*2,r*2);c.restore()}
+
+ // Preserve the approved Undertow proportions in the room's local coordinates.
+ c.save();c.translate(cx,cy);c.scale(r/150,r/150);c.translate(-240,-315);
+ const rgb='125,218,242',p=Math.sin(t*.78),q=Math.cos(t*.62);c.save();c.translate(p*9,Math.sin(t*.8+1)*9);
+ c.save();c.globalCompositeOperation='screen';glow(c,247,282,130,rgb,.16,1.7);glow(c,240,172,49,'170,237,248',.18,1.3);c.restore();
+ const shape=`M 242 100 C 200 92 185 134 192 177 C 198 207 168 220 155 253 C 141 286 154 325 117 363 C 165 353 179 328 179 296 C 196 349 170 379 159 422 C 146 464 157 503 ${183+p*25} 543 C 205 570 244 570 ${264+q*30} 552 C 218 567 193 523 211 496 C 240 454 282 431 288 385 C 295 348 272 324 292 289 C 305 322 315 332 357 343 C 323 315 338 268 317 241 C 294 211 278 210 285 173 C 293 129 278 102 242 100 Z`;
+ const g=gradient(c,150,120,310,554,[[0,color(rgb,.24)],[.29,color(rgb,.18)],[.65,color(rgb,.14)],[1,color(rgb,0)]]);
+ c.save();c.filter='blur(5px)';path(c,shape,color(rgb,.12));c.restore();path(c,shape,g);
+ // Caustic folds occupy a continuous fluid silhouette, with open flowing tails.
+ c.save();c.clip(new Path2D(shape));
+ for(let j=0;j<24;j++){
+  const x=142+j*8,w=Math.sin(t*.7+j*.4)*16;const sy=95+j%5*13;
+  c.beginPath();c.moveTo(x,sy);c.bezierCurveTo(x+45+w,205,x-65,295,x+13,366);c.bezierCurveTo(x+60+w,425,x-70+w,494,x+22,572);
+  c.strokeStyle=gradient(c,0,sy,0,580,[[0,color(rgb,.03)],[.26,color(rgb,.19)],[.6,color(rgb,.08)],[1,color(rgb,0)]]);c.lineWidth=j%5===0?4:.7;c.stroke();
  }
- ctx.bezierCurveTo(cx+size*.95,cy-size*.15,cx+size*.65,cy-size*1.3,cx,cy-size);
- ctx.fillStyle='#a7b9c88c';ctx.fill();
- ctx.fillStyle='#02080ecc';ctx.beginPath();ctx.ellipse(cx-size*.22,cy-size*.29,size*.08,size*.14,0,0,TAU);ctx.ellipse(cx+size*.20,cy-size*.30,size*.08,size*.14,0,0,TAU);ctx.fill();
- ctx.strokeStyle='#0a1d2ac0';ctx.lineWidth=3;ctx.beginPath();ctx.arc(cx,cy+size*.02,size*.16,0,Math.PI);ctx.stroke();
- for(let p=0;p<7;p++){
-  const orbit=time*.8+p*TAU/7+id;
-  const px=cx+Math.cos(orbit)*size*(.8+p*.06),py=cy+Math.sin(orbit)*size*.8;
-  ctx.fillStyle='rgba(153,222,237,'+(.28+.14*Math.sin(time+p))+')';
-  ctx.beginPath();ctx.arc(px,py,2.2+p%3,0,TAU);ctx.fill();
+ c.restore();
+ // Asymmetric almost-human face suspended under a curved ectoplasmic brow.
+ path(c,'M 210 153 C 211 128 232 116 251 122 C 281 134 266 167 265 186 C 263 210 246 230 231 219 C 216 207 205 180 210 153 Z',gradient(c,210,130,266,230,[[0,color(rgb,.13)],[.4,'#14303d70'],[1,'#13344212']]));
+ path(c,'M 209 148 C 212 124 231 115 251 121 C 267 126 273 140 273 155',null,color('196,246,250',.53),1.15);
+ path(c,'M 217 169 C 221 164 230 162 236 168 C 231 180 220 184 217 169 Z M 249 167 C 254 159 262 159 267 163 C 267 176 255 180 249 167 Z',color('9,29,43',.72));
+ path(c,'M 244 169 Q 235 187 240 191 M 238 204 Q 244 201 250 205',null,color(rgb,.21),1);
+ // Bright edge filaments flow into dimmer curls rather than thick rigid limbs.
+ for(let j=0;j<8;j++){
+  const a=j/7,xx=192+a*92,yy=239+Math.sin(j)*22,w=Math.sin(t*.65+j)*28;
+  const s=`M ${xx} ${yy} C ${xx+50} 345 ${xx-76+w} 369 ${xx-24} 442 C ${xx+20} 506 ${xx-10+w} 554 ${xx+75+w} ${548+j*4}`;
+  path(c,s,null,gradient(c,0,yy,0,580,[[0,color(rgb,.02)],[.3,color(rgb,.29)],[.73,color(rgb,.17)],[1,color(rgb,0)]]),j%3? .85:2.2);
  }
- ctx.restore();
+ path(c,`M 239 101 C 197 100 187 139 193 176 C 201 211 162 228 156 260 C 150 287 155 322 126 352`,null,color(rgb,.47),1.15);
+ path(c,'M 277 122 C 294 158 271 186 289 213 C 299 229 321 234 322 269',null,color(rgb,.34),.9);
+ for(let j=0;j<7;j++){
+  const a=t*.55+j*2.399,x=240+Math.cos(a)*(87+j*7),y=334+Math.sin(a*.7+j)*139;
+  glow(c,x,y,7,rgb,.20,1.4);ellipse(c,x,y,1.3,2.6,color(rgb,.41),-.3);
+ }
+ c.restore();c.restore();
 }
 function hungryHand(x,y,reach,alpha,id){
  ctx.save();ctx.globalAlpha=alpha;
@@ -1795,16 +1812,11 @@ function hungryFurniture(kind,progress,i){
   hungryRect(352,-495,238,36,'#352723');
   hungryDoor(375,-458,95,440,progress> -2?Math.min(1,(progress+2)/2):0,id+2);
   hungryDoor(470,-458,95,440,progress> -1.7?Math.min(1,(progress+1.7)/1.7):0,id+3);
-  // A long-limbed silhouette jumps from the black opening after a fake closing.
+  // The selected liquid apparition surges out after the false closing.
   if(strength>0){
    ctx.save();ctx.globalAlpha=strength;
    const lunge=110*Math.sin(Math.PI*Math.min(progress/1.2,1));
-   const cx=488-lunge,cy=-292;
-   ctx.fillStyle='#05070a';ctx.beginPath();ctx.ellipse(cx,cy,62,138,0,0,TAU);ctx.fill();
-   ctx.beginPath();ctx.ellipse(cx-12,cy-138,39,56,.2,0,TAU);ctx.fill();
-   hungryRect(cx-31,cy-151,8,8,'#ecedc4');hungryRect(cx-3,cy-151,8,8,'#ecedc4');
-   hungryStroke([[cx-32,cy-38],[cx-100,cy+90],[cx-138,cy+57]],'#a7a0a0',13,id+5);
-   hungryStroke([[cx+31,cy-22],[cx+96,cy+91],[cx+54,cy+176]],'#8f9296',11,id+6);
+   hungrySpirit(488-lunge,-292,120,time,id+5);
    ctx.restore();
   }
  }else if(kind==='dining'){
@@ -1829,7 +1841,7 @@ function hungryFurniture(kind,progress,i){
   hungryStroke([[293,-170],[294,-112]],'#8e8c87',9,id+20);
   const twist=progress>-1.1?Math.min(1,(progress+1.1)*2):0;
   hungryRect(286+twist*3,-205,4+twist*5,4,'#050608');
-  if(strength>0)hungrySpirit(454,-238,52,strength,id+29);
+  if(strength>0)hungrySpirit(454,-238,52,time,id+29);
  }else if(kind==='inkwall'){
   hungryDoor(425,-440,145,433,0,id);
   if(progress> -3.4){
@@ -1838,7 +1850,7 @@ function hungryFurniture(kind,progress,i){
     hungryStroke([[x,y],[x-25-Math.sin(time*2+p)*19,y+64],[x+10-Math.cos(time+p)*11,y+107]],'#06070ad9',5,id+p+51);
    }
   }
-  if(strength>0){hungryHand(494,-237,.4+strength*1.4,strength,id+83);hungrySpirit(515,-332,32,strength,id+90);}
+  if(strength>0){hungryHand(494,-237,.4+strength*1.4,strength,id+83);hungrySpirit(515,-332,32,time,id+90);}
  }else if(kind==='stomach'){
   for(let p=0;p<8;p++){
    const x=68+p*69;
@@ -1856,7 +1868,7 @@ function hungryFurniture(kind,progress,i){
    const botY=-238+Math.sin(theta)*(119+66*gape);
    hungryStroke([[xx-8,botY],[xx,botY-32-19*gape],[xx+9,botY]],'#bfb2a2',3,id+p+141);
   }
-  if(strength>0)hungrySpirit(428,-236,50+strength*35,strength,id+180);
+  if(strength>0)hungrySpirit(428,-236,50+strength*35,time,id+180);
  }
 }
 function hungryDrawRooms(){

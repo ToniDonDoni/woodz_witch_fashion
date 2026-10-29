@@ -36,6 +36,12 @@ forest mode is unaffected. See the researched sound criteria and sources
 in `specs/spec_001.md`. The previous forest mode and all 13 original effect
 checkboxes are unchanged. Use **LEAVE HOUSE** to return to the forest.
 
+**Undertow apparition:** the wardrobe reveal, stolen mirror reflection and
+stomach spirit share the selected blue ectoplasm design: a translucent body,
+hollow face, flowing internal highlights and curling vapour tails. The
+wardrobe appearance retains its existing reveal timing, lunge and audio.
+The ghost is drawn at runtime with Canvas 2D; no image or library is loaded.
+
 **Phone controls:** Tap ENTER HOUSE at the top, then SOUND ON/OFF to
 mute or restore the sting. The bottom PLAY/PAUSE button still controls
 walking. House controls have 44px or taller touch targets. Forest-only

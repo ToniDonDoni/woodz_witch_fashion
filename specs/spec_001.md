@@ -10,7 +10,7 @@ Add a selectable **Haunted House** world while preserving the original forest an
 
 The scenery is a 2D cutaway moving **left to right** behind the screen-anchored walker. Reuse or adapt exactly these three requested effect families, not Rolling Fog or Stained Glass: **Living Ink** for animated cracks, dripping walls and shadow limbs; **Liquid Spirits** for morphing ectoplasm and mirror ghosts; **Moonlit Caustics** for unnaturally shifting light, silhouettes and reflections.
 
-Scenes: foyer (the house watches), wardrobe (door creaks, lanky creature bursts out), dining room (eyes and a hand beneath the table), mirror room (the woman's reflection is replaced by a liquid ghost), nursery (a false alarm followed by a doll/shadow reveal), inked wall (fingers and faces emerge), stomach chamber (living ribs, pulsing wall, enormous mouth). An occasional reaching hand may startle without replacing the main story.
+Scenes: foyer (the house watches), wardrobe (door creaks, the selected blue Undertow apparition bursts out), dining room (eyes and a hand beneath the table), mirror room (the woman's reflection is replaced by a liquid ghost), nursery (a false alarm followed by a doll/shadow reveal), inked wall (fingers and faces emerge), stomach chamber (living ribs, pulsing wall, enormous mouth). An occasional reaching hand may startle without replacing the main story.
 
 Sudden reveals use original, **procedurally synthesized cinematic horror sound**, not a single arcade-style pitch sweep. A scare has (1) an understated warning/creak around 1.8 seconds before the reveal, (2) a brief near-silent gap, (3) a frame-aligned layered attack with material-specific noise, dissonant tonal clusters and a low impact, (4) a shaped decay and short room echo. The seven room types must have distinct sonic identities: settling wood, wardrobe slam/hinges, dining clatter, mirror/glass and spectral tone, twisted music box, wet ink/plaster tearing, and deep organic house rumble. Variation is determined by stable world identity, not uncontrolled random replay.
 
@@ -24,7 +24,7 @@ Sound requires an explicit user gesture, with a visible mute/unmute control. No 
 - [ ] At least seven recognizable room designs are present, with deterministic decor variation across a repeating endless sequence.
 - [ ] A deterministic scare sequence includes anticipation, at least one false alarm, a sudden reveal and a recovery window; wardrobe, dining, mirror, nursery, wall and stomach each have distinct readable events.
 - [ ] The stomach reveal makes the house's true nature legible through rib-like architecture, pulsing surfaces and teeth.
-- [ ] Living Ink visibly animates wall cracks/shadows, Liquid Spirits visibly morphs a ghost, and Moonlit Caustics animates moonlit highlights in the house.
+- [ ] Living Ink visibly animates wall cracks/shadows, Liquid Spirits visibly morphs a ghost, and Moonlit Caustics animates moonlit highlights in the house. The selected Undertow drawing supplies the translucent blue body, flowing highlights and fading tails for house apparitions.
 - [ ] At each major reveal, a scary audio sting is requested exactly once during continuous forward playback; pausing, repainting or seeking cannot retrigger it.
 - [ ] The audio is synthesized offline using Web Audio, starts only after a user gesture, can be muted immediately and fails gracefully when audio is unavailable.
 - [ ] A deterministic warning cue (quiet detuned drones/creak) starts before the room reveal; its envelope decays to a quiet gap before impact.
