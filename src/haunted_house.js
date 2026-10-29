@@ -298,12 +298,15 @@ function hungryAudioBetween(before,after){
  }
 }
 function hungryUpdateControls(){
+ document.body.classList.toggle('house-active',hungry.active);
  const toggle=document.querySelector('#house-mode'),sound=document.querySelector('#house-sound');
  toggle.textContent=hungry.active?'LEAVE HOUSE':'ENTER HOUSE';
  toggle.setAttribute('aria-pressed',String(hungry.active));
+ toggle.setAttribute('aria-label',hungry.active?'Leave the haunted house':'Enter the haunted house');
  sound.hidden=!hungry.active;
  sound.textContent=hungry.sound?'SOUND ON':'SOUND OFF';
  sound.setAttribute('aria-pressed',String(hungry.sound));
+ sound.setAttribute('aria-label',hungry.sound?'Mute scary sounds':'Enable scary sounds');
  const cap=document.querySelector('.caption');
  cap.querySelector('h1').textContent=hungry.active?'The Hungry House.':'Into the woods.';
  cap.querySelector('p').textContent=hungry.active?'A house that digests its visitors':'An endless woodland procession';
