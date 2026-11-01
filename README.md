@@ -61,6 +61,26 @@ with articulated arms and legs, carved eyes and a hinged jaw. It waits through
 the early warning, performs one gesture during the encounter and settles in
 recovery. The toy chest sits beside the cot so the face remains readable.
 
+### Selected house designs and their references
+
+The [Awesome Opus collection](https://github.com/yihui-dev/awesome-opus5-5-videos)
+provided visual and technique references during the ghost, hand, doll and
+interior studies. This table maps those references to the **selected designs**,
+rather than to the forest's optional-effect checkboxes below.
+
+| Selected design | Collection examples | What informed this design | Project implementation |
+| --- | --- | --- | --- |
+| **Undertow ghost / Liquid Spirits** | [Realistic Lava Lamp](https://github.com/yihui-dev/awesome-opus5-5-videos/blob/main/prompts/juancarlos17626-382690.md) | Stretching fluid shapes informed the changing ectoplasm silhouette, translucent folds and flowing tails. The humanoid face, filaments and reveal animation are original drawing code. | `hungrySpirit` in [haunted_house.js](src/haunted_house.js) |
+| **The Ink Thief hand / Living Ink** | [Interactive Ink Painting](https://github.com/yihui-dev/awesome-opus5-5-videos/blob/main/prompts/youwareai-259061.md) | Dry-brush fibres and paper texture informed the frayed ink silhouette. Palm anatomy, five articulated digits, nails and reaching motion are original drawing code. | [ink_thief_hand.js](src/ink_thief_hand.js) |
+| **The Little Usher marionette** | [Paper Puppet Story](https://github.com/yihui-dev/awesome-opus5-5-videos/blob/main/prompts/jamee-now-583635.md), [Claymation Desk Scene](https://github.com/yihui-dev/awesome-opus5-5-videos/blob/main/prompts/wikiwayne-080350.md) | Puppet staging and tactile material cues informed the character study. The wooden face, hinged jaw, joints, five attached strings and one-shot gesture are original drawing code. | [little_usher_doll.js](src/little_usher_doll.js) |
+| **The Ashen Nave interior** | [Fishbowl Light and Caustics](https://github.com/yihui-dev/awesome-opus5-5-videos/blob/main/prompts/nicolamanzini-156628.md), [Interactive Ink Painting](https://github.com/yihui-dev/awesome-opus5-5-videos/blob/main/prompts/youwareai-259061.md) | Moving light inspired the clipped cold window bands; the living-ink idea carries into the animated wall cracks. The Gothic architecture, black-grey palette, furniture, ribbed vaults and toothed throat were designed for this project. | [ashen_nave.js](src/ashen_nave.js), `hungryInk` in [haunted_house.js](src/haunted_house.js) |
+
+These are original Canvas 2D interpretations. No third-party renderer,
+character asset or house scene was copied or installed. In particular, the
+Ashen Nave is an original Gothic design; its collection references apply to
+the light and ink treatment. Its moving light is drawn with clipped gradients
+and bands, without reproducing the fishbowl's physical refraction simulation.
+
 **Phone controls:** Tap ENTER HOUSE at the top, then SOUND ON/OFF to
 mute or restore the sting. The bottom PLAY/PAUSE button still controls
 walking. House controls have 44px or taller touch targets. Forest-only
