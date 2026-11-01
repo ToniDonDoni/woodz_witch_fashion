@@ -8,6 +8,12 @@ Woodz Witch Fashion is an endless, procedural, side-scrolling runway. The approv
 
 Add a selectable **Haunted House** world while preserving the original forest and the existing walk sprites. The story is **The Hungry House**: the building is a living creature that stalks and digests its visitors. Its rooms are organs, its walls breathe, its mirrors hold stolen souls, and the final hall reveals ribs and a toothed throat. As the infinite walk continues, the story progresses through atmospheric clues, false alarms, escalating threats, and a climactic stomach reveal, then loops with stable seeded variation.
 
+Selected visual direction: **The Ashen Nave**. Use soot-black Gothic ribs,
+neutral grey stone and furniture, torn curtains, narrow cold-blue light and
+sparse highlights. The stomach chamber transforms this architecture into
+living ribs and a toothed black void. Keep the previously selected Undertow,
+Ink Thief and Little Usher drawings and their established encounter timing.
+
 The scenery is a 2D cutaway moving **left to right** behind the screen-anchored walker. Reuse or adapt exactly these three requested effect families, not Rolling Fog or Stained Glass: **Living Ink** for animated cracks, dripping walls and shadow limbs; **Liquid Spirits** for morphing ectoplasm and mirror ghosts; **Moonlit Caustics** for unnaturally shifting light, silhouettes and reflections.
 
 Scenes: foyer (the house watches), wardrobe (door creaks, the selected blue Undertow apparition bursts out), dining room (eyes and the selected Ink Thief hand beneath the table), mirror room (the woman's reflection is replaced by a liquid ghost), nursery (a false alarm followed by the selected Little Usher marionette and a spirit reveal), inked wall (fingers and faces emerge), stomach chamber (living ribs, pulsing wall, enormous mouth). An occasional reaching hand may startle without replacing the main story.

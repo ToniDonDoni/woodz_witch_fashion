@@ -36,6 +36,13 @@ forest mode is unaffected. See the researched sound criteria and sources
 in `specs/spec_001.md`. The previous forest mode and all 13 original effect
 checkboxes are unchanged. Use **LEAVE HOUSE** to return to the forest.
 
+**The Ashen Nave interior:** the selected soot-black Gothic direction now
+shapes all seven rooms. Lancet windows cast cold moving light over ribbed
+vaults, torn curtains, stone recesses and grey domestic furniture. The final
+chamber turns the same mouldings into living ribs around a toothed black
+throat. The rooms retain their horizontal traversal and encounter timing.
+The architecture is drawn at runtime in `src/ashen_nave.js`.
+
 **Undertow apparition:** the wardrobe reveal, stolen mirror reflection and
 stomach spirit share the selected blue ectoplasm design: a translucent body,
 hollow face, flowing internal highlights and curling vapour tails. The
@@ -88,6 +95,7 @@ at upper left. No runtime libraries or network requests are required.
 | --- | --- |
 | `src/forest_runway_template.html` | Page, composition, playback, effect checkboxes and HEAD position. |
 | `src/forest_scene.js` | Trees, moon, stars, ground objects and foreground vegetation. |
+| `src/ashen_nave.js` | Selected soot-black Gothic architecture, furnishings and living throat. |
 | `src/ink_thief_hand.js` | Selected procedural living-ink hand, articulated fingers and brush texture. |
 | `src/little_usher_doll.js` | Selected carved marionette, jointed limbs and attached strings. |
 | `src/haunted_house.js` | Procedural haunted mansion, seven story rooms, scares and Web Audio stingers. |

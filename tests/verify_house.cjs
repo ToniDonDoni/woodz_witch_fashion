@@ -45,6 +45,34 @@ const ROOT=path.resolve(__dirname,'..'),OUT=path.join(ROOT,'dist','verification'
   assert(audioSource.includes(feature),'Cinematic audio synthesizer missing '+feature);
  }
  assert(audioSource.includes("['warning',-1.84]"),'No timed anticipation before the reveal');
+ // The selected architecture draws deterministic, animated pixels without
+ // leaking transform, alpha, stroke or compositing state into the encounters.
+ const architectureSource=fs.readFileSync(path.join(ROOT,'src','ashen_nave.js'),'utf8');
+ const architecture=await page.evaluate(source=>{
+  const renderer=new Function(source+';return ashenNave;')();
+  const surface=document.createElement('canvas');surface.width=660;surface.height=1000;
+  const c=surface.getContext('2d');c.translate(20,790);c.globalAlpha=.72;c.strokeStyle='#123456';c.fillStyle='#654321';
+  const state=()=>JSON.stringify({matrix:['a','b','c','d','e','f'].map(k=>c.getTransform()[k]),alpha:c.globalAlpha,stroke:c.strokeStyle,fill:c.fillStyle,filter:c.filter,composite:c.globalCompositeOperation,lineWidth:c.lineWidth,lineJoin:c.lineJoin,shadow:c.shadowColor,blur:c.shadowBlur});
+  const before=state();
+  const sample=(t,kind='foyer',seed=12731)=>{
+   c.clearRect(-20,-790,660,1000);renderer.room(c,-7,kind,t,seed);renderer.furniture(c,kind,t,-7);
+   if(kind==='stomach')renderer.throat(c,t,.85,-7);
+   return c.getImageData(0,0,660,1000).data;
+  };
+  const a=sample(3),b=sample(5),again=sample(3),other=sample(3,'stomach'),seeded=sample(3,'foyer',2151);
+  let visible=0,moving=0,stable=true,distinct=0,seedVariation=0;
+  for(let i=0;i<a.length;i++){
+   if(a[i]!==again[i])stable=false;if(a[i]!==b[i])moving++;if(a[i]!==other[i])distinct++;if(a[i]!==seeded[i])seedVariation++;
+   if(i%4===3&&a[i]>10)visible++;
+  }
+  renderer.door(c,422,-407,158,407,.7);renderer.diningLeg(c);
+  const preserved=before===state();c.globalAlpha=0;const blank=sample(3).every(v=>v===0);
+  return {visible,moving,stable,distinct,seedVariation,statePreserved:preserved,zeroAlpha:blank};
+ },architectureSource);
+ assert(architecture.visible>300000,'Ashen Nave room is not visibly painted');
+ assert(architecture.stable&&architecture.moving>1000,'Architecture lost deterministic secondary motion');
+ assert(architecture.distinct>10000&&architecture.seedVariation>1000,'The final chamber or seeded decor lost its variation');
+ assert(architecture.statePreserved&&architecture.zeroAlpha,'Architecture leaked Canvas state or ignored inherited alpha');
  // Test real alpha pixels and state isolation of the selected spectral renderer.
  const spiritSource=audioSource.slice(audioSource.indexOf('function hungrySpirit('),audioSource.indexOf('function hungryHand('));
  const spirit=await page.evaluate(source=>{
@@ -208,13 +236,28 @@ const ROOT=path.resolve(__dirname,'..'),OUT=path.join(ROOT,'dist','verification'
  await page.setViewportSize({width:1440,height:900});
  await page.evaluate(()=>runway.seek(78));
  await page.locator('#scene').screenshot({path:path.join(OUT,'hungry-house-stomach-desktop.png')});
+ // Inspect every integrated room during its reveal, not just one fixed time.
+ const captures=[];
+ for(const viewport of [{width:1440,height:900},{width:390,height:844},{width:844,height:390}]){
+  await page.setViewportSize(viewport);
+  await page.waitForFunction(v=>runway.state().viewport.w===v.width&&runway.state().viewport.h===v.height,viewport);
+  const scale=Math.min(viewport.height/900,1.2),span=620*scale,speed=49*scale;
+  for(let k=0;k<7;k++){
+   const id=k?-k:-7,kind=['foyer','wardrobe','dining','mirror','nursery','inkwall','stomach'][k];
+   const t=(viewport.width*.5-id*span-span*.5)/speed+.45;
+   const state=await page.evaluate(t=>runway.seek(t),t);
+   assert(state.house.rooms.some(r=>r.id===id&&r.kind===kind),'Room disappeared during its reveal');
+   const name=`ashen-${kind}-${viewport.width}x${viewport.height}.png`;
+   await page.locator('#scene').screenshot({path:path.join(OUT,name)});captures.push(name);
+  }
+ }
  await entering.click();
  const back=await page.evaluate(()=>runway.state());
  assert.equal(back.house,undefined,'Leaving the house did not restore the forest');
  assert(back.forest.length>0,'Forest objects disappeared');
  assert.deepEqual(errors,[]);
  assert.deepEqual(requests,[]);
- fs.writeFileSync(path.join(OUT,'haunted-house.json'),JSON.stringify({rooms:[...seen],samples:snapshots.length,stingers:count,soundAvailable,spirit,hand,doll,errors,requests},null,2)+'\n');
+ fs.writeFileSync(path.join(OUT,'haunted-house.json'),JSON.stringify({rooms:[...seen],samples:snapshots.length,stingers:count,soundAvailable,architecture,spirit,hand,doll,captures,errors,requests},null,2)+'\n');
  console.log('Hungry House verification passed');
  await browser.close();
 })().catch(err=>{console.error(err);process.exit(1);});

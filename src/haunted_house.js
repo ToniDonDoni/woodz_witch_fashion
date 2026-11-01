@@ -13,30 +13,6 @@ function hungryRect(x,y,width,height,color){ctx.fillStyle=color;ctx.fillRect(x,y
 function hungryStroke(points,color='#67717a',weight=1,id=0){
  line(points,color,weight,id);
 }
-function hungryWindow(id,at){
- hungryRect(at,-548,116,230,'#0a0e17');
- ctx.strokeStyle='#829090';ctx.lineWidth=4;ctx.strokeRect(at,-548,116,230);
- const light=ctx.createLinearGradient(at,-548,at+116,-318);
- light.addColorStop(0,'#88939c42');light.addColorStop(1,'#7081a600');
- hungryRect(at+5,-543,106,220,light);
- hungryStroke([[at+58,-548],[at+58,-318]],'#7b8079',3,id+5);
- hungryStroke([[at,-439],[at+116,-439]],'#7b8079',2,id+6);
- const phase=time*.5+id;
- for(let p=0;p<5;p++){
-  const tx=at+16+p*24;
-  hungryStroke([[tx,-325],[tx-4,-362],[tx+10*Math.sin(phase+p),-387]],'#27333c',2,id+p+20);
- }
- // Light ripples are deliberately clipped to the lower wall and floor.
- ctx.save();ctx.beginPath();ctx.rect(at-20,-315,184,355);ctx.clip();
- for(let j=0;j<4;j++){
-  const x=at+10+j*37+Math.sin(time*.7+j+id)*13;
-  const alpha=.025+.025*(.5+.5*Math.sin(time*.8+j));
-  ctx.fillStyle='rgba(171,198,232,'+alpha+')';
-  ctx.beginPath();ctx.moveTo(at+15+j*17,-320);ctx.lineTo(at+46+j*14,-320);
-  ctx.lineTo(x+88,35);ctx.lineTo(x-28,35);ctx.closePath();ctx.fill();
- }
- ctx.restore();
-}
 function hungryInk(i,intensity=1){
  // Living Ink: the same seeded wall cracks undulate without changing their roots.
  const id=i*71+412;
@@ -52,50 +28,11 @@ function hungryInk(i,intensity=1){
  }
 }
 function hungryRoomShell(i,kind,m){
- const id=7701+i*383,breath=.5+.5*Math.sin(time*1.24+i*.37);
- const grad=ctx.createLinearGradient(0,-690,620,0);
- grad.addColorStop(0,'#141d21');grad.addColorStop(.52,kind==='stomach'?'#2e151b':'#24282a');grad.addColorStop(1,'#0c1216');
- hungryRect(0,-685,620,695,grad);
- for(let j=0;j<20;j++){
-  const x=j*34+nrand(id+j)*8;
-  hungryStroke([[x,-657],[x+nrand(id+j+44)*18,-395],[x+nrand(id+j+78)*7,-40]],'#78817c12',.8,id+j);
- }
- hungryRect(0,-675,620,24,'#0b0c12');hungryRect(0,-50,620,48,'#19171a');
- hungryRect(0,0,620,67,'#161318');
- for(let p=0;p<22;p++){
-  const px=p*31;
-  hungryStroke([[px,0],[px-12,66]],'#74685c48',1,id+p+34);
-  hungryStroke([[px,-48],[px,-7]],'#756a6240',1,id+p+141);
- }
- hungryRect(0,-330,620,11,'#131519');hungryStroke([[0,-315],[620,-315]],'#6d665d70',2,id+170);
- hungryStroke([[2,-651],[2,8]],'#56443b',12,id+171);
- hungryStroke([[618,-651],[618,8]],'#56443b',12,id+172);
- hungryStroke([[0,-649],[620,-649]],'#756f66',5,id+173);
- hungryStroke([[0,-50],[620,-50]],'#65615a',4,id+174);
- // The house starts to breathe before the stomach reveal.
- if(kind==='stomach'||Math.abs(i)>7){
-  ctx.fillStyle='rgba(114,33,44,'+(.08+breath*.13)+')';ctx.fillRect(10,-640,600,593);
- }
- hungryWindow(id,68+Math.round(rand(id)*20));
+ ashenNave.room(ctx,i,kind,time,seed);
  hungryInk(i,kind==='inkwall'?2.3:kind==='stomach'?1.8:1);
- // Ceiling chandelier and candles.
- hungryStroke([[310,-666],[310,-574]],'#918b83',2,id+190);
- hungryStroke([[264,-574],[282,-551],[338,-551],[357,-574]],'#9a8a71',3,id+191);
- for(const x of [274,346]){
-  hungryRect(x-2,-565,4,21,'#998e75');
-  ctx.fillStyle='#efd49a';ctx.beginPath();ctx.ellipse(x,-572,4,8+2*Math.sin(time*3+x),0,0,TAU);ctx.fill();
- }
 }
 function hungryDoor(x,y,width,height,open,id){
- hungryRect(x-9,y-9,width+18,height+10,'#171419');
- hungryRect(x,y,width,height,'#352a28');
- hungryStroke([[x,y],[x+width,y],[x+width,y+height],[x,y+height],[x,y]],'#a2917c',3,id);
- for(let j=0;j<2;j++)hungryStroke([[x+14,y+14+j*145],[x+width-14,y+14+j*145],[x+width-14,y+127+j*145],[x+14,y+127+j*145],[x+14,y+14+j*145]],'#8b7b6a',2,id+j+3);
- if(open>0){
-  hungryRect(x+width*.5,y+4,width*.5*open,height-7,'#020408');
-  ctx.fillStyle='#17151b';ctx.beginPath();ctx.moveTo(x+width*.5,y);ctx.lineTo(x+width*.5+width*.4*open,y+11);ctx.lineTo(x+width*.5+width*.4*open,y+height-6);ctx.lineTo(x+width*.5,y+height);ctx.fill();
- }
- hungryRect(x+width*.55,y+height*.53,5,5,'#c3a581');
+ ashenNave.door(ctx,x,y,width,height,open);
 }
 // Undertow: the selected translucent ectoplasm study, shared by house apparitions.
 function hungrySpirit(cx,cy,r,age,id,drawingContext=ctx){
@@ -147,18 +84,10 @@ function hungryFurniture(kind,progress,i){
  const active=Math.max(0,Math.min(1,(progress+.2)*4));
  const fade=Math.max(0,1-Math.max(0,progress-1.6)/2.5);
  const strength=active*fade,id=110+i*151;
- if(kind==='foyer'){
-  hungryDoor(422,-407,158,407,0,id);
-  hungryRect(225,-160,120,151,'#352923');
-  hungryStroke([[212,-166],[355,-166]],'#91745b',7,id+2);
-  for(let j=0;j<3;j++)hungryStroke([[242,-110+j*35],[327,-110+j*35]],'#806d5c',2,id+j+3);
-  for(let j=0;j<4;j++)hungryRect(230+j*26,-174,12,8,'#a18a6c');
- }else if(kind==='wardrobe'){
-  hungryRect(364,-474,214,469,'#100b12');
-  hungryRect(352,-495,238,36,'#352723');
+ ashenNave.furniture(ctx,kind,time,i);
+ if(kind==='wardrobe'){
   hungryDoor(375,-458,95,440,progress> -2?Math.min(1,(progress+2)/2):0,id+2);
   hungryDoor(470,-458,95,440,progress> -1.7?Math.min(1,(progress+1.7)/1.7):0,id+3);
-  // The selected liquid apparition surges out after the false closing.
   if(strength>0){
    ctx.save();ctx.globalAlpha=strength;
    const lunge=110*Math.sin(Math.PI*Math.min(progress/1.2,1));
@@ -166,33 +95,20 @@ function hungryFurniture(kind,progress,i){
    ctx.restore();
   }
  }else if(kind==='dining'){
-  for(let j=0;j<3;j++){const x=220+j*110;hungryRect(x,-166,32,154,'#332822');hungryStroke([[x-9,-177],[x+40,-177]],'#8a7267',5,id+j);}
-  hungryRect(181,-238,365,32,'#665044');hungryRect(206,-205,25,193,'#362b2b');hungryRect(501,-205,25,193,'#362b2b');
-  ctx.fillStyle='#b3a38b';ctx.beginPath();ctx.moveTo(178,-209);ctx.lineTo(547,-209);ctx.lineTo(532,-167);ctx.lineTo(200,-167);ctx.fill();
-  for(let j=0;j<6;j++)hungryRect(236+j*47,-110,7+strength*3,5,'#d5c07a');
+  for(let j=0;j<6;j++)hungryRect(236+j*47,-110,7+strength*3,5,'#b1c3df8c');
   if(strength>0){
    ctx.save();ctx.beginPath();ctx.rect(140,-164,415,164);ctx.clip();
    hungryHand(515,-78,.2+strength*1.2,strength,id+50);
    ctx.restore();
-   // The near table leg hides the arm's root, so the hand emerges from below.
-   hungryRect(501,-167,25,155,'#362b2b');
+   // The near leg still hides the selected hand's wrist root below the cloth.
+   ashenNave.diningLeg(ctx);
   }
  }else if(kind==='mirror'){
-  hungryRect(363,-520,189,382,'#554739');
-  hungryRect(376,-503,162,351,'#111924');
-  ctx.strokeStyle='#b39c78';ctx.lineWidth=11;ctx.strokeRect(365,-520,183,370);
-  ctx.fillStyle='#a6bfd423';ctx.beginPath();ctx.ellipse(460,-331,67,160,0,0,TAU);ctx.fill();
   if(progress> -2)hungrySpirit(466-Math.max(0,strength)*96,-320,60+strength*24,time,id+88);
-  hungryRect(390,-149,134,7,'#574940');
  }else if(kind==='nursery'){
-  hungryRect(388,-320,147,295,'#242024');
-  hungryRect(398,-311,127,42,'#665047');
-  for(let j=0;j<5;j++)hungryStroke([[406+j*27,-310],[406+j*27,-29]],'#a2917a',4,id+j);
-  hungryRect(324,-150,100,117,'#413635');
   littleUsherDoll.draw(ctx,374,-150,.65,progress);
   if(strength>0)hungrySpirit(454,-238,52,time,id+29);
  }else if(kind==='inkwall'){
-  hungryDoor(425,-440,145,433,0,id);
   if(progress> -3.4){
    for(let p=0;p<6;p++){
     const x=455+p*12,y=-420+p*34;
@@ -201,22 +117,7 @@ function hungryFurniture(kind,progress,i){
   }
   if(strength>0){hungryHand(494,-237,.4+strength*1.4,strength,id+83);hungrySpirit(515,-332,32,time,id+90);}
  }else if(kind==='stomach'){
-  for(let p=0;p<8;p++){
-   const x=68+p*69;
-   const bend=34*Math.sin(time*1.25+i+p*.2);
-   ctx.beginPath();ctx.moveTo(x,-650);ctx.bezierCurveTo(x+55+bend,-550,x-67-bend,-220,x+10,0);
-   ctx.strokeStyle=p%2?'#967273':'#5f353e';ctx.lineWidth=15;ctx.stroke();
-   ctx.strokeStyle='#c3a1a041';ctx.lineWidth=2;ctx.stroke();
-  }
-  const gape=(.6+.4*Math.sin(time*1.3))*strength;
-  ctx.fillStyle='#070305';ctx.beginPath();ctx.ellipse(432,-238,112+30*gape,130+80*gape,0,0,TAU);ctx.fill();
-  for(let p=0;p<9;p++){
-   const theta=p*Math.PI/8,xx=432+Math.cos(theta)*(107+23*gape);
-   const topY=-238- Math.sin(theta)*(119+66*gape);
-   hungryStroke([[xx-8,topY],[xx,topY+38+16*gape],[xx+9,topY]],'#bfb2a2',3,id+p+120);
-   const botY=-238+Math.sin(theta)*(119+66*gape);
-   hungryStroke([[xx-8,botY],[xx,botY-32-19*gape],[xx+9,botY]],'#bfb2a2',3,id+p+141);
-  }
+  ashenNave.throat(ctx,time,strength,id);
   if(strength>0)hungrySpirit(428,-236,50+strength*35,time,id+180);
  }
 }
