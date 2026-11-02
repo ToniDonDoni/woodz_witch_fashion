@@ -75,11 +75,23 @@ const ROOT=path.resolve(__dirname,'..'),OUT=path.join(ROOT,'dist','verification'
       assert(bounds.card.bottom<bounds.effects.top,'Act title overlaps effects');
     }
     await page.setViewportSize({width:390,height:844});
-    await button.tap();
+    // The first click in the forest starts groove, without using its button.
+    await page.locator('#scene').tap({position:{x:80,y:160}});
     await page.waitForFunction(()=>runway.groove().playing&&runway.groove().scheduled>0);
     assert.equal(await button.textContent(),'GROOVE ON');
     assert.equal(await button.getAttribute('aria-pressed'),'true');
-    assert(await button.isDisabled(),'Only the main PAUSE/PLAY may stop active music');
+    assert(await button.isEnabled(),'Groove button must remain available to toggle off');
+
+    // After that first activation, unrelated clicks must never restart music.
+    await button.tap();
+    assert.equal(await button.textContent(),'START GROOVE');
+    assert.equal(await page.evaluate(()=>runway.groove().armed),false);
+    await page.locator('#scene').tap({position:{x:80,y:160}});
+    assert.equal(await page.evaluate(()=>runway.groove().armed),false,
+      'Only the first forest click may auto-start groove');
+    await button.tap();
+    await page.waitForFunction(()=>runway.groove().playing);
+    assert.equal(await button.textContent(),'GROOVE ON');
 
     const gainEventsBefore=await page.evaluate(()=>window.__grooveGainCalls.length);
     await setRange('#pace',1.2);
@@ -132,10 +144,22 @@ const ROOT=path.resolve(__dirname,'..'),OUT=path.join(ROOT,'dist','verification'
     assert.equal(await page.evaluate(()=>runway.groove().playing),false,'Programmatic house entry must stop music');
     await page.evaluate(()=>runway.setHouse(false));
 
+    // After a reload, the first click directly on START GROOVE must not
+    // both turn audio on and immediately toggle it off as it bubbles.
+    await page.reload();
+    await page.waitForFunction(()=>window.runway?.ready);
+    assert.equal(await button.textContent(),'START GROOVE');
+    await button.tap();
+    await page.waitForFunction(()=>runway.groove().playing);
+    assert.equal(await button.textContent(),'GROOVE ON');
+    await button.tap();
+    assert.equal(await page.evaluate(()=>runway.groove().armed),false,
+      'The groove button must toggle off after direct first-click activation');
+
     assert.deepEqual(errors,[],'JavaScript exceptions: '+errors.join('; '));
     assert.deepEqual(requests,[],'Unexpected network requests');
     await page.screenshot({path:path.join(OUT,'forest-groove-phone.png')});
-    console.log('87.27 BPM pace sync, immediate gain restoration, pause, and house isolation passed');
+    console.log('First forest click, groove on/off, 87.27 BPM pace sync, pause and house isolation passed');
   }finally{
     await browser.close();
   }
