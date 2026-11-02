@@ -61,11 +61,16 @@ const ROOT=path.resolve(__dirname,'..'),OUT=path.join(ROOT,'dist','verification'
           const r=document.querySelector(selector).getBoundingClientRect();
           return {left:r.left,right:r.right,top:r.top,bottom:r.bottom,height:r.height};
         };
-        return {groove:rect('#forest-groove'),effects:rect('.effects'),controls:rect('.controls'),card:rect('#actcard')};
+        return {groove:rect('#forest-groove'),effects:rect('.effects'),controls:rect('.controls'),card:rect('#actcard'),
+          play:rect('#play'),pace:rect('#pace'),dream:rect('#dream')};
       });
       assert(bounds.groove.left>=0&&bounds.groove.right<=viewport.width,'Groove controls clipped: '+JSON.stringify(viewport));
       assert(bounds.groove.bottom<=viewport.height,'Groove controls extend below viewport');
-      assert(bounds.groove.top>=bounds.controls.bottom+3,'Tempo panel overlaps runway controls');
+      const grooveCenter=(bounds.groove.left+bounds.groove.right)/2;
+      assert(Math.abs(grooveCenter-viewport.width/2)<3,'Groove and volume must be centered beneath PACE');
+      assert(bounds.play.right<=bounds.pace.left,'Main PLAY must be directly left of PACE');
+      assert(bounds.pace.right<=bounds.dream.left-4,'NEW DREAM overlaps PACE');
+      assert(bounds.groove.top>=bounds.controls.bottom+3,'Groove overlaps runway controls');
       assert(bounds.effects.bottom<=bounds.controls.top-5,'Effects overlap playback controls');
       assert(bounds.card.bottom<bounds.effects.top,'Act title overlaps effects');
     }
