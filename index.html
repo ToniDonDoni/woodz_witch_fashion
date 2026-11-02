@@ -46,35 +46,27 @@ body.house-active #actcard{bottom:112px}
 #actcard{bottom:174px}
 @media(max-width:700px){#actcard{bottom:245px}}
 
-/* The temporary calibration row sits directly beneath the groove controls. */
-.tempo output{min-width:36px;text-align:right;color:#d7b7ec;font:10px monospace;font-variant-numeric:tabular-nums}
-.forest-groove{position:fixed;bottom:max(12px,env(safe-area-inset-bottom));left:25px;z-index:3;display:flex;flex-direction:column;gap:3px;width:min(310px,calc(100vw - 32px));padding:5px 9px 7px 5px;border:1px solid #d9bfe62a;border-radius:22px;background:#131017e8;backdrop-filter:blur(10px)}
-.forest-groove-row{display:flex;align-items:center;gap:9px}
+/* Keep START GROOVE and volume at lower left, separate from walking controls. */
+.forest-groove{position:fixed;bottom:max(12px,env(safe-area-inset-bottom));left:25px;z-index:3;display:flex;align-items:center;gap:9px;padding:4px 11px 4px 4px;border:1px solid #d9bfe62a;border-radius:26px;background:#131017e8;backdrop-filter:blur(10px)}
 .forest-groove button{min-height:40px;white-space:nowrap;padding:0 12px;color:#e9d0f4}
 .forest-groove button:disabled{opacity:.83;cursor:default}
 .forest-groove label{display:flex;align-items:center;gap:8px;color:#c6b1d3;font-size:10px;letter-spacing:.05em;white-space:nowrap}
 .forest-groove input{width:90px;height:26px;accent-color:#c3a2dc;cursor:pointer}
-.forest-groove .forest-tempo{justify-content:space-between;gap:7px;padding:0 7px 0 9px;min-height:30px}
-.forest-tempo input{flex:1;min-width:64px;max-width:150px}
-.forest-tempo output{min-width:49px;text-align:right;color:#d7b7ec;font:10px monospace;font-variant-numeric:tabular-nums}
 body.house-active .forest-groove{display:none}
-body:not(.house-active) .controls{bottom:calc(max(12px,env(safe-area-inset-bottom)) + 108px)}
-body:not(.house-active) .effects{bottom:calc(max(12px,env(safe-area-inset-bottom)) + 162px)}
-body:not(.house-active) #actcard{bottom:282px}
-@media(max-width:700px){body:not(.house-active) #actcard{bottom:352px}}
+body:not(.house-active) .controls{bottom:calc(max(12px,env(safe-area-inset-bottom)) + 58px)}
+body:not(.house-active) .effects{bottom:calc(max(12px,env(safe-area-inset-bottom)) + 112px)}
+body:not(.house-active) #actcard{bottom:232px}
+@media(max-width:700px){body:not(.house-active) #actcard{bottom:303px}}
 @media(max-height:550px){
  .forest-groove{bottom:max(5px,env(safe-area-inset-bottom))}
- body:not(.house-active) .controls{bottom:calc(max(5px,env(safe-area-inset-bottom)) + 108px)}
- body:not(.house-active) .effects{bottom:calc(max(5px,env(safe-area-inset-bottom)) + 162px)}
+ body:not(.house-active) .controls{bottom:calc(max(5px,env(safe-area-inset-bottom)) + 58px)}
+ body:not(.house-active) .effects{bottom:calc(max(5px,env(safe-area-inset-bottom)) + 112px)}
 }
 @media(max-width:500px){
- .forest-groove{left:16px;gap:2px;padding-right:7px}
- .forest-groove-row{gap:6px}
+ .forest-groove{left:16px;gap:6px;padding-right:7px}
  .forest-groove button{padding:0 10px;font-size:9px}
  .forest-groove label{gap:5px;font-size:9px}
- .forest-groove-row input{width:72px}
- .tempo{gap:4px}
- .tempo output{min-width:30px;font-size:9px}
+ .forest-groove input{width:72px}
 }
 </style>
 </head>
@@ -105,16 +97,10 @@ body:not(.house-active) #actcard{bottom:282px}
 <div id="loading" role="status">Entering the night…</div>
 <div id="actcard" role="status" aria-live="polite"></div>
 <div class="forest-groove" id="forest-groove" role="group" aria-label="Forest groove controls">
-  <div class="forest-groove-row">
-    <button id="forest-groove-start" type="button" aria-pressed="false">START GROOVE</button>
-    <label for="forest-groove-volume">VOL <input id="forest-groove-volume" type="range" min="0" max="100" value="62" aria-label="Groove volume"></label>
-  </div>
-  <label class="forest-tempo" for="forest-tempo">TEMPO
-    <input id="forest-tempo" type="range" min="50" max="180" value="88" step="1" aria-label="Groove tempo in BPM">
-    <output id="forest-tempo-readout" for="forest-tempo">88 BPM</output>
-  </label>
+  <button id="forest-groove-start" type="button" aria-pressed="false">START GROOVE</button>
+  <label for="forest-groove-volume">VOL <input id="forest-groove-volume" type="range" min="0" max="100" value="62" aria-label="Groove volume"></label>
 </div>
-<div class="controls"><button id="play" aria-label="Pause animation">Ⅱ PAUSE</button><label class="tempo">PACE <input id="pace" aria-label="Walking pace" type="range" min="0.6" max="1.6" value="1" step="0.1"><output id="pace-readout" for="pace">1.0x</output></label><button id="dream">NEW DREAM ↗</button></div>
+<div class="controls"><button id="play" aria-label="Pause animation">Ⅱ PAUSE</button><label class="tempo">PACE <input id="pace" aria-label="Walking pace and music tempo" type="range" min="0.6" max="1.6" value="1" step="0.1"></label><button id="dream">NEW DREAM ↗</button></div>
 <script>
 'use strict';
 (() => {
@@ -2437,9 +2423,9 @@ document.querySelector('#house-sound').addEventListener('click',()=>{
 hungryUpdateControls();
 
 // Adapted from this owner's VibeCat groove engine (MIT license).
-// Embedded in the offline forest page, with a default 88 BPM tempo and a calibration control.
+// Embedded in the offline forest page, with a fixed base tempo of 87.27 BPM at normal walking pace.
 // Every sound is synthesized mathematically. No recordings, samples or network audio.
-const GROOVE_SAMPLE_RATE=24000, GROOVE_BPM=88, MIN_BPM=50, MAX_BPM=180, GROOVE_BAR_SECONDS=240/GROOVE_BPM;
+const GROOVE_SAMPLE_RATE=24000, GROOVE_BPM=87.27, MIN_BPM=50, MAX_BPM=180, GROOVE_BAR_SECONDS=240/GROOVE_BPM;
 const GROOVE_TAU=Math.PI*2, grooveHz=m=>440*2**((m-69)/12);
 function grooveRandomGenerator(seed){let x=seed>>>0||1;return()=>{x^=x<<13;x^=x>>>17;x^=x<<5;return(x>>>0)/4294967296;};}
 function grooveVoice(seconds,fn){const a=new Float32Array(Math.ceil(seconds*GROOVE_SAMPLE_RATE));for(let i=0;i<a.length;i++)a[i]=fn(i/GROOVE_SAMPLE_RATE,i);return a;}
@@ -2558,12 +2544,10 @@ class ForestGrooveSynth{
 const forestGroove=(()=>{
   const button=document.querySelector('#forest-groove-start');
   const volume=document.querySelector('#forest-groove-volume');
-  const tempo=document.querySelector('#forest-tempo');
-  const tempoOutput=document.querySelector('#forest-tempo-readout');
   const storageKey='woodz-forest-groove-volume';
   let context=null,master=null,synth=null,timer=null,tempoTimer=null;
   let nextBar=0,nextTime=0,armed=false,playing=false,pending=false,walking=true,generation=0;
-  let level=.62,paceFactor=1,baseBpm=GROOVE_BPM,bpm=GROOVE_BPM;
+  let level=.62,paceFactor=1,bpm=GROOVE_BPM;
   const sources=new Map();
 
   try{
@@ -2688,26 +2672,23 @@ const forestGroove=(()=>{
     master.gain.cancelScheduledValues(now);
     master.gain.setTargetAtTime(0,now,.012);
     clearSources(cutAt);
-    nextTime=cutAt+.03;
+    const restartAt=cutAt+.03;
+    nextTime=restartAt;
     schedule();
-    master.gain.setTargetAtTime(level*.95,nextTime-.03,.06);
-  }
-
-  function setTempoDisplay(){
-    const next=Math.min(MAX_BPM,Math.max(MIN_BPM,Math.round(baseBpm*paceFactor)));
-    if(bpm!==next){
-      bpm=next;
-      if(synth)synth.setBpm(bpm);
-      clearTimeout(tempoTimer);
-      if(playing)tempoTimer=setTimeout(reschedule,90);
-    }
-    tempo.value=String(bpm);
-    tempoOutput.textContent=`${bpm} BPM`;
+    // nextTime has advanced through the look-ahead queue. Restore gain at
+    // the first restarted bar, not at the END of the queued bars.
+    master.gain.setTargetAtTime(level*.95,restartAt,.06);
   }
 
   function setPace(value){
     paceFactor=Number(value);
-    setTempoDisplay();
+    // Retain the fractional BPM for exact step-to-beat cadence.
+    const next=Math.min(MAX_BPM,Math.max(MIN_BPM,Number((GROOVE_BPM*paceFactor).toFixed(4))));
+    if(bpm===next)return;
+    bpm=next;
+    if(synth)synth.setBpm(bpm);
+    clearTimeout(tempoTimer);
+    if(playing)tempoTimer=setTimeout(reschedule,90);
   }
 
   function setWalking(value){
@@ -2727,15 +2708,9 @@ const forestGroove=(()=>{
     if(master&&playing)master.gain.setTargetAtTime(level*.95,context.currentTime,.025);
     try{localStorage.setItem(storageKey,String(level));}catch{}
   });
-  tempo.addEventListener('input',()=>{
-    // The selected tempo calibrates the current pace; later PACE changes scale it.
-    baseBpm=Number(tempo.value)/paceFactor;
-    setTempoDisplay();
-  });
   document.addEventListener('visibilitychange',()=>{
     if(playing&&!document.hidden)schedule();
   });
-  setTempoDisplay();
   updateControls();
   return {
     stop,pause,resume,setWalking,setPace,
@@ -2880,7 +2855,7 @@ function tick(now){if(last!==null&&playing&&!document.hidden){const before=time;
 const play=document.querySelector('#play');
 function setPlaying(value){playing=value;last=null;forestGroove.setWalking(playing);if(!playing&&hungry.active&&hungry.audio)hungryStopSounds();play.textContent=playing?'Ⅱ PAUSE':'▶ PLAY';play.setAttribute('aria-label',playing?'Pause animation':'Play animation');}
 play.onclick=()=>setPlaying(!playing);
-document.querySelector('#pace').oninput=e=>{pace=Number(e.target.value);document.querySelector('#pace-readout').textContent=pace.toFixed(1)+'x';forestGroove.setPace(pace);};
+document.querySelector('#pace').oninput=e=>{pace=Number(e.target.value);forestGroove.setPace(pace);};
 document.querySelector('#dream').onclick=()=>{seed=(seed+7919)|0;resetWorld();if(ready)draw()};
 document.addEventListener('visibilitychange',()=>{last=null});window.addEventListener('resize',resize);
 // Deterministic review controls; they do not load assets or alter the selected walk cycle.
