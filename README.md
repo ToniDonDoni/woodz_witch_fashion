@@ -9,7 +9,7 @@ world layout and colour mood.
 
 ## Forest groove synchronized with walking pace
 
-In **forest walking mode**, the bottom-left **START GROOVE** button enables
+In **forest walking mode**, the centered **START GROOVE** button enables
 VibeCat's endless procedural instrumental hip-hop. At **PACE 1.0x**, the groove
 runs at **87.27 BPM**, matching the estimated two footsteps per 33-frame
 walking cycle at 24 fps. The **PACE** slider scales both the animation and
@@ -17,15 +17,19 @@ the music tempo proportionally. There is no separate TEMPO slider or numeric
 PACE/BPM readout.
 
 The adjacent **VOL** slider adjusts music volume and saves the setting
-locally. START GROOVE must be clicked before music plays. Once enabled, it
-displays GROOVE ON (or GROOVE READY while paused). The original **PAUSE / PLAY**
-button stops and resumes both walking and the opted-in music. A change to
+locally. Because browsers require user interaction to start audio, the **first
+click or tap anywhere in the forest** automatically enables groove. After that,
+unrelated clicks do not change music: the **START GROOVE / GROOVE ON** button
+alone toggles it on or off. While animation is paused it reads GROOVE READY.
+The original **PAUSE / PLAY** button stops and resumes both walking and
+the currently enabled music. A change to
 PACE rebuilds the queued music at the new BPM and promptly restores volume,
 without needing to toggle PAUSE / PLAY.
 
 Entering **THE HUNGRY HOUSE** clears the groove opt-in, stops forest audio,
 and hides the forest groove controls; the house's horror audio is unchanged.
-Returning to the forest requires START GROOVE again. Audio, sprites, and
+After groove has been activated once, returning to the forest requires START
+GROOVE again. House navigation never auto-starts forest music. Audio, sprites, and
 application code remain embedded in a standalone offline HTML page.
 
 ## The Hungry House: optional horror world
