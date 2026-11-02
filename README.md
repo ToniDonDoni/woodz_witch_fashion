@@ -7,29 +7,26 @@ of hand-drawn trees, a moonlit sky and a changing programme of woodland acts.
 Foreground plants pass in front of the walker. New Dream reshuffles the acts,
 world layout and colour mood.
 
-## Forest groove and pace calibration
+## Forest groove synchronized with walking pace
 
 In **forest walking mode**, the bottom-left **START GROOVE** button enables
-VibeCat's endless procedural hip-hop. The default is **88 BPM** at **1.0x PACE**.
-The nearby **VOL** slider adjusts music volume and saves that choice locally.
-Once enabled, the button reads **GROOVE ON** (or **GROOVE READY** when paused);
-there is no separate PAUSE GROOVE action. The runway's **PAUSE / PLAY** button
-pauses or restarts both walking and the opted-in music. Music never starts until
-the visitor has tapped START GROOVE.
+VibeCat's endless procedural instrumental hip-hop. At **PACE 1.0x**, the groove
+runs at **87.27 BPM**, matching the estimated two footsteps per 33-frame
+walking cycle at 24 fps. The **PACE** slider scales both the animation and
+the music tempo proportionally. There is no separate TEMPO slider or numeric
+PACE/BPM readout.
 
-For temporary calibration, the existing **PACE** slider shows its multiplier
-(0.6x to 1.6x), and the new **TEMPO** slider below the groove controls shows
-the current, audible BPM. Changing PACE scales both the walking animation and
-the groove BPM proportionally. Changing TEMPO adjusts the groove BPM for the
-current PACE, establishing a new proportional baseline for later PACE changes.
-For example, at 1.0x the default is 88 BPM; at 1.2x it is 106 BPM, until
-TEMPO is adjusted independently. These numerical readouts and the TEMPO slider
-are temporary calibration aids, intended to be removed after choosing a pairing.
+The adjacent **VOL** slider adjusts music volume and saves the setting
+locally. START GROOVE must be clicked before music plays. Once enabled, it
+displays GROOVE ON (or GROOVE READY while paused). The original **PAUSE / PLAY**
+button stops and resumes both walking and the opted-in music. A change to
+PACE rebuilds the queued music at the new BPM and promptly restores volume,
+without needing to toggle PAUSE / PLAY.
 
-Entering **THE HUNGRY HOUSE** clears the groove opt-in, stops all forest audio,
-and hides the forest groove controls. The house's own horror audio is unchanged.
-Returning to the forest requires START GROOVE again. Audio, sprites and
-application code remain embedded in one standalone offline HTML.
+Entering **THE HUNGRY HOUSE** clears the groove opt-in, stops forest audio,
+and hides the forest groove controls; the house's horror audio is unchanged.
+Returning to the forest requires START GROOVE again. Audio, sprites, and
+application code remain embedded in a standalone offline HTML page.
 
 ## The Hungry House: optional horror world
 
