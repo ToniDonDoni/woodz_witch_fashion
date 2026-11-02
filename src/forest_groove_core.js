@@ -1,7 +1,7 @@
 // Adapted from this owner's VibeCat groove engine (MIT license).
-// Embedded in the offline forest page, with a fixed 88 BPM tempo.
+// Embedded in the offline forest page, with a default 88 BPM tempo and a calibration control.
 // Every sound is synthesized mathematically. No recordings, samples or network audio.
-const GROOVE_SAMPLE_RATE=24000, GROOVE_BPM=88, MIN_BPM=50, MAX_BPM=140, GROOVE_BAR_SECONDS=240/GROOVE_BPM;
+const GROOVE_SAMPLE_RATE=24000, GROOVE_BPM=88, MIN_BPM=50, MAX_BPM=180, GROOVE_BAR_SECONDS=240/GROOVE_BPM;
 const GROOVE_TAU=Math.PI*2, grooveHz=m=>440*2**((m-69)/12);
 function grooveRandomGenerator(seed){let x=seed>>>0||1;return()=>{x^=x<<13;x^=x>>>17;x^=x<<5;return(x>>>0)/4294967296;};}
 function grooveVoice(seconds,fn){const a=new Float32Array(Math.ceil(seconds*GROOVE_SAMPLE_RATE));for(let i=0;i<a.length;i++)a[i]=fn(i/GROOVE_SAMPLE_RATE,i);return a;}
