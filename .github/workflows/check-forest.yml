@@ -40,6 +40,7 @@ jobs:
           node tests/verify_forest.cjs
           node tests/verify_effects.cjs
           node tests/verify_house.cjs
+          node tests/verify_groove.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
