@@ -4,7 +4,7 @@ const forestGroove=(()=>{
   const volume=document.querySelector('#forest-groove-volume');
   const storageKey='woodz-forest-groove-volume';
   let context=null,master=null,synth=null,timer=null,tempoTimer=null;
-  let nextBar=0,nextTime=0,armed=false,playing=false,pending=false,walking=true,generation=0;
+  let nextBar=0,nextTime=0,armed=false,playing=false,pending=false,walking=true,firstActivationUsed=false,generation=0;
   let level=.62,paceFactor=1,bpm=GROOVE_BPM;
   const sources=new Map();
 
@@ -17,9 +17,9 @@ const forestGroove=(()=>{
 
   function updateControls(){
     button.textContent=armed?(playing?'GROOVE ON':'GROOVE READY'):'START GROOVE';
-    button.disabled=armed||pending;
+    button.disabled=pending;
     button.setAttribute('aria-pressed',String(armed));
-    button.setAttribute('aria-label',armed?'Groove enabled; use main play or pause':'Start forest groove');
+    button.setAttribute('aria-label',armed?'Turn forest groove off':'Start forest groove');
   }
 
   function schedule(){
@@ -155,11 +155,26 @@ const forestGroove=(()=>{
     else resume();
   }
 
-  button.addEventListener('click',()=>{
+  function start(){
     if(armed||pending||hungry.active)return;
+    // Only the first activation may come from a click anywhere in the forest.
+    firstActivationUsed=true;
     armed=true;
     updateControls();
     resume();
+  }
+
+  button.addEventListener('click',()=>{
+    if(pending||hungry.active)return;
+    if(armed)stop();
+    else start();
+  });
+
+  document.addEventListener('click',event=>{
+    if(firstActivationUsed||hungry.active)return;
+    // House navigation must never start forest music on entry or exit.
+    if(event.target.closest('.house-toolbar'))return;
+    start();
   });
   volume.addEventListener('input',()=>{
     level=Math.max(0,Math.min(1,Number(volume.value)/100));
