@@ -7,6 +7,21 @@ of hand-drawn trees, a moonlit sky and a changing programme of woodland acts.
 Foreground plants pass in front of the walker. New Dream reshuffles the acts,
 world layout and colour mood.
 
+## Forest groove
+
+In the original **forest walking mode**, the bottom-left **START GROOVE** button
+starts the same endless synthesized instrumental hip-hop arrangement used by
+[VibeCat](https://github.com/ToniDonDoni/vibecat), at a **fixed 88 BPM**.
+The adjacent **VOL** slider changes playback volume (and remembers its setting
+locally). There is no BPM control. Music starts only after a user click or tap,
+and the button then becomes **PAUSE GROOVE**.
+
+Entering **THE HUNGRY HOUSE** stops the groove and removes its two controls.
+The house's independent procedural horror sound remains unchanged. Returning
+to the forest does not automatically restart hip-hop; tap START GROOVE again.
+The music, sprites, and application code are embedded in the single offline
+HTML page. No audio files or streaming requests are needed.
+
 ## The Hungry House: optional horror world
 
 Click **ENTER HOUSE** to switch from the original forest to a horizontal
@@ -113,7 +128,9 @@ at upper left. No runtime libraries or network requests are required.
 
 | Path | Purpose |
 | --- | --- |
-| `src/forest_runway_template.html` | Page, composition, playback, effect checkboxes and HEAD position. |
+| `src/forest_runway_template.html` | Page, composition, playback, forest groove controls, effect checkboxes and HEAD position. |
+| `src/forest_groove_core.js` | Procedural boom-bap synthesis ported from VibeCat, set to 88 BPM. |
+| `src/forest_groove.js` | Forest-only Web Audio scheduling, playback button, persistent volume and scene isolation. |
 | `src/forest_scene.js` | Trees, moon, stars, ground objects and foreground vegetation. |
 | `src/ashen_nave.js` | Selected soot-black Gothic architecture, furnishings and living throat. |
 | `src/ink_thief_hand.js` | Selected procedural living-ink hand, articulated fingers and brush texture. |
@@ -128,6 +145,7 @@ at upper left. No runtime libraries or network requests are required.
 | `tests/verify_forest.cjs` | Acts, foreground, walk and world regression checks. |
 | `tests/verify_effects.cjs` | Effect pixels, 13 checkboxes, global toggle, native scene restoration, HEAD and layout checks. |
 | `tests/verify_house.cjs` | Offline house mode, horizontal movement, story, rendering and sound trigger checks. |
+| `tests/verify_groove.cjs` | Offline forest groove, 88 BPM, scene transitions, controls and phone layout checks. |
 | `dist/` | Local generated site, screenshots and reports; ignored by Git. |
 | `index.html`, `site/index.html` | Identical version-neutral snapshots made with `--snapshot`. |
 | `tasks/` | Specification and implementation requirements. |
@@ -202,6 +220,8 @@ node /tmp/woodz-browser-check/node_modules/playwright/cli.js install chromium
 python scripts/build_forest_page.py
 PLAYWRIGHT_MODULE=/tmp/woodz-browser-check/node_modules/playwright node tests/verify_forest.cjs
 PLAYWRIGHT_MODULE=/tmp/woodz-browser-check/node_modules/playwright node tests/verify_effects.cjs
+node tests/verify_house.cjs
+node tests/verify_groove.cjs
 ```
 
 `BROWSER_EXECUTABLE` can select an existing Chromium. Reports and screenshots
