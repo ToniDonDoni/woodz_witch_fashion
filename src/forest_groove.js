@@ -1,12 +1,14 @@
-// Forest-only procedural hip-hop. No sound starts before a user gesture.
+// Forest-only hip-hop. START GROOVE opts in; the runway PAUSE/PLAY owns playback.
 const forestGroove=(()=>{
   const button=document.querySelector('#forest-groove-start');
   const volume=document.querySelector('#forest-groove-volume');
+  const tempo=document.querySelector('#forest-tempo');
+  const tempoOutput=document.querySelector('#forest-tempo-readout');
   const storageKey='woodz-forest-groove-volume';
-  let context=null,master=null,synth=null,timer=null;
-  let nextBar=0,nextTime=0,playing=false,pending=false,generation=0;
-  let level=.62;
-  const sources=new Set();
+  let context=null,master=null,synth=null,timer=null,tempoTimer=null;
+  let nextBar=0,nextTime=0,armed=false,playing=false,pending=false,walking=true,generation=0;
+  let level=.62,paceFactor=1,baseBpm=GROOVE_BPM,bpm=GROOVE_BPM;
+  const sources=new Map();
 
   try{
     const saved=localStorage.getItem(storageKey);
@@ -16,20 +18,22 @@ const forestGroove=(()=>{
   volume.value=String(Math.round(level*100));
 
   function updateControls(){
-    button.textContent=playing?'PAUSE GROOVE':'START GROOVE';
-    button.setAttribute('aria-pressed',String(playing));
-    button.setAttribute('aria-label',playing?'Pause forest groove':'Start forest groove');
+    button.textContent=armed?(playing?'GROOVE ON':'GROOVE READY'):'START GROOVE';
+    button.disabled=armed||pending;
+    button.setAttribute('aria-pressed',String(armed));
+    button.setAttribute('aria-label',armed?'Groove enabled; use main play or pause':'Start forest groove');
   }
 
   function schedule(){
     if(!playing||hungry.active||!context||context.state!=='running')return;
     if(nextTime<context.currentTime)nextTime=context.currentTime+.05;
     while(nextTime<context.currentTime+5){
-      const {left,right}=synth.renderBar(nextBar++);
+      const bar=nextBar++,{left,right}=synth.renderBar(bar);
       const buffer=context.createBuffer(2,left.length,GROOVE_SAMPLE_RATE);
       buffer.copyToChannel(left,0);buffer.copyToChannel(right,1);
       const source=context.createBufferSource();
-      source.buffer=buffer;source.connect(master);sources.add(source);
+      source.buffer=buffer;source.connect(master);
+      sources.set(source,{bar,start:nextTime});
       source.onended=()=>{
         sources.delete(source);
         source.disconnect();
@@ -40,29 +44,44 @@ const forestGroove=(()=>{
     }
   }
 
-  function stop(){
+  function clearSources(at){
+    const now=context.currentTime;
+    for(const source of sources.keys()){
+      try{source.stop(at);}catch{}
+      if(at<=now){
+        source.onended=null;
+        source.disconnect();
+        source.buffer=null;
+      }else{
+        source.onended=()=>{source.disconnect();source.buffer=null;};
+      }
+    }
+    sources.clear();
+  }
+
+  function pause(){
     ++generation;
     playing=false;
     clearInterval(timer);timer=null;
+    clearTimeout(tempoTimer);tempoTimer=null;
     if(context){
       master.gain.cancelScheduledValues(context.currentTime);
       master.gain.setValueAtTime(0,context.currentTime);
-      for(const source of sources){
-        try{source.stop();}catch{}
-        source.disconnect();
-        source.buffer=null;
-      }
-      sources.clear();
+      clearSources(context.currentTime);
       context.suspend().catch(()=>{});
     }
     updateControls();
   }
 
-  async function toggle(){
-    if(pending||hungry.active)return;
-    if(playing){stop();return;}
+  function stop(){
+    armed=false;
+    pause();
+  }
+
+  async function resume(){
+    if(!armed||!walking||hungry.active||playing||pending)return;
     const token=++generation;
-    pending=true;button.disabled=true;
+    pending=true;updateControls();
     try{
       if(!context){
         const Audio=window.AudioContext||window.webkitAudioContext;
@@ -80,13 +99,14 @@ const forestGroove=(()=>{
         master.connect(high).connect(low).connect(compressor).connect(context.destination);
         const seed=new Uint32Array(1);
         crypto.getRandomValues(seed);
-        synth=new ForestGrooveSynth(seed[0],GROOVE_BPM);
+        synth=new ForestGrooveSynth(seed[0],bpm);
       }
       await context.resume();
-      if(token!==generation||hungry.active||context.state!=='running'){
+      if(token!==generation||!armed||!walking||hungry.active||context.state!=='running'){
         if(context.state==='running')context.suspend().catch(()=>{});
         return;
       }
+      synth.setBpm(bpm);
       playing=true;
       nextTime=context.currentTime+.07;
       schedule();
@@ -98,25 +118,71 @@ const forestGroove=(()=>{
       button.title='Unable to play music. Tap to retry.';
       stop();
     }finally{
-      pending=false;button.disabled=false;
+      pending=false;
       updateControls();
     }
   }
 
-  button.addEventListener('click',toggle);
+  function reschedule(){
+    tempoTimer=null;
+    if(!playing||!context||context.state!=='running')return;
+    const now=context.currentTime,cutAt=now+.05;
+    const firstUnheard=[...sources.values()].find(item=>item.start>=cutAt);
+    if(firstUnheard)nextBar=firstUnheard.bar;
+    master.gain.cancelScheduledValues(now);
+    master.gain.setTargetAtTime(0,now,.012);
+    clearSources(cutAt);
+    nextTime=cutAt+.03;
+    schedule();
+    master.gain.setTargetAtTime(level*.95,nextTime-.03,.06);
+  }
+
+  function setTempoDisplay(){
+    const next=Math.min(MAX_BPM,Math.max(MIN_BPM,Math.round(baseBpm*paceFactor)));
+    if(bpm!==next){
+      bpm=next;
+      if(synth)synth.setBpm(bpm);
+      clearTimeout(tempoTimer);
+      if(playing)tempoTimer=setTimeout(reschedule,90);
+    }
+    tempo.value=String(bpm);
+    tempoOutput.textContent=`${bpm} BPM`;
+  }
+
+  function setPace(value){
+    paceFactor=Number(value);
+    setTempoDisplay();
+  }
+
+  function setWalking(value){
+    walking=!!value;
+    if(!walking)pause();
+    else resume();
+  }
+
+  button.addEventListener('click',()=>{
+    if(armed||pending||hungry.active)return;
+    armed=true;
+    updateControls();
+    resume();
+  });
   volume.addEventListener('input',()=>{
     level=Math.max(0,Math.min(1,Number(volume.value)/100));
-    if(master&&playing){
-      master.gain.setTargetAtTime(level*.95,context.currentTime,.025);
-    }
+    if(master&&playing)master.gain.setTargetAtTime(level*.95,context.currentTime,.025);
     try{localStorage.setItem(storageKey,String(level));}catch{}
+  });
+  tempo.addEventListener('input',()=>{
+    // The selected tempo calibrates the current pace; later PACE changes scale it.
+    baseBpm=Number(tempo.value)/paceFactor;
+    setTempoDisplay();
   });
   document.addEventListener('visibilitychange',()=>{
     if(playing&&!document.hidden)schedule();
   });
+  setTempoDisplay();
   updateControls();
   return {
-    stop,
-    status:()=>({playing,bpm:GROOVE_BPM,volume:level,scheduled:sources.size})
+    stop,pause,resume,setWalking,setPace,
+    status:()=>({playing,armed,bpm,pace:paceFactor,volume:level,scheduled:sources.size})
   };
 })();
