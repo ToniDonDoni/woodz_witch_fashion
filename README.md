@@ -7,20 +7,29 @@ of hand-drawn trees, a moonlit sky and a changing programme of woodland acts.
 Foreground plants pass in front of the walker. New Dream reshuffles the acts,
 world layout and colour mood.
 
-## Forest groove
+## Forest groove and pace calibration
 
-In the original **forest walking mode**, the bottom-left **START GROOVE** button
-starts the same endless synthesized instrumental hip-hop arrangement used by
-[VibeCat](https://github.com/ToniDonDoni/vibecat), at a **fixed 88 BPM**.
-The adjacent **VOL** slider changes playback volume (and remembers its setting
-locally). There is no BPM control. Music starts only after a user click or tap,
-and the button then becomes **PAUSE GROOVE**.
+In **forest walking mode**, the bottom-left **START GROOVE** button enables
+VibeCat's endless procedural hip-hop. The default is **88 BPM** at **1.0x PACE**.
+The nearby **VOL** slider adjusts music volume and saves that choice locally.
+Once enabled, the button reads **GROOVE ON** (or **GROOVE READY** when paused);
+there is no separate PAUSE GROOVE action. The runway's **PAUSE / PLAY** button
+pauses or restarts both walking and the opted-in music. Music never starts until
+the visitor has tapped START GROOVE.
 
-Entering **THE HUNGRY HOUSE** stops the groove and removes its two controls.
-The house's independent procedural horror sound remains unchanged. Returning
-to the forest does not automatically restart hip-hop; tap START GROOVE again.
-The music, sprites, and application code are embedded in the single offline
-HTML page. No audio files or streaming requests are needed.
+For temporary calibration, the existing **PACE** slider shows its multiplier
+(0.6x to 1.6x), and the new **TEMPO** slider below the groove controls shows
+the current, audible BPM. Changing PACE scales both the walking animation and
+the groove BPM proportionally. Changing TEMPO adjusts the groove BPM for the
+current PACE, establishing a new proportional baseline for later PACE changes.
+For example, at 1.0x the default is 88 BPM; at 1.2x it is 106 BPM, until
+TEMPO is adjusted independently. These numerical readouts and the TEMPO slider
+are temporary calibration aids, intended to be removed after choosing a pairing.
+
+Entering **THE HUNGRY HOUSE** clears the groove opt-in, stops all forest audio,
+and hides the forest groove controls. The house's own horror audio is unchanged.
+Returning to the forest requires START GROOVE again. Audio, sprites and
+application code remain embedded in one standalone offline HTML.
 
 ## The Hungry House: optional horror world
 
