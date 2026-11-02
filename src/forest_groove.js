@@ -2,12 +2,10 @@
 const forestGroove=(()=>{
   const button=document.querySelector('#forest-groove-start');
   const volume=document.querySelector('#forest-groove-volume');
-  const tempo=document.querySelector('#forest-tempo');
-  const tempoOutput=document.querySelector('#forest-tempo-readout');
   const storageKey='woodz-forest-groove-volume';
   let context=null,master=null,synth=null,timer=null,tempoTimer=null;
   let nextBar=0,nextTime=0,armed=false,playing=false,pending=false,walking=true,generation=0;
-  let level=.62,paceFactor=1,baseBpm=GROOVE_BPM,bpm=GROOVE_BPM;
+  let level=.62,paceFactor=1,bpm=GROOVE_BPM;
   const sources=new Map();
 
   try{
@@ -132,26 +130,23 @@ const forestGroove=(()=>{
     master.gain.cancelScheduledValues(now);
     master.gain.setTargetAtTime(0,now,.012);
     clearSources(cutAt);
-    nextTime=cutAt+.03;
+    const restartAt=cutAt+.03;
+    nextTime=restartAt;
     schedule();
-    master.gain.setTargetAtTime(level*.95,nextTime-.03,.06);
-  }
-
-  function setTempoDisplay(){
-    const next=Math.min(MAX_BPM,Math.max(MIN_BPM,Math.round(baseBpm*paceFactor)));
-    if(bpm!==next){
-      bpm=next;
-      if(synth)synth.setBpm(bpm);
-      clearTimeout(tempoTimer);
-      if(playing)tempoTimer=setTimeout(reschedule,90);
-    }
-    tempo.value=String(bpm);
-    tempoOutput.textContent=`${bpm} BPM`;
+    // nextTime has advanced through the look-ahead queue. Restore gain at
+    // the first restarted bar, not at the END of the queued bars.
+    master.gain.setTargetAtTime(level*.95,restartAt,.06);
   }
 
   function setPace(value){
     paceFactor=Number(value);
-    setTempoDisplay();
+    // Retain the fractional BPM for exact step-to-beat cadence.
+    const next=Math.min(MAX_BPM,Math.max(MIN_BPM,Number((GROOVE_BPM*paceFactor).toFixed(4))));
+    if(bpm===next)return;
+    bpm=next;
+    if(synth)synth.setBpm(bpm);
+    clearTimeout(tempoTimer);
+    if(playing)tempoTimer=setTimeout(reschedule,90);
   }
 
   function setWalking(value){
@@ -171,15 +166,9 @@ const forestGroove=(()=>{
     if(master&&playing)master.gain.setTargetAtTime(level*.95,context.currentTime,.025);
     try{localStorage.setItem(storageKey,String(level));}catch{}
   });
-  tempo.addEventListener('input',()=>{
-    // The selected tempo calibrates the current pace; later PACE changes scale it.
-    baseBpm=Number(tempo.value)/paceFactor;
-    setTempoDisplay();
-  });
   document.addEventListener('visibilitychange',()=>{
     if(playing&&!document.hidden)schedule();
   });
-  setTempoDisplay();
   updateControls();
   return {
     stop,pause,resume,setWalking,setPace,
