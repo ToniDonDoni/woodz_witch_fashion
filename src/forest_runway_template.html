@@ -45,6 +45,28 @@ body.house-active #actcard{bottom:112px}
 
 #actcard{bottom:174px}
 @media(max-width:700px){#actcard{bottom:245px}}
+
+/* Independent forest-only beat controls. Keep the original scene controls clear. */
+.forest-groove{position:fixed;bottom:max(22px,env(safe-area-inset-bottom));left:25px;z-index:3;display:flex;align-items:center;gap:11px;padding:3px 9px 3px 3px;border:1px solid #d9bfe62a;border-radius:26px;background:#131017e8;backdrop-filter:blur(10px)}
+.forest-groove button{min-height:40px;white-space:nowrap;padding:0 13px;color:#e9d0f4}
+.forest-groove label{display:flex;align-items:center;gap:8px;color:#c6b1d3;font-size:10px;letter-spacing:.05em}
+.forest-groove input{width:90px;height:26px;accent-color:#c3a2dc;cursor:pointer}
+body.house-active .forest-groove{display:none}
+body:not(.house-active) .controls{bottom:calc(max(22px,env(safe-area-inset-bottom)) + 58px)}
+body:not(.house-active) .effects{bottom:calc(max(22px,env(safe-area-inset-bottom)) + 112px)}
+body:not(.house-active) #actcard{bottom:232px}
+@media(max-width:700px){body:not(.house-active) #actcard{bottom:303px}}
+@media(max-height:550px){
+ .forest-groove{bottom:max(8px,env(safe-area-inset-bottom))}
+ body:not(.house-active) .controls{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 55px)}
+ body:not(.house-active) .effects{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 109px)}
+}
+@media(max-width:500px){
+ .forest-groove{left:16px;gap:6px;padding-right:7px}
+ .forest-groove button{padding:0 10px;font-size:9px}
+ .forest-groove label{gap:5px;font-size:9px}
+ .forest-groove input{width:72px}
+}
 </style>
 </head>
 <body>
@@ -73,6 +95,10 @@ body.house-active #actcard{bottom:112px}
 </div>
 <div id="loading" role="status">Entering the night…</div>
 <div id="actcard" role="status" aria-live="polite"></div>
+<div class="forest-groove" id="forest-groove" role="group" aria-label="Forest groove controls">
+  <button id="forest-groove-start" type="button" aria-pressed="false">START GROOVE</button>
+  <label for="forest-groove-volume">VOL <input id="forest-groove-volume" type="range" min="0" max="100" value="62" aria-label="Groove volume"></label>
+</div>
 <div class="controls"><button id="play" aria-label="Pause animation">Ⅱ PAUSE</button><label class="tempo">PACE <input id="pace" aria-label="Walking pace" type="range" min="0.6" max="1.6" value="1" step="0.1"></label><button id="dream">NEW DREAM ↗</button></div>
 <script>
 'use strict';
@@ -94,6 +120,7 @@ function ellipse(x,y,rx,ry,color){ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,TAU)
 __FOREST_CODE__
 __ENCHANTMENT_CODE__
 __HAUNTED_CODE__
+__GROOVE_CODE__
 function pathHeight(x){return h*.84+Math.sin(x/w*2.7+.5)*h*.012;}
 function drawPath(){
  const top=h*.785,bottom=h*.936;
@@ -238,7 +265,8 @@ document.addEventListener('visibilitychange',()=>{last=null});window.addEventLis
 window.runway={seek(t){setPlaying(false);time=Math.max(0,t);if(ready)draw();return debug},play(){setPlaying(true)},state(){return debug},
  programme(count=12){return actProgramme(count)},act(){return {...currentAct()}},plan(index){return actPlan(index)},
  setForeground(on){foregroundEnabled=!!on;if(ready)draw();return debug},
- setHouse(on){hungry.active=!!on;hungry.lastScare=null;if(!hungry.active&&hungry.audio)hungry.audio.suspend().catch(()=>{});hungryUpdateControls();if(ready)draw();return debug},
+ setHouse(on){hungry.active=!!on;hungry.lastScare=null;if(hungry.active)forestGroove.stop();if(!hungry.active&&hungry.audio)hungry.audio.suspend().catch(()=>{});hungryUpdateControls();if(ready)draw();return debug},
+ groove(){return forestGroove.status()},
  get ready(){return ready}};
 atlas.onload=()=>{ready=true;document.querySelector('#loading').remove();draw()};atlas.onerror=()=>{document.querySelector('#loading').textContent='The embedded walk frames could not be loaded.'};
 bindEnchantmentControls();resize();atlas.src='data:image/webp;base64,__ATLAS_DATA__';requestAnimationFrame(tick);
