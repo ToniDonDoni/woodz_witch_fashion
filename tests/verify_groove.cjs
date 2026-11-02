@@ -21,21 +21,38 @@ const ROOT=path.resolve(__dirname,'..'),OUT=path.join(ROOT,'dist','verification'
     el.dispatchEvent(new Event('input',{bubbles:true}));
   },value);
   try{
+    // Spy on the Web Audio gain schedule: a PACE change must restore volume
+    // at the new bar, not five seconds later at the end of the look-ahead queue.
+    await page.addInitScript(()=>{
+      window.__grooveGainCalls=[];
+      const originalCreateGain=AudioContext.prototype.createGain;
+      AudioContext.prototype.createGain=function(){
+        const gain=originalCreateGain.call(this);
+        if(!window.__grooveMaster)window.__grooveMaster={parameter:gain.gain,context:this};
+        return gain;
+      };
+      const originalTarget=AudioParam.prototype.setTargetAtTime;
+      AudioParam.prototype.setTargetAtTime=function(value,startTime,timeConstant){
+        if(window.__grooveMaster?.parameter===this){
+          window.__grooveGainCalls.push({value,startTime,now:window.__grooveMaster.context.currentTime});
+        }
+        return originalTarget.call(this,value,startTime,timeConstant);
+      };
+    });
     await page.goto('file://'+path.join(ROOT,'dist','index.html'));
     await page.waitForFunction(()=>window.runway?.ready);
     assert.deepEqual(await page.evaluate(()=>runway.groove()),{
-      playing:false,armed:false,bpm:88,pace:1,volume:.62,scheduled:0
+      playing:false,armed:false,bpm:87.27,pace:1,volume:.62,scheduled:0
     });
     const button=page.locator('#forest-groove-start');
     const volume=page.locator('#forest-groove-volume');
-    const tempo=page.locator('#forest-tempo');
-    const pace=page.locator('#pace');
+
     assert(await button.isVisible(),'Groove button must be visible in the forest');
     assert(await volume.isVisible(),'Volume slider must be visible before playback');
-    assert(await tempo.isVisible(),'Tempo calibration slider must be visible');
+    assert.equal(await page.locator('#forest-tempo').count(),0,'Temporary TEMPO slider must be removed');
+    assert.equal(await page.locator('#forest-tempo-readout').count(),0,'BPM readout must be removed');
+    assert.equal(await page.locator('#pace-readout').count(),0,'PACE readout must be removed');
     assert.equal(await button.textContent(),'START GROOVE');
-    assert.equal(await page.locator('#pace-readout').textContent(),'1.0x');
-    assert.equal(await page.locator('#forest-tempo-readout').textContent(),'88 BPM');
 
     for(const viewport of [{width:320,height:568},{width:390,height:844},{width:430,height:932},{width:844,height:390},{width:1280,height:800}]){
       await page.setViewportSize(viewport);
@@ -59,20 +76,23 @@ const ROOT=path.resolve(__dirname,'..'),OUT=path.join(ROOT,'dist','verification'
     assert.equal(await button.getAttribute('aria-pressed'),'true');
     assert(await button.isDisabled(),'Only the main PAUSE/PLAY may stop active music');
 
+    const gainEventsBefore=await page.evaluate(()=>window.__grooveGainCalls.length);
     await setRange('#pace',1.2);
-    assert.equal(await page.locator('#pace-readout').textContent(),'1.2x');
-    assert.equal(await page.locator('#forest-tempo-readout').textContent(),'106 BPM');
-    assert.equal(await tempo.inputValue(),'106');
-    assert.equal(await page.evaluate(()=>runway.groove().bpm),106);
-    await setRange('#forest-tempo',100);
-    assert.equal(await page.locator('#forest-tempo-readout').textContent(),'100 BPM');
-    assert.equal(await page.evaluate(()=>runway.groove().bpm),100);
+    assert.equal(await page.evaluate(()=>runway.groove().bpm),104.724);
+    await page.waitForFunction(before=>window.__grooveGainCalls.slice(before).some(event=>event.value>0),gainEventsBefore);
+    let restore=await page.evaluate(before=>window.__grooveGainCalls.slice(before).find(event=>event.value>0),gainEventsBefore);
+    assert(restore.startTime-restore.now<.3,'PACE left music muted until the look-ahead queue finished');
+    assert.equal(await page.evaluate(()=>runway.groove().playing),true,'Music stopped when PACE changed');
+    const secondChange=await page.evaluate(()=>window.__grooveGainCalls.length);
     await setRange('#pace',1.5);
-    assert.equal(await page.locator('#pace-readout').textContent(),'1.5x');
-    assert.equal(await page.locator('#forest-tempo-readout').textContent(),'125 BPM');
-    assert.equal(await tempo.inputValue(),'125');
-    await page.waitForTimeout(240);
+    assert.equal(await page.evaluate(()=>runway.groove().bpm),130.905);
+    await page.waitForFunction(before=>window.__grooveGainCalls.slice(before).some(event=>event.value>0),secondChange);
+    restore=await page.evaluate(before=>window.__grooveGainCalls.slice(before).find(event=>event.value>0),secondChange);
+    assert(restore.startTime-restore.now<.3,'A repeated PACE change left music muted');
+    assert.equal(await page.evaluate(()=>runway.groove().playing),true,'Music stopped after repeated PACE changes');
     assert.equal(await page.evaluate(()=>runway.groove().scheduled>0),true,'Tempo change left no scheduled audio');
+    await setRange('#pace',1);
+    assert.equal(await page.evaluate(()=>runway.groove().bpm),87.27);
 
     await setRange('#forest-groove-volume',28);
     assert.equal(await page.evaluate(()=>runway.groove().volume),.28);
@@ -87,7 +107,7 @@ const ROOT=path.resolve(__dirname,'..'),OUT=path.join(ROOT,'dist','verification'
     await page.locator('#play').tap();
     await page.waitForFunction(()=>runway.groove().playing);
     assert.equal(await button.textContent(),'GROOVE ON');
-    assert.equal(await page.evaluate(()=>runway.groove().bpm),125);
+    assert.equal(await page.evaluate(()=>runway.groove().bpm),87.27);
 
     await page.locator('#house-mode').tap();
     await page.waitForFunction(()=>!runway.groove().playing);
@@ -110,7 +130,7 @@ const ROOT=path.resolve(__dirname,'..'),OUT=path.join(ROOT,'dist','verification'
     assert.deepEqual(errors,[],'JavaScript exceptions: '+errors.join('; '));
     assert.deepEqual(requests,[],'Unexpected network requests');
     await page.screenshot({path:path.join(OUT,'forest-groove-phone.png')});
-    console.log('Forest tempo calibration, pace sync, global pause, and house isolation passed');
+    console.log('87.27 BPM pace sync, immediate gain restoration, pause, and house isolation passed');
   }finally{
     await browser.close();
   }
