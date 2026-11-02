@@ -46,6 +46,9 @@ house = ((SOURCE / 'ashen_nave.js').read_text(encoding='utf-8') + '\n' +
          (SOURCE / 'little_usher_doll.js').read_text(encoding='utf-8') + '\n' +
          (SOURCE / 'haunted_house.js').read_text(encoding='utf-8'))
 html = html.replace('__HAUNTED_CODE__', house)
+groove = ((SOURCE / 'forest_groove_core.js').read_text(encoding='utf-8') + '\n' +
+          (SOURCE / 'forest_groove.js').read_text(encoding='utf-8'))
+html = html.replace('__GROOVE_CODE__', groove)
 html = html.replace('__BUILD_STAMP__', stamp)
 html = html.replace('__ATLAS_DATA__', base64.b64encode(buffer.getvalue()).decode('ascii'))
 outputs = [ROOT / 'index.html', ROOT / 'site' / 'index.html'] if args.snapshot else [ROOT / 'dist' / 'index.html']

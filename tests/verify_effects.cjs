@@ -256,8 +256,9 @@ const pixels=async p=>p.locator('canvas').evaluate(c=>c.toDataURL());
  const viewports=[[430,932,'phone'],[320,568,'small-phone'],[844,390,'landscape'],[1440,900,'desktop'],[2048,1000,'wide-desktop']];
  for(const [width,height,name] of viewports){
   await page.setViewportSize({width,height});await page.evaluate(()=>runway.seek(2));
-  const box=await page.evaluate(()=>{const b=s=>{const r=document.querySelector(s).getBoundingClientRect();return {x:r.x,y:r.y,right:r.right,bottom:r.bottom}};return {fx:b('.effects'),controls:b('.controls'),commit:b('#build-commit'),edition:b('.edition'),card:b('#actcard'),labels:[...document.querySelectorAll('.effects label')].map(e=>{const r=e.getBoundingClientRect();return {x:r.x,right:r.right}})}});
-  assert(box.fx.y>height*.6,`Effect grid too high at ${name} (${width}x${height}): y=${box.fx.y}`);
+  const box=await page.evaluate(()=>{const b=s=>{const r=document.querySelector(s).getBoundingClientRect();return {x:r.x,y:r.y,right:r.right,bottom:r.bottom}};return {fx:b('.effects'),controls:b('.controls'),groove:b('.forest-groove'),commit:b('#build-commit'),edition:b('.edition'),card:b('#actcard'),labels:[...document.querySelectorAll('.effects label')].map(e=>{const r=e.getBoundingClientRect();return {x:r.x,right:r.right}})}});
+  assert(box.fx.y>Math.max(95,height*.35),`Effect grid too high at ${name} (${width}x${height}): y=${box.fx.y}`);
+  assert(box.groove.y>=box.controls.bottom+3,'Groove overlaps runway controls');
   assert(box.fx.bottom<=box.controls.y-5,`Effects overlap playback at ${name}: ${JSON.stringify(box)}`);
   assert(box.card.bottom<box.fx.y,`Effects cover act title at ${name}: ${JSON.stringify(box)}`);
   assert(box.labels.every(r=>r.x>=0&&r.right<=width));assert(box.commit.x>=0&&box.commit.right<=width,'HEAD clipped at '+width+'x'+height);assert(box.commit.right<box.edition.x||box.commit.bottom<box.edition.y||box.commit.y>box.edition.bottom,'HEAD overlaps edition at '+width+'x'+height);

@@ -143,10 +143,14 @@ const canvasSignature = page => page.evaluate(() => {
   // 6 — identical time renders identically.
   const stageClip = {x: 0, y: 0, width: PHONE.width, height: 780};
   await page.evaluate(() => runway.seek(7.125)); await settle(page);
-  const signatureOne = await canvasSignature(page), clipOne = await page.screenshot({clip: stageClip});
+  const signatureOne = await canvasSignature(page);
+  const pixelsOne = await page.locator('#scene').evaluate(canvas => canvas.toDataURL());
+  await page.screenshot({clip: stageClip});
   await page.evaluate(() => runway.seek(7.125)); await settle(page);
   assert.equal(await canvasSignature(page), signatureOne, 'The same time produced two different worlds');
-  assert(clipOne.equals(await page.screenshot({clip: stageClip})), 'The same time produced two different frames');
+  // Compare exact canvas pixels, not overlaid HTML controls that can repaint independently.
+  assert.equal(await page.locator('#scene').evaluate(canvas => canvas.toDataURL()), pixelsOne,
+    'The same time produced two different canvas frames');
   // 7 — the foreground row is genuinely composited in front of the walker. Verified by
   // differencing two renders of the same simulated time with the row on and off: the
   // pixels over her legs must change, and the pixels over her torso must not.

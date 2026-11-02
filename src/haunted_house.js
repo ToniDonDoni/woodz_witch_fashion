@@ -360,7 +360,7 @@ function hungryEnableAudio(){
 }
 document.querySelector('#house-mode').addEventListener('click',()=>{
  hungry.active=!hungry.active;hungry.lastScare=null;
- if(hungry.active)hungryEnableAudio();
+ if(hungry.active){forestGroove.stop();hungryEnableAudio();}
  else if(hungry.audio){hungryStopSounds();hungry.audio.suspend().catch(()=>{});}
  hungryUpdateControls();if(ready)draw();
 });
