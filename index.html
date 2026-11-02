@@ -46,26 +46,35 @@ body.house-active #actcard{bottom:112px}
 #actcard{bottom:174px}
 @media(max-width:700px){#actcard{bottom:245px}}
 
-/* Independent forest-only beat controls. Keep the original scene controls clear. */
-.forest-groove{position:fixed;bottom:max(22px,env(safe-area-inset-bottom));left:25px;z-index:3;display:flex;align-items:center;gap:11px;padding:3px 9px 3px 3px;border:1px solid #d9bfe62a;border-radius:26px;background:#131017e8;backdrop-filter:blur(10px)}
-.forest-groove button{min-height:40px;white-space:nowrap;padding:0 13px;color:#e9d0f4}
-.forest-groove label{display:flex;align-items:center;gap:8px;color:#c6b1d3;font-size:10px;letter-spacing:.05em}
+/* The temporary calibration row sits directly beneath the groove controls. */
+.tempo output{min-width:36px;text-align:right;color:#d7b7ec;font:10px monospace;font-variant-numeric:tabular-nums}
+.forest-groove{position:fixed;bottom:max(12px,env(safe-area-inset-bottom));left:25px;z-index:3;display:flex;flex-direction:column;gap:3px;width:min(310px,calc(100vw - 32px));padding:5px 9px 7px 5px;border:1px solid #d9bfe62a;border-radius:22px;background:#131017e8;backdrop-filter:blur(10px)}
+.forest-groove-row{display:flex;align-items:center;gap:9px}
+.forest-groove button{min-height:40px;white-space:nowrap;padding:0 12px;color:#e9d0f4}
+.forest-groove button:disabled{opacity:.83;cursor:default}
+.forest-groove label{display:flex;align-items:center;gap:8px;color:#c6b1d3;font-size:10px;letter-spacing:.05em;white-space:nowrap}
 .forest-groove input{width:90px;height:26px;accent-color:#c3a2dc;cursor:pointer}
+.forest-groove .forest-tempo{justify-content:space-between;gap:7px;padding:0 7px 0 9px;min-height:30px}
+.forest-tempo input{flex:1;min-width:64px;max-width:150px}
+.forest-tempo output{min-width:49px;text-align:right;color:#d7b7ec;font:10px monospace;font-variant-numeric:tabular-nums}
 body.house-active .forest-groove{display:none}
-body:not(.house-active) .controls{bottom:calc(max(22px,env(safe-area-inset-bottom)) + 58px)}
-body:not(.house-active) .effects{bottom:calc(max(22px,env(safe-area-inset-bottom)) + 112px)}
-body:not(.house-active) #actcard{bottom:232px}
-@media(max-width:700px){body:not(.house-active) #actcard{bottom:303px}}
+body:not(.house-active) .controls{bottom:calc(max(12px,env(safe-area-inset-bottom)) + 108px)}
+body:not(.house-active) .effects{bottom:calc(max(12px,env(safe-area-inset-bottom)) + 162px)}
+body:not(.house-active) #actcard{bottom:282px}
+@media(max-width:700px){body:not(.house-active) #actcard{bottom:352px}}
 @media(max-height:550px){
- .forest-groove{bottom:max(8px,env(safe-area-inset-bottom))}
- body:not(.house-active) .controls{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 55px)}
- body:not(.house-active) .effects{bottom:calc(max(8px,env(safe-area-inset-bottom)) + 109px)}
+ .forest-groove{bottom:max(5px,env(safe-area-inset-bottom))}
+ body:not(.house-active) .controls{bottom:calc(max(5px,env(safe-area-inset-bottom)) + 108px)}
+ body:not(.house-active) .effects{bottom:calc(max(5px,env(safe-area-inset-bottom)) + 162px)}
 }
 @media(max-width:500px){
- .forest-groove{left:16px;gap:6px;padding-right:7px}
+ .forest-groove{left:16px;gap:2px;padding-right:7px}
+ .forest-groove-row{gap:6px}
  .forest-groove button{padding:0 10px;font-size:9px}
  .forest-groove label{gap:5px;font-size:9px}
- .forest-groove input{width:72px}
+ .forest-groove-row input{width:72px}
+ .tempo{gap:4px}
+ .tempo output{min-width:30px;font-size:9px}
 }
 </style>
 </head>
@@ -96,10 +105,16 @@ body:not(.house-active) #actcard{bottom:232px}
 <div id="loading" role="status">Entering the night…</div>
 <div id="actcard" role="status" aria-live="polite"></div>
 <div class="forest-groove" id="forest-groove" role="group" aria-label="Forest groove controls">
-  <button id="forest-groove-start" type="button" aria-pressed="false">START GROOVE</button>
-  <label for="forest-groove-volume">VOL <input id="forest-groove-volume" type="range" min="0" max="100" value="62" aria-label="Groove volume"></label>
+  <div class="forest-groove-row">
+    <button id="forest-groove-start" type="button" aria-pressed="false">START GROOVE</button>
+    <label for="forest-groove-volume">VOL <input id="forest-groove-volume" type="range" min="0" max="100" value="62" aria-label="Groove volume"></label>
+  </div>
+  <label class="forest-tempo" for="forest-tempo">TEMPO
+    <input id="forest-tempo" type="range" min="50" max="180" value="88" step="1" aria-label="Groove tempo in BPM">
+    <output id="forest-tempo-readout" for="forest-tempo">88 BPM</output>
+  </label>
 </div>
-<div class="controls"><button id="play" aria-label="Pause animation">Ⅱ PAUSE</button><label class="tempo">PACE <input id="pace" aria-label="Walking pace" type="range" min="0.6" max="1.6" value="1" step="0.1"></label><button id="dream">NEW DREAM ↗</button></div>
+<div class="controls"><button id="play" aria-label="Pause animation">Ⅱ PAUSE</button><label class="tempo">PACE <input id="pace" aria-label="Walking pace" type="range" min="0.6" max="1.6" value="1" step="0.1"><output id="pace-readout" for="pace">1.0x</output></label><button id="dream">NEW DREAM ↗</button></div>
 <script>
 'use strict';
 (() => {
@@ -2422,9 +2437,9 @@ document.querySelector('#house-sound').addEventListener('click',()=>{
 hungryUpdateControls();
 
 // Adapted from this owner's VibeCat groove engine (MIT license).
-// Embedded in the offline forest page, with a fixed 88 BPM tempo.
+// Embedded in the offline forest page, with a default 88 BPM tempo and a calibration control.
 // Every sound is synthesized mathematically. No recordings, samples or network audio.
-const GROOVE_SAMPLE_RATE=24000, GROOVE_BPM=88, MIN_BPM=50, MAX_BPM=140, GROOVE_BAR_SECONDS=240/GROOVE_BPM;
+const GROOVE_SAMPLE_RATE=24000, GROOVE_BPM=88, MIN_BPM=50, MAX_BPM=180, GROOVE_BAR_SECONDS=240/GROOVE_BPM;
 const GROOVE_TAU=Math.PI*2, grooveHz=m=>440*2**((m-69)/12);
 function grooveRandomGenerator(seed){let x=seed>>>0||1;return()=>{x^=x<<13;x^=x>>>17;x^=x<<5;return(x>>>0)/4294967296;};}
 function grooveVoice(seconds,fn){const a=new Float32Array(Math.ceil(seconds*GROOVE_SAMPLE_RATE));for(let i=0;i<a.length;i++)a[i]=fn(i/GROOVE_SAMPLE_RATE,i);return a;}
@@ -2539,15 +2554,17 @@ class ForestGrooveSynth{
   }
 }
 
-// Forest-only procedural hip-hop. No sound starts before a user gesture.
+// Forest-only hip-hop. START GROOVE opts in; the runway PAUSE/PLAY owns playback.
 const forestGroove=(()=>{
   const button=document.querySelector('#forest-groove-start');
   const volume=document.querySelector('#forest-groove-volume');
+  const tempo=document.querySelector('#forest-tempo');
+  const tempoOutput=document.querySelector('#forest-tempo-readout');
   const storageKey='woodz-forest-groove-volume';
-  let context=null,master=null,synth=null,timer=null;
-  let nextBar=0,nextTime=0,playing=false,pending=false,generation=0;
-  let level=.62;
-  const sources=new Set();
+  let context=null,master=null,synth=null,timer=null,tempoTimer=null;
+  let nextBar=0,nextTime=0,armed=false,playing=false,pending=false,walking=true,generation=0;
+  let level=.62,paceFactor=1,baseBpm=GROOVE_BPM,bpm=GROOVE_BPM;
+  const sources=new Map();
 
   try{
     const saved=localStorage.getItem(storageKey);
@@ -2557,20 +2574,22 @@ const forestGroove=(()=>{
   volume.value=String(Math.round(level*100));
 
   function updateControls(){
-    button.textContent=playing?'PAUSE GROOVE':'START GROOVE';
-    button.setAttribute('aria-pressed',String(playing));
-    button.setAttribute('aria-label',playing?'Pause forest groove':'Start forest groove');
+    button.textContent=armed?(playing?'GROOVE ON':'GROOVE READY'):'START GROOVE';
+    button.disabled=armed||pending;
+    button.setAttribute('aria-pressed',String(armed));
+    button.setAttribute('aria-label',armed?'Groove enabled; use main play or pause':'Start forest groove');
   }
 
   function schedule(){
     if(!playing||hungry.active||!context||context.state!=='running')return;
     if(nextTime<context.currentTime)nextTime=context.currentTime+.05;
     while(nextTime<context.currentTime+5){
-      const {left,right}=synth.renderBar(nextBar++);
+      const bar=nextBar++,{left,right}=synth.renderBar(bar);
       const buffer=context.createBuffer(2,left.length,GROOVE_SAMPLE_RATE);
       buffer.copyToChannel(left,0);buffer.copyToChannel(right,1);
       const source=context.createBufferSource();
-      source.buffer=buffer;source.connect(master);sources.add(source);
+      source.buffer=buffer;source.connect(master);
+      sources.set(source,{bar,start:nextTime});
       source.onended=()=>{
         sources.delete(source);
         source.disconnect();
@@ -2581,29 +2600,44 @@ const forestGroove=(()=>{
     }
   }
 
-  function stop(){
+  function clearSources(at){
+    const now=context.currentTime;
+    for(const source of sources.keys()){
+      try{source.stop(at);}catch{}
+      if(at<=now){
+        source.onended=null;
+        source.disconnect();
+        source.buffer=null;
+      }else{
+        source.onended=()=>{source.disconnect();source.buffer=null;};
+      }
+    }
+    sources.clear();
+  }
+
+  function pause(){
     ++generation;
     playing=false;
     clearInterval(timer);timer=null;
+    clearTimeout(tempoTimer);tempoTimer=null;
     if(context){
       master.gain.cancelScheduledValues(context.currentTime);
       master.gain.setValueAtTime(0,context.currentTime);
-      for(const source of sources){
-        try{source.stop();}catch{}
-        source.disconnect();
-        source.buffer=null;
-      }
-      sources.clear();
+      clearSources(context.currentTime);
       context.suspend().catch(()=>{});
     }
     updateControls();
   }
 
-  async function toggle(){
-    if(pending||hungry.active)return;
-    if(playing){stop();return;}
+  function stop(){
+    armed=false;
+    pause();
+  }
+
+  async function resume(){
+    if(!armed||!walking||hungry.active||playing||pending)return;
     const token=++generation;
-    pending=true;button.disabled=true;
+    pending=true;updateControls();
     try{
       if(!context){
         const Audio=window.AudioContext||window.webkitAudioContext;
@@ -2621,13 +2655,14 @@ const forestGroove=(()=>{
         master.connect(high).connect(low).connect(compressor).connect(context.destination);
         const seed=new Uint32Array(1);
         crypto.getRandomValues(seed);
-        synth=new ForestGrooveSynth(seed[0],GROOVE_BPM);
+        synth=new ForestGrooveSynth(seed[0],bpm);
       }
       await context.resume();
-      if(token!==generation||hungry.active||context.state!=='running'){
+      if(token!==generation||!armed||!walking||hungry.active||context.state!=='running'){
         if(context.state==='running')context.suspend().catch(()=>{});
         return;
       }
+      synth.setBpm(bpm);
       playing=true;
       nextTime=context.currentTime+.07;
       schedule();
@@ -2639,26 +2674,72 @@ const forestGroove=(()=>{
       button.title='Unable to play music. Tap to retry.';
       stop();
     }finally{
-      pending=false;button.disabled=false;
+      pending=false;
       updateControls();
     }
   }
 
-  button.addEventListener('click',toggle);
+  function reschedule(){
+    tempoTimer=null;
+    if(!playing||!context||context.state!=='running')return;
+    const now=context.currentTime,cutAt=now+.05;
+    const firstUnheard=[...sources.values()].find(item=>item.start>=cutAt);
+    if(firstUnheard)nextBar=firstUnheard.bar;
+    master.gain.cancelScheduledValues(now);
+    master.gain.setTargetAtTime(0,now,.012);
+    clearSources(cutAt);
+    nextTime=cutAt+.03;
+    schedule();
+    master.gain.setTargetAtTime(level*.95,nextTime-.03,.06);
+  }
+
+  function setTempoDisplay(){
+    const next=Math.min(MAX_BPM,Math.max(MIN_BPM,Math.round(baseBpm*paceFactor)));
+    if(bpm!==next){
+      bpm=next;
+      if(synth)synth.setBpm(bpm);
+      clearTimeout(tempoTimer);
+      if(playing)tempoTimer=setTimeout(reschedule,90);
+    }
+    tempo.value=String(bpm);
+    tempoOutput.textContent=`${bpm} BPM`;
+  }
+
+  function setPace(value){
+    paceFactor=Number(value);
+    setTempoDisplay();
+  }
+
+  function setWalking(value){
+    walking=!!value;
+    if(!walking)pause();
+    else resume();
+  }
+
+  button.addEventListener('click',()=>{
+    if(armed||pending||hungry.active)return;
+    armed=true;
+    updateControls();
+    resume();
+  });
   volume.addEventListener('input',()=>{
     level=Math.max(0,Math.min(1,Number(volume.value)/100));
-    if(master&&playing){
-      master.gain.setTargetAtTime(level*.95,context.currentTime,.025);
-    }
+    if(master&&playing)master.gain.setTargetAtTime(level*.95,context.currentTime,.025);
     try{localStorage.setItem(storageKey,String(level));}catch{}
+  });
+  tempo.addEventListener('input',()=>{
+    // The selected tempo calibrates the current pace; later PACE changes scale it.
+    baseBpm=Number(tempo.value)/paceFactor;
+    setTempoDisplay();
   });
   document.addEventListener('visibilitychange',()=>{
     if(playing&&!document.hidden)schedule();
   });
+  setTempoDisplay();
   updateControls();
   return {
-    stop,
-    status:()=>({playing,bpm:GROOVE_BPM,volume:level,scheduled:sources.size})
+    stop,pause,resume,setWalking,setPace,
+    status:()=>({playing,armed,bpm,pace:paceFactor,volume:level,scheduled:sources.size})
   };
 })();
 
@@ -2797,9 +2878,9 @@ function draw(){
 // Clamp only large tab/scheduling stalls, rather than throttling low FPS playback.
 function tick(now){if(last!==null&&playing&&!document.hidden){const before=time;time+=Math.min((now-last)/1000,.25)*pace;hungryAudioBetween(before,time);}last=now;if(ready&&playing)draw();requestAnimationFrame(tick);}
 const play=document.querySelector('#play');
-function setPlaying(value){playing=value;last=null;if(!playing&&hungry.active&&hungry.audio)hungryStopSounds();play.textContent=playing?'Ⅱ PAUSE':'▶ PLAY';play.setAttribute('aria-label',playing?'Pause animation':'Play animation');}
+function setPlaying(value){playing=value;last=null;forestGroove.setWalking(playing);if(!playing&&hungry.active&&hungry.audio)hungryStopSounds();play.textContent=playing?'Ⅱ PAUSE':'▶ PLAY';play.setAttribute('aria-label',playing?'Pause animation':'Play animation');}
 play.onclick=()=>setPlaying(!playing);
-document.querySelector('#pace').oninput=e=>{pace=Number(e.target.value)};
+document.querySelector('#pace').oninput=e=>{pace=Number(e.target.value);document.querySelector('#pace-readout').textContent=pace.toFixed(1)+'x';forestGroove.setPace(pace);};
 document.querySelector('#dream').onclick=()=>{seed=(seed+7919)|0;resetWorld();if(ready)draw()};
 document.addEventListener('visibilitychange',()=>{last=null});window.addEventListener('resize',resize);
 // Deterministic review controls; they do not load assets or alter the selected walk cycle.
